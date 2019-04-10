@@ -1,0 +1,163 @@
+{
+  // See https://go.microsoft.com/fwlink/?LinkId=733558
+  // for the documentation about the tasks.json format
+  "version": "2.0.0",
+  "tasks": [
+    {
+      "label": "Build Debug Engine (Windows)",
+      "type": "shell",
+      "group": "build",
+      "command": ".\\build.bat engine_debug",
+      "problemMatcher": []
+    },
+
+    {
+      "label": "Build Release Engine (Windows)",
+      "type": "shell",
+      "group": "build",
+      "command": ".\\build.bat engine_release",
+      "problemMatcher": []
+    },
+
+    {
+      "label": "Build Include (Windows)",
+      "type": "shell",
+      "group": "build",
+      "command": ".\\build.bat include",
+      "problemMatcher": []
+    },
+    
+    {
+      "label": "Build Debug Test Game (Windows)",
+      "type": "shell",
+      "group": "build",
+      "command": ".\\build.bat test_game_debug",
+      "problemMatcher": []
+    },
+    
+    {
+      "label": "Build Release Test Game (Windows)",
+      "type": "shell",
+      "group": "build",
+      "command": ".\\build.bat test_game_release",
+      "problemMatcher": []
+    },
+    
+    {
+      "label": "Build Debug Test Mod (Windows)",
+      "type": "shell",
+      "group": "build",
+      "command": ".\\build.bat test_mod_debug",
+      "problemMatcher": []
+    },
+    
+    {
+      "label": "Build Release Test Mod (Windows)",
+      "type": "shell",
+      "group": "build",
+      "command": ".\\build.bat test_mod_release",
+      "problemMatcher": []
+    },
+    
+
+    {
+      "label": "Clear Debug Engine (Windows)",
+      "type": "shell",
+      "group": "build",
+      "command": ".\\build.bat clear debug",
+      "problemMatcher": []
+    },
+
+    {
+      "label": "Clear Release Engine (Windows)",
+      "type": "shell",
+      "group": "build",
+      "command": ".\\build.bat clear release",
+      "problemMatcher": []
+    },
+
+    {
+      "label": "Clear Include (Windows)",
+      "type": "shell",
+      "group": "build",
+      "command": ".\\build.bat clear include",
+      "problemMatcher": []
+    },
+
+    {
+      "label": "Clear Debug Test Game (Windows)",
+      "type": "shell",
+      "group": "build",
+      "command": ".\\build.bat clear test\\debug",
+      "problemMatcher": []
+    },
+
+    {
+      "label": "Clear Release Test Game (Windows)",
+      "type": "shell",
+      "group": "build",
+      "command": ".\\build.bat clear test\\release",
+      "problemMatcher": []
+    },
+
+    {
+      "label": "Clear Debug Test Mod (Windows)",
+      "type": "shell",
+      "group": "build",
+      "command": ".\\build.bat clear test\\debug\\mods",
+      "problemMatcher": []
+    },
+
+    {
+      "label": "Clear Release Test Mod (Windows)",
+      "type": "shell",
+      "group": "build",
+      "command": ".\\build.bat clear test\\release\\mods",
+      "problemMatcher": []
+    },
+
+    {
+      "label": "Clear All (Windows)",
+      "type": "shell",
+      "group": "build",
+      "command": ".\\build.bat clear",
+      "problemMatcher": []
+    },
+
+
+    {
+      "label": "Run Debug Test (Windows)",
+      "type": "shell",
+      "group": "build",
+      "command": ".\\build\\test\\debug\\main",
+      "problemMatcher": []
+    },
+    
+
+    {
+      "label": "Rebuild Debug Test Mod and Run (Windows)",
+      "type": "shell",
+      "group": "build",
+      "command": ".\\build.bat test_mod_debug run_debug",
+      "problemMatcher": []
+    },
+
+
+    {
+      "label": "Rebuild Full Debug Test and Run (Windows)",
+      "type": "shell",
+      "group": "build",
+      "command": ".\\build.bat engine_debug include test_game_debug test_mod_debug run_debug",
+      "problemMatcher": []
+    },
+
+
+    {
+      "label": "Package (Windows)",
+      "type": "shell",
+      "group": "build",
+      "command": ".\\package.bat",
+      "problemMatcher": []
+    }
+  ]
+}

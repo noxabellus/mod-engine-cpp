@@ -1,0 +1,48 @@
+{
+  "shader_program": "Minimal2D",
+
+  "culling": {
+    "side": "back",
+    "winding": "ccw"
+  },
+
+  "blending": {
+    "src_factor": "src_alpha",
+    "dest_factor": "one_minus_src_alpha"
+  },
+  
+  "uniforms": [
+    {
+      "name": "diffuse_tex",
+      "type": "texture",
+      "value": 0
+    },
+    {
+      "name": "transform",
+      "type": "matrix4",
+      "value": [
+        1, 0, 0, 0,
+        0, 1, 0, 0,
+        0, 0, 1, 0,
+        0, 0, 0, 1
+      ]
+    },
+    {
+      "name": "view",
+      "type": "matrix4",
+      "value": [
+        1, 0, 0, 0,
+        0, 1, 0, 0,
+        0, 0, 1, 0,
+        0, 0, 0, 1
+      ]
+    }
+  ],
+
+  "textures": [
+    {
+      "location": 0,
+      "name": "ModEngine Logo"
+    }
+  ]
+}

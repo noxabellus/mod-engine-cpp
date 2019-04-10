@@ -1,0 +1,9 @@
+{
+  "fonts": [
+    {
+      "path": "./assets/fonts/Roboto/Roboto-Regular.ttf",
+      "size": 26
+    }
+  ],
+  "show_fps": true
+}

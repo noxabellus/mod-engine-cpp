@@ -1,0 +1,45 @@
+{
+  "shader_program": "Minimal3D",
+
+  "culling": {
+    "side": "back",
+    "winding": "ccw"
+  },
+
+  "depth": "less",
+  
+  "uniforms": [
+    {
+      "name": "diffuse_tex",
+      "type": "texture",
+      "value": 0
+    },
+    {
+      "name": "transform",
+      "type": "matrix4",
+      "value": [
+        1, 0, 0, 0,
+        0, 1, 0, 0,
+        0, 0, 1, 0,
+        0, 0, 0, 1
+      ]
+    },
+    {
+      "name": "view",
+      "type": "matrix4",
+      "value": [
+        1, 0, 0, 0,
+        0, 1, 0, 0,
+        0, 0, 1, 0,
+        0, 0, 0, 1
+      ]
+    }
+  ],
+
+  "textures": [
+    {
+      "location": 0,
+      "name": "Color Calibration Test"
+    }
+  ]
+}

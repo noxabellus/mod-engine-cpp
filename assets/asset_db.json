@@ -1,0 +1,54 @@
+{
+  "shaders": {
+    "Minimal2D Vert": "shaders/minimal2d.vert",
+    "Minimal3D Vert": "shaders/minimal3d.vert",
+    "Minimal Frag": "shaders/minimal.frag"
+  },
+
+  "shader_programs": {
+    "Minimal2D": {
+      "vertex": "Minimal2D Vert",
+      "fragment": "Minimal Frag"
+    },
+    "Minimal3D": {
+      "vertex": "Minimal3D Vert",
+      "fragment": "Minimal Frag"
+    }
+  },
+
+  "textures": {
+    "ModEngine Logo": "textures/modengine.json",
+    "Color Calibration Test": "textures/color_test.json",
+    "Color Blending Test": "textures/blending_test.json",
+    "Transparency Test": "textures/transparency_test.json"
+  },
+
+  "materials": {
+    "Minimal2DA": "materials/minimal2dA.json",
+    "Minimal2DB": "materials/minimal2dB.json",
+    "Minimal2DC": "materials/minimal2dC.json",
+    "Minimal3DA": "materials/minimal3dA.json",
+    "Minimal3DB": "materials/minimal3dB.json",
+    "Minimal3DC": "materials/minimal3dC.json"
+  },
+
+  "material_sets": {
+    "Minimal2D Set": [
+      "Minimal2DA",
+      "Minimal2DB"
+    ],
+    "Minimal3D Set": [
+      "Minimal3DA",
+      "Minimal3DB"
+    ]
+  },
+
+  "render_mesh_2ds": {
+    "Test Quad 2D": "meshes/test_quad2d.json"
+  },
+
+  "render_mesh_3ds": {
+    "Test Quad 3D": "meshes/test_quad3d.json",
+    "Test Cube": "meshes/test_cube.json"
+  }
+}

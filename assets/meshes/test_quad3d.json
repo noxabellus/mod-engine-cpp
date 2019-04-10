@@ -1,0 +1,42 @@
+{
+  "positions": [
+     0.5, -0.5, 0.0,
+    -0.5, -0.5, 0.0,
+    -0.5,  0.5, 0.0,
+     0.5,  0.5, 0.0
+  ],
+
+  "uvs": [
+    1.0, 0.0,
+    0.0, 0.0,
+    0.0, 1.0,
+    1.0, 1.0 
+  ],
+
+  "colors": [
+    1.0, 1.0, 1.0,
+    1.0, 1.0, 1.0,
+    1.0, 1.0, 1.0,
+    1.0, 1.0, 1.0
+  ],
+
+  "faces": [
+    0, 1, 2,
+    2, 3, 0
+  ],
+
+  "material_set": [
+    {
+      "material_index": 0,
+      "cast_shadow": true,
+      "start_index": 0,
+      "length": 1
+    },
+    {
+      "material_index": 1,
+      "cast_shadow": true,
+      "start_index": 1,
+      "length": 1
+    }
+  ]
+}
