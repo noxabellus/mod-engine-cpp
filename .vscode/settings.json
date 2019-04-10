@@ -1,6 +1,5 @@
 {
   "files.associations": {
-    "*.h": "cpp",
-    "algorithm": "cpp"
+    "*.h": "cpp"
   }
 }
