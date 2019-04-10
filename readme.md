@@ -47,14 +47,15 @@ All assets used by the engine or test game utilize open source or public domain 
 
 
 ## Project Status
-This is still very early in production, but a list of architectural elements that have been implemented to some degree is as follows:
-<!-- + Various generic data structures:
-  - Bitmask (64 bit flag set)
-  - Dynamic array
-  - Dynamic string -->
+This is still very early in production, and code is being ported from the C-only prototype, but a list of architectural elements that have been implemented to some degree is as follows:
++ Various generic data structures:
+  - Bitmask (Bit flag set template)
+  - Dynamic array (Template)
+  - Dynamic string (ASCII-only for now)
+  - Shared Library
++ UI through SDL + ImGUI
 <!-- + ECS (Speculative) -->
 <!-- + ThreadPool -->
-<!-- + UI through SDL + ImGUI -->
 <!-- + Application window abstraction with config file i/o -->
 <!-- + JSON parser + stringifier -->
 <!-- + Extensive linear algebra library including:
@@ -113,7 +114,7 @@ git clone https://github.com/noxabellus/mod-engine
 #### Windows
 Build by running `.\build.bat` followed by the names of the targets you want to build:
 - `engine_debug` / `engine_release`
-> Build the core ModEngine library `.dll` and `.lib` files. Copy the dependency `.dll` files and combine their `.lib` files with the ModEngine `.lib` file for easier linking
+> Build the core ModEngine library `.dll` and `.lib` files. Copy the dependency `.dll` files and combine their `.lib` files with the ModEngine `.lib` file for easier linking. For Debug, create/copy `.pdb` files
 - `include`
 > Build the ModEngine redistributable header file collection
 - `test_game_debug` / `test_game_release`
@@ -147,7 +148,8 @@ Additionally, VS Code tasks are preconfigured for most actions in `.vscode/tasks
 ### Utilize
 In order to use the engine in your own game there are a few steps to follow
 + Copy the built include directory into your project
-+ Copy the dependency dlls `ModEngine.dll`, `SDL2.dll`, and `FreeImage.dll` from the appropriate target (Debug or Release), and place them where your game's exe will be built
++ Copy the dependency dlls `ModEngine.dll`, `SDL2.dll`, `FreeImage.dll`, and `imgui.dll` from the appropriate target (Debug or Release), and place them where your game's exe will be built
++ (Optional) If using the Debug target, copy the `.pdb` files from the engine directory
 + Include the `include/ModEngine.hh` header into your source
 + Define `M_GAME` so the headers have the appropriate Windows `__declspec`s
 + Link against the `ModEngine.lib` from the appropriate target when building
