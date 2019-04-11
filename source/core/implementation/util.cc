@@ -178,6 +178,27 @@ namespace mod {
 
     return true;
   }
+
+  s32_t str_cmp_caseless (char const* str1, char const* str2, size_t num) {
+    s32_t ret_code = -9999;
+
+    size_t i = 0;
+
+    if (str1 == NULL || str2== NULL) goto done;
+
+    while ((*str1 || *str2) && (i < num)) {
+      ret_code = tolower((s32_t)(*str1)) - tolower((s32_t)(*str2));
+
+      if (ret_code != 0) break;
+
+      ++ i;
+      
+      ++ str1;
+      ++ str2;
+    }
+
+    done: return ret_code;
+  }
 }
 
 

@@ -61,6 +61,15 @@ namespace mod {
   ENGINE_API bool str_ends_with (char const* str, char const* end, size_t max_length);
 
 
+  /* Determine whether two strs are the same if case (a vs A) is disregarded
+   * Returns:
+   * -9999 if there are invalid arguments (one or both of the input strings is a NULL pointer).
+   * < 0 if the first character that does not match has a lower value in str1 than in str2.
+   * 0 if the contents of both strings are equal.
+   * > 0 if the first character that does not match has a greater value in str1 than in str2 */
+  ENGINE_API int str_cmp_caseless (char const* str1, char const* str2, size_t num = SIZE_MAX);
+
+
   /* Determine if an ASCII character is whitespace ' ', '\n', etc */
   static bool char_is_whitespace (char c) {
     return c == ' '
