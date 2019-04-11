@@ -106,7 +106,7 @@ namespace mod {
     
     /* Free the heap allocation of an Array */
     void destroy () {
-      free(elements);
+      if (elements != NULL) free(elements);
     }
 
 

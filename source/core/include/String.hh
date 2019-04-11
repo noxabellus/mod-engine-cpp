@@ -63,7 +63,7 @@ namespace mod {
 
     /* Free the heap allocation of a String */
     void destroy () {
-      free(value);
+      if (value != NULL) free(value);
     }
 
     
