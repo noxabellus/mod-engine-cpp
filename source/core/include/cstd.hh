@@ -215,6 +215,8 @@ namespace mod {
 
   /* Create a new heap-allocated str copy of a str or substr */
   static char* str_clone (char const* base, size_t length = 0) {
+    if (base == NULL) return NULL;
+    
     if (length == 0) length = strlen(base);
     
     auto out = (char*) malloc(length + 1);
