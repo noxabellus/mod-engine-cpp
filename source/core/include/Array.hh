@@ -211,7 +211,7 @@ namespace mod {
 
     /* Get a pointer to a specific element of an Array */
     T* get_element (size_t index) const {
-      m_assert(index < count, "Out of range access for Array: index %zu, length %zu", index, length);
+      m_assert(index < count, "Out of range access for Array: index %zu, count %zu", index, count);
       return (T*) elements + index;
     }
 
