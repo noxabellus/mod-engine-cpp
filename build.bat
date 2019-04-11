@@ -83,14 +83,14 @@ if "%1" == "" (
     %STD_FLAGS% %DBG_FLAGS% -LD ^
     -I.\source\ -I.\source\core\include\ ^
     .\source\core\implementation\ModEngine.cc ^
-    .\source\extern\sdl2\sdl2.lib .\source\extern\freeimage\FreeImage.lib .\source\extern\imgui\imgui.lib ^
+    .\source\extern\sdl2\sdl2.lib .\source\extern\freeimage\FreeImage.lib .\source\extern\imgui\imgui.lib .\source\extern\ImGuiColorTextEdit\text_editor.lib ^
     -o.\build\debug\ModEngine ^
   || exit /b 1
 
   :: Merge dependency libs into engine lib
   lib ^
     .\build\debug\ModEngine.lib ^
-    .\source\extern\sdl2\sdl2.lib .\source\extern\freeimage\FreeImage.lib .\source\extern\imgui\imgui.lib ^
+    .\source\extern\sdl2\sdl2.lib .\source\extern\freeimage\FreeImage.lib .\source\extern\imgui\imgui.lib .\source\extern\ImGuiColorTextEdit\text_editor.lib ^
     /OUT:.\build\debug\ModEngine.lib ^
   || exit /b 1
 
@@ -98,9 +98,11 @@ if "%1" == "" (
   copy .\source\extern\sdl2\sdl2_dbg.dll .\build\debug\sdl2.dll
   copy .\source\extern\freeimage\FreeImage.dll .\build\debug\FreeImage.dll
   copy .\source\extern\imgui\imgui_dbg.dll .\build\debug\imgui.dll
+  copy .\source\extern\ImGuiColorTextEdit\text_editor_dbg.dll .\build\debug\text_editor.dll
 
   :: Copy dependency pdbs into engine directory
   copy .\source\extern\imgui\imgui.pdb .\build\debug\imgui.pdb
+  copy .\source\extern\ImGuiColorTextEdit\text_editor.pdb .\build\debug\text_editor.pdb
 
   :: Clean up intermediate files
   for %%i in (
@@ -128,14 +130,14 @@ if "%1" == "" (
     %STD_FLAGS% %REL_FLAGS% -LD ^
     -I.\source\ -I.\source\core\include\ ^
     .\source\core\implementation\ModEngine.cc ^
-    .\source\extern\sdl2\sdl2.lib .\source\extern\freeimage\FreeImage.lib .\source\extern\imgui\imgui.lib ^
+    .\source\extern\sdl2\sdl2.lib .\source\extern\freeimage\FreeImage.lib .\source\extern\imgui\imgui.lib .\source\extern\ImGuiColorTextEdit\text_editor.lib ^
     -o.\build\release\ModEngine ^
   || exit /b 1
 
   :: Merge dependency libs into engine lib
   lib ^
     .\build\release\ModEngine.lib ^
-    .\source\extern\sdl2\sdl2.lib .\source\extern\freeimage\FreeImage.lib .\source\extern\imgui\imgui.lib ^
+    .\source\extern\sdl2\sdl2.lib .\source\extern\freeimage\FreeImage.lib .\source\extern\imgui\imgui.lib .\source\extern\ImGuiColorTextEdit\text_editor.lib ^
     /OUT:.\build\release\ModEngine.lib ^
   || exit /b 1
 
@@ -143,6 +145,7 @@ if "%1" == "" (
   copy .\source\extern\sdl2\sdl2_rel.dll .\build\release\sdl2.dll
   copy .\source\extern\freeimage\FreeImage.dll .\build\release\FreeImage.dll
   copy .\source\extern\imgui\imgui_rel.dll .\build\release\imgui.dll
+  copy .\source\extern\ImGuiColorTextEdit\text_editor_rel.dll .\build\release\text_editor.dll
 
   :: Clean up intermediate files
   for %%i in (

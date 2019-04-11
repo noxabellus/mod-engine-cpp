@@ -55,3 +55,6 @@ namespace ImGui {
     }
   }
 }
+
+
+#include <extern/ImGuiColorTextEdit/TextEditor.h>
