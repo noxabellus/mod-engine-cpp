@@ -8,3 +8,4 @@
 #include "String.hh"
 #include "Bitmask.hh"
 #include "SharedLib.hh"
+#include "ThreadPool.hh"

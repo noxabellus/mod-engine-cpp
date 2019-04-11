@@ -56,10 +56,10 @@ This is still very early in production, and code is being ported from the C-only
   - Dynamic array (Template)
   - Dynamic string (ASCII-only for now)
   - Shared Library
+  - ThreadPool
 + UI through SDL + ImGUI
 + Source file editor with ImGuiColorTextEdit
 <!-- + ECS (Speculative) -->
-<!-- + ThreadPool -->
 <!-- + Application window abstraction with config file i/o -->
 <!-- + JSON parser + stringifier -->
 <!-- + Extensive linear algebra library including:

@@ -32,5 +32,6 @@ s32_t main (s32_t argc, char** args) {
   } catch (mod::Exception& except) {
     except.panic();
   }
+  
   return 0;
 }
