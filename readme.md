@@ -29,6 +29,9 @@ All dependencies are embedded in the source tracking so no extra downloads or bu
 + Dear ImGUI
   > https://github.com/ocornut/imgui
 
++ ImGuiColorTextEdit
+  > https://github.com/BalazsJako/ImGuiColorTextEdit
+
 + tinycthread
   > https://github.com/tinycthread/tinycthread
 
@@ -54,6 +57,7 @@ This is still very early in production, and code is being ported from the C-only
   - Dynamic string (ASCII-only for now)
   - Shared Library
 + UI through SDL + ImGUI
++ Source file editor with ImGuiColorTextEdit
 <!-- + ECS (Speculative) -->
 <!-- + ThreadPool -->
 <!-- + Application window abstraction with config file i/o -->
