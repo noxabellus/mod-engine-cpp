@@ -59,9 +59,9 @@ This is still very early in production, and code is being ported from the C-only
   - ThreadPool
 + UI through SDL + ImGUI
 + Source file editor with ImGuiColorTextEdit
++ JSON parser + stringifier
 <!-- + ECS (Speculative) -->
 <!-- + Application window abstraction with config file i/o -->
-<!-- + JSON parser + stringifier -->
 <!-- + Extensive linear algebra library including:
   - 2d and 3d vectors and geometric primitives
   - 3x3 and 4x4 matrices
