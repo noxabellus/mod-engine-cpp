@@ -9,3 +9,4 @@
 #include "Bitmask.hh"
 #include "SharedLib.hh"
 #include "ThreadPool.hh"
+#include "JSON.hh"
