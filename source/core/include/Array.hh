@@ -110,8 +110,10 @@ namespace mod {
     }
 
 
-    /* Access a specific element of an Array */
+    /* Access a specific element of an Array, by index. 
+     * Panics if the index is out of range */
     T& operator [] (size_t index) const {
+      m_assert(index < count, "Out of range access for Array: index %zu, count %zu", index, count);
       return *get_element(index);
     }
 
@@ -209,9 +211,9 @@ namespace mod {
     }
 
 
-    /* Get a pointer to a specific element of an Array */
+    /* Get a pointer to a specific element of an Array.
+     * Returns NULL if the index is out of range */
     T* get_element (size_t index) const {
-      m_assert(index < count, "Out of range access for Array: index %zu, count %zu", index, count);
       return (T*) elements + index;
     }
 
