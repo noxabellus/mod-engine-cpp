@@ -214,7 +214,8 @@ namespace mod {
     /* Get a pointer to a specific element of an Array.
      * Returns NULL if the index is out of range */
     T* get_element (size_t index) const {
-      return (T*) elements + index;
+      if (index < count) return (T*) elements + index;
+      else return NULL;
     }
 
     /* Set a specific element of an Array */
