@@ -486,9 +486,9 @@ namespace mod {
     /* Throw an exception using the location information of this item along with its root */
     template <typename ... A> void asset_error (char const* fmt, A ... args) const {
       if (root != NULL) {
-        root->asset_error(origin_offset, fmt, args...);
+        root->asset_error(origin_offset != 0? origin_offset + 1 : 0, fmt, args...);
       } else {
-        m_asset_error(origin_offset, fmt, args...);
+        m_asset_error(origin_offset != 0? origin_offset + 1 : 0, fmt, args...);
       }
     }
 
