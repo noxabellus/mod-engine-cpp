@@ -67,7 +67,8 @@ namespace mod {
     }
 
     
-    /* Access a specific char of a String */
+    /* Access a char at a specific offset in a String.
+     * Panics if the offset is out of range */
     char& operator [] (size_t offset) const {
       m_assert(offset < length, "Out of range access for String: offset %zu, length %zu", offset, length);
       return value[offset];
