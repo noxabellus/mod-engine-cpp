@@ -115,15 +115,17 @@ namespace mod {
     /* Create a new Matrix4 from a Matrix3 and an aribtrary axis vector */
     ENGINE_API static Matrix4 from_3 (Matrix3 const& m, Vector3f const& axis);
 
+
     /* Create a new Matrix4 from column vectors */
     static Matrix4 from_column_vectors (Vector3f const& a, Vector3f const& b, Vector3f const& c) {
-      return row_major(
-        a.x,  b.x,  c.x,  0.0f,
-        a.y,  b.y,  c.y,  0.0f,
-        a.z,  b.z,  c.z,  0.0f,
+      return {
+        a.x,  a.y,  a.z,  0.0f,
+        b.x,  b.y,  b.z,  0.0f,
+        c.x,  c.y,  c.z,  0.0f,
         0.0f, 0.0f, 0.0f, 1.0f
-      );
+      };
     }
+
 
     /* Create a new Matrix4 from perspective components */
     ENGINE_API static Matrix4 from_perspective (f32_t l, f32_t r, f32_t t, f32_t b, f32_t n, f32_t f);
