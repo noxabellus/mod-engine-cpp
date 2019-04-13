@@ -3,12 +3,6 @@
 #include "cstd.hh"
 
 
-/* Determine the length of an array */
-#define m_array_length(ARR) (sizeof(ARR) / sizeof(ARR[0]))
-
-/* Get the address offset of a structure's field */
-#define m_field_offset(TY, FIELD) ((size_t) (&((TY*) 0)->FIELD))
-
 
 namespace mod {
   /* The number of bytes read from a file at a time when calling load_file */

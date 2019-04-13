@@ -7,3 +7,5 @@
 #include "SharedLib.cc"
 #include "ThreadPool.cc"
 #include "JSON.cc"
+
+#include "math/lib.cc"

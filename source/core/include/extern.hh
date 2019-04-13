@@ -2,6 +2,10 @@
 
 #include "apis.h"
 
+#ifndef NOMINMAX
+#define NOMINMAX
+#endif
+
 
 
 #include <extern/tinycthread/tinycthread.h>

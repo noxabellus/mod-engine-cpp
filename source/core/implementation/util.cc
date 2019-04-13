@@ -9,7 +9,7 @@ namespace mod {
 
     if (f == NULL) return { NULL, 0 };
 
-    auto data = (uint8_t*) malloc(FILE_READ_CHUNK_SIZE + 1);
+    auto data = (u8_t*) malloc(FILE_READ_CHUNK_SIZE + 1);
 
     m_assert(data != NULL, "Out of memory or other null pointer error while allocating memory for load_file with path '%s' at base chunk size %zu", path, FILE_READ_CHUNK_SIZE + 1);
 
@@ -20,7 +20,7 @@ namespace mod {
     do {
       size_t total_size = FILE_READ_CHUNK_SIZE * i + 1;
 
-      data = (uint8_t*) realloc(data, total_size);
+      data = (u8_t*) realloc(data, total_size);
 
       m_assert(data != NULL, "Out of memory or other null pointer error while reallocating memory for load_file with path '%s' with buffer size %zu", path, total_size);
 
@@ -33,7 +33,7 @@ namespace mod {
 
     size_t final_size = offset + 1;
 
-    data = (uint8_t*) realloc(data, final_size);
+    data = (u8_t*) realloc(data, final_size);
 
     m_assert(data != NULL, "Out of memory or other null pointer error while performing final reallocation of memory for load_file with path '%s' with buffer size %zu", path, final_size);
 

@@ -1,5 +1,9 @@
 #pragma once
 
+#ifndef NOMINMAX
+#define NOMINMAX
+#endif
+
 #include <cstdio>
 #include <cstdlib>
 #include <cstdarg>
@@ -18,6 +22,7 @@
 #include <new>
 #include <typeinfo>
 #include <type_traits>
+#include <limits>
 
 
 #include "extern.hh"
@@ -25,7 +30,7 @@
 
 namespace mod { }
 
-
+using f128_t = long double;
 using f64_t = double;
 using f32_t = float;
 
@@ -226,6 +231,111 @@ namespace mod {
     out[length] = '\0';
 
     return out;
+  }
+}
+
+
+/* Determine the length of an array */
+#define m_array_length(ARR) (sizeof(ARR) / sizeof(ARR[0]))
+
+/* Get the address offset of a structure's field */
+#define m_field_offset(TY, FIELD) ((size_t) (&((TY*) 0)->FIELD))
+
+
+namespace num {
+  /* Get the absolute value of a number */
+  template <typename T> T abs (T v) {
+    return v < T(0)? -v : v;
+  }
+
+  /* Get the minimum value of a set of numbers */
+  template <typename T, typename ... A> T min (T arg0, A ... argsN) {
+    T args [] = { ((T) argsN)... };
+    for (size_t i = 0; i < m_array_length(args); i ++) {
+      if (args[i] < arg0) arg0 = args[i];
+    }
+    return arg0;
+  }
+
+  /* Get the maximum value of a set of numbers */
+  template <typename T, typename ... A> T max (T arg0, A ... argsN) {
+    T args [] = { ((T) argsN)... };
+    for (size_t i = 0; i < m_array_length(args); i ++) {
+      if (args[i] > arg0) arg0 = args[i];
+    }
+    return arg0;
+  }
+
+  /* Get the sign of number */
+  template <typename T> T sign (T v) {
+    return v < T(0)? T(-1) : T(1);
+  }
+
+  /* Clamp a value between some minimum and maximum */
+  template <typename T> T clamp (T value, T vmin, T vmax) {
+    return max(vmin, min(value, vmax));
+  }
+
+  /* Linear interpolate between two numbers using an alpha (Recommend alpha be floating point 0 to 1) */
+  template <typename T, typename U> T lerp (U alpha, T start, T finish) {
+    T vmin = min(start, finish);
+    T vmax = max(start, finish);
+    return vmin + ((U) (vmax - vmin)) * alpha;
+  }
+
+  /* Get a random number between 0 and std::numeric_limts<T>::max() */
+  template <typename T> T random () {
+    return random<f64_t>() * std::numeric_limits<T>::max();
+  }
+
+  /* Get a random 128 bit floating point number between 0 and 1 */
+  template <> f128_t random () {
+    return ((f128_t) rand() / (f128_t) RAND_MAX);
+  }
+
+  /* Get a random 64 bit floating point number between 0 and 1 */
+  template <> f64_t random () {
+    return ((f64_t) rand() / (f64_t) RAND_MAX);
+  }
+  
+  /* Get a random 32 bit floating point number between 0 and 1 */  
+  template <> f32_t random () {
+    return ((f32_t) rand() / (f32_t) RAND_MAX);
+  }
+
+  /* Get a random number between some minimum and maximum */
+  template <typename T> T random_range (T vmin, T vmax) {
+    return lerp<T, f64_t>(random<f64_t>(), vmin, vmax);
+  }
+
+  /* Get a random number between some minimum and maximum */
+  template <> f128_t random_range (f128_t vmin, f128_t vmax) {
+    return lerp<f128_t, f128_t>(random<f128_t>(), vmin, vmax);
+  }
+
+  /* Get a random number between some minimum and maximum */
+  template <> f32_t random_range (f32_t vmin, f32_t vmax) {
+    return lerp<f32_t, f32_t>(random<f32_t>(), vmin, vmax);
+  }
+
+  /* Seed the cmath random number generator */
+  inline void seed_random (u32_t seed = time(NULL)) {
+    srand(seed);
+  }
+
+  /* Get the remainder of the division of two numbers */
+  template <typename T> T remainder (T l, T r) {
+    if constexpr (std::is_floating_point<T>::value) {
+      if constexpr (sizeof(T) <= sizeof(f32_t)) {
+        return fmodf(l, r);
+      } else if constexpr (sizeof(T) <= sizeof(f64_t)) {
+        return fmod(l, r);
+      } else {
+        return fmodl(l, r);
+      }
+    } else {
+      return l % r;
+    }
   }
 }
 
