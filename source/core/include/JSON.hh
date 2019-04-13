@@ -9,7 +9,7 @@
 
 namespace mod {
   namespace JSONType {
-    enum: int8_t {
+    enum: s8_t {
       Invalid = -1,
       Boolean = 0,
       Number,
@@ -19,7 +19,7 @@ namespace mod {
     };
 
     /* Get the name of a JSONType as a str */
-    static char const* name (uint8_t type) {
+    static char const* name (u8_t type) {
       switch (type) {
         case Boolean: return "Boolean";
         case Number: return "Number";
@@ -31,7 +31,7 @@ namespace mod {
     }
 
     /* Get a JSONType from its name in str form */
-    static int8_t from_name (char const* str) {
+    static s8_t from_name (char const* str) {
       if (str_cmp_caseless(str, "boolean") == 0) return Boolean;
       else if (str_cmp_caseless(str, "number") == 0) return Number;
       else if (str_cmp_caseless(str, "string") == 0) return String;
@@ -130,7 +130,7 @@ namespace mod {
   struct JSONItem {
     JSON* root = NULL;
     size_t origin_offset = 0;
-    uint8_t type = JSONType::Invalid;
+    u8_t type = JSONType::Invalid;
     union {
       bool boolean;
       f64_t number;
@@ -187,7 +187,7 @@ namespace mod {
     { }
 
     /* Create a new JSONItem from a type identifier with an optional root and offset from its origin */
-    JSONItem (uint8_t new_type, JSON* new_root = NULL, size_t new_origin_offset = 0)
+    JSONItem (u8_t new_type, JSON* new_root = NULL, size_t new_origin_offset = 0)
     : root(new_root)
     , origin_offset(new_origin_offset)
     , type(new_type)
@@ -533,7 +533,7 @@ namespace mod {
     { }
 
     /* Create a new JSON root with type and optional origin */
-    JSON (uint8_t type, char const* new_origin = NULL)
+    JSON (u8_t type, char const* new_origin = NULL)
     : origin(str_clone(new_origin))
     { 
       m_assert(type == JSONType::Object || type == JSONType::Array, "JSON root Item must be either JSONType::Object or JSONType::Array, not %s", JSONType::name(type));
