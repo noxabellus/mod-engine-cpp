@@ -173,6 +173,16 @@ namespace mod {
       return add(r);
     }
 
+    /* x += r.x, y += r.y, z += r.z, w += r.w */
+    Vector4& operator += (Vector4 const& r) {
+      x += r.x;
+      y += r.y;
+      z += r.z;
+      w += r.w;
+      return *this;
+    }
+
+
     /* x - r.x, y - r.y, z - r.z, w - r.w */
     Vector4 sub (Vector4 const& r) const {
       return {
@@ -188,6 +198,16 @@ namespace mod {
       return sub(r);
     }
 
+    /* x -= r.x, y -= r.y, z -= r.z, w -= r.w */
+    Vector4& operator -= (Vector4 const& r) {
+      x -= r.x;
+      y -= r.y;
+      z -= r.z;
+      w -= r.w;
+      return *this;
+    }
+
+
     /* x * r.x, y * r.y, z * r.z, w * r.w */
     Vector4 mul (Vector4 const& r) const {
       return {
@@ -201,6 +221,15 @@ namespace mod {
     /* x * r.x, y * r.y, z * r.z, w * r.w */
     Vector4 operator * (Vector4 const& r) const {
       return mul(r);
+    }
+
+    /* x *= r.x, y *= r.y, z *= r.z, w *= r.w */
+    Vector4& operator *= (Vector4 const& r) {
+      x *= r.x;
+      y *= r.y;
+      z *= r.z;
+      w *= r.w;
+      return *this;
     }
 
     /* x / r.x, y / r.y, z / r.z, w / r.w */
@@ -218,6 +247,15 @@ namespace mod {
       return div(r);
     }
 
+    /* x /= r.x, y /= r.y, z /= r.z, w /= r.w */
+    Vector4& operator /= (Vector4 const& r) {
+      x /= r.x;
+      y /= r.y;
+      z /= r.z;
+      w /= r.w;
+      return *this;
+    }
+
     /* x % r.x, y % r.y, z % r.z, w % r.w */
     Vector4 rem (Vector4 const& r) const {
       return {
@@ -231,6 +269,15 @@ namespace mod {
     /* x % r.x, y % r.y, z % r.z, w % r.w */
     Vector4 operator % (Vector4 const& r) const {
       return rem(r);
+    }
+    
+    /* x %= r.x, y %= r.y, z %= r.z, w %= r.w */
+    Vector4& operator %= (Vector4 const& r) {
+      x = num::remainder(x, r.x);
+      y = num::remainder(y, r.y);
+      z = num::remainder(z, r.z);
+      w = num::remainder(w, r.w);
+      return *this;
     }
 
 
@@ -248,6 +295,16 @@ namespace mod {
     Vector4 operator + (T r) const {
       return add_scl(r);
     }
+    
+    /* x += r, y += r, z += r, w += r */
+    Vector4& operator += (T r) {
+      x += r;
+      y += r;
+      z += r;
+      w += r;
+      return *this;
+    }
+
 
     /* x - r, y - r, z - r, w - r */
     Vector4 sub_scl (T r) const {
@@ -263,6 +320,16 @@ namespace mod {
     Vector4 operator - (T r) const {
       return sub_scl(r);
     }
+    
+    /* x -= r, y -= r, z -= r, w -= r */
+    Vector4& operator -= (T r) {
+      x -= r;
+      y -= r;
+      z -= r;
+      w -= r;
+      return *this;
+    }
+
 
     /* x * r, y * r, z * r, w * r */
     Vector4 mul_scl (T r) const {
@@ -278,6 +345,16 @@ namespace mod {
     Vector4 operator * (T r) const {
       return mul_scl(r);
     }
+    
+    /* x *= r, y *= r, z *= r, w *= r */
+    Vector4& operator *= (T r) {
+      x *= r;
+      y *= r;
+      z *= r;
+      w *= r;
+      return *this;
+    }
+
 
     /* x / r, y / r, z / r, w / r */
     Vector4 div_scl (T r) const {
@@ -293,6 +370,16 @@ namespace mod {
     Vector4 operator / (T r) const {
       return div_scl(r);
     }
+    
+    /* x /= r, y /= r, z /= r, w /= r */
+    Vector4& operator /= (T r) {
+      x /= r;
+      y /= r;
+      z /= r;
+      w /= r;
+      return *this;
+    }
+
 
     /* x % r, y % r, z % r, w % r */
     Vector4 rem_scl (T r) const {
@@ -307,6 +394,15 @@ namespace mod {
     /* x % r, y % r, z % r, w % r */
     Vector4 operator % (T r) const {
       return rem_scl(r);
+    }
+    
+    /* x %= r, y %= r, z %= r, w %= r */
+    Vector4& operator %= (T r) {
+      x = num::remainder(x, r);
+      y = num::remainder(y, r);
+      z = num::remainder(z, r);
+      w = num::remainder(w, r);
+      return *this;
     }
 
 

@@ -63,7 +63,15 @@ namespace mod {
     Vector2 operator + (Vector2 const& r) const {
       return add(r);
     }
+
+    /* x += r.x, y += r.y */
+    Vector2& operator += (Vector2 const& r) {
+      x += r.x;
+      y += r.y;
+      return *this;
+    }
     
+
     /* x - r.x, y - r.y */
     Vector2 sub (Vector2 const& r) const {
       return {
@@ -76,6 +84,14 @@ namespace mod {
     Vector2 operator - (Vector2 const& r) const {
       return sub(r);
     }
+
+    /* x -= r.x, y -= r.y */
+    Vector2& operator -= (Vector2 const& r) {
+      x -= r.x;
+      y -= r.y;
+      return *this;
+    }
+
     
     /* x * r.x, y * r.y */
     Vector2 mul (Vector2 const& r) const {
@@ -88,6 +104,13 @@ namespace mod {
     /* x * r.x, y * r.y */
     Vector2 operator * (Vector2 const& r) const {
       return mul(r);
+    }
+
+    /* x *= r.x, y *= r.y */
+    Vector2& operator *= (Vector2 const& r) {
+      x *= r.x;
+      y *= r.y;
+      return *this;
     }
     
     /* x / r.x, y / r.y */
@@ -102,6 +125,14 @@ namespace mod {
     Vector2 operator / (Vector2 const& r) const {
       return div(r);
     }
+
+    /* x /= r.x, y /= r.y */
+    Vector2& operator /= (Vector2 const& r) {
+      x /= r.x;
+      y /= r.y;
+      return *this;
+    }
+    
     
     /* x % r.x, y % r.y */
     Vector2 rem (Vector2 const& r) const {
@@ -114,6 +145,13 @@ namespace mod {
     /* x % r.x, y % r.y */
     Vector2 operator % (Vector2 const& r) const {
       return rem(r);
+    }
+
+    /* x %= r.x, y %= r.y */
+    Vector2& operator %= (Vector2 const& r) {
+      x = num::remainder(x, r.x);
+      y = num::remainder(x, r.y);
+      return *this;
     }
 
     
@@ -129,7 +167,15 @@ namespace mod {
     Vector2 operator + (T r) const {
       return add_scl(r);
     }
+
+    /* x += r, y += r */
+    Vector2& operator += (T r) {
+      x += r;
+      y += r;
+      return *this;
+    }
     
+
     /* x * r, y * r */
     Vector2 sub_scl (T r) const {
       return {
@@ -141,6 +187,14 @@ namespace mod {
     Vector2 operator - (T r) const {
       return sub_scl(r);
     }
+
+    /* x -= r, y -= r */
+    Vector2& operator -= (T r) {
+      x -= r;
+      y -= r;
+      return *this;
+    }
+
     
     /* x - r, y - r */
     Vector2 mul_scl (T r) const {
@@ -154,6 +208,14 @@ namespace mod {
     Vector2 operator * (T r) const {
       return mul_scl(r);
     }
+
+    /* x *= r, y *= r */
+    Vector2& operator *= (T r) {
+      x *= r;
+      y *= r;
+      return *this;
+    }
+
     
     /* x / r, y / r */
     Vector2 div_scl (T r) const {
@@ -167,6 +229,14 @@ namespace mod {
     Vector2 operator / (T r) const {
       return div_scl(r);
     }
+
+    /* x /= r, y /= r */
+    Vector2& operator /= (T r) {
+      x /= r;
+      y /= r;
+      return *this;
+    }
+
     
     /* x % r, y % r */
     Vector2 rem_scl (T r) const {
@@ -179,6 +249,13 @@ namespace mod {
     /* x % r, y % r */
     Vector2 operator % (T r) const {
       return rem_scl(r);
+    }
+
+    /* x %= r, y %= r */
+    Vector2& operator %= (T r) {
+      x = num::remainder(x, r);
+      y = num::remainder(y, r);
+      return *this;
     }
 
     
