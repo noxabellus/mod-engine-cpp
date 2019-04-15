@@ -105,20 +105,23 @@ namespace mod {
 
     /* Enable multiple bit indices of a Bitmask by iterating a parameter pack list of indices */
     template <typename ... A> void set_multiple (A ... args) {
-      u64_t indices [] = { ((u64_t) args)... };
-      set_list(indices, m_array_length(indices));
+      static constexpr size_t arg_count = sizeof...(args);
+      u64_t indices [arg_count] = { ((u64_t) args)... };
+      set_list(indices, arg_count);
     }
 
     /* Disable multiple bit indices of a Bitmask by iterating a parameter pack list of indices */
     template <typename ... A> void unset_multiple (A ... args) {
-      u64_t indices [] = { ((u64_t) args)... };
-      unset_list(indices, m_array_length(indices));
+      static constexpr size_t arg_count = sizeof...(args);
+      u64_t indices [arg_count] = { ((u64_t) args)... };
+      unset_list(indices, arg_count);
     }
 
     /* Toggle multiple bit indices of a Bitmask by iterating a parameter pack list of indices */
     template <typename ... A> void toggle_multiple (A ... args) {
-      u64_t indices [] = { ((u64_t) args)... };
-      toggle_list(indices, m_array_length(indices));
+      static constexpr size_t arg_count = sizeof...(args);
+      u64_t indices [arg_count] = { ((u64_t) args)... };
+      toggle_list(indices, arg_count);
     }
 
     

@@ -46,8 +46,9 @@ namespace mod {
 
     /* Create a new Array from a parameter pack list of elements */
     template <typename ... A> static Array from_elements (A ... args) {
-      T arg_arr [] = { args... };
-      return { arg_arr, m_array_length(arg_arr) };
+      static constexpr size_t arg_count = sizeof...(args);
+      T arg_arr [arg_count] = { ((T) args)... };
+      return { arg_arr, arg_count };
     }
 
     /* Create a new Array by copying an existing buffer or region */

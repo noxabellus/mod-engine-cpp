@@ -250,8 +250,9 @@ namespace num {
 
   /* Get the minimum value of a set of numbers */
   template <typename T, typename ... A> T min (T arg0, A ... argsN) {
-    T args [] = { ((T) argsN)... };
-    for (size_t i = 0; i < m_array_length(args); i ++) {
+    static constexpr size_t arg_count = sizeof...(argsN);
+    T args [arg_count] = { ((T) argsN)... };
+    for (size_t i = 0; i < arg_count; i ++) {
       if (args[i] < arg0) arg0 = args[i];
     }
     return arg0;
@@ -259,8 +260,9 @@ namespace num {
 
   /* Get the maximum value of a set of numbers */
   template <typename T, typename ... A> T max (T arg0, A ... argsN) {
-    T args [] = { ((T) argsN)... };
-    for (size_t i = 0; i < m_array_length(args); i ++) {
+    static constexpr size_t arg_count = sizeof...(argsN);
+    T args [arg_count] = { ((T) argsN)... };
+    for (size_t i = 0; i < arg_count; i ++) {
       if (args[i] > arg0) arg0 = args[i];
     }
     return arg0;
