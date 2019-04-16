@@ -225,7 +225,7 @@ namespace mod {
     if (length == 0) length = strlen(base);
     
     auto out = (char*) malloc(length + 1);
-    
+
     memcpy(out, base, length);
 
     out[length] = '\0';
@@ -244,13 +244,13 @@ namespace mod {
 
 namespace num {
   /* Get the absolute value of a number */
-  template <typename T> T abs (T v) {
+  template <typename T> constexpr T abs (T v) {
     return v < T(0)? -v : v;
   }
 
   /* Get the minimum value of a set of numbers */
-  template <typename T, typename ... A> T min (T arg0, A ... argsN) {
-    static constexpr size_t arg_count = sizeof...(argsN);
+  template <typename T, typename ... A> constexpr T min (T arg0, A ... argsN) {
+    constexpr size_t arg_count = sizeof...(argsN);
     T args [arg_count] = { ((T) argsN)... };
     for (size_t i = 0; i < arg_count; i ++) {
       if (args[i] < arg0) arg0 = args[i];
@@ -259,8 +259,8 @@ namespace num {
   }
 
   /* Get the maximum value of a set of numbers */
-  template <typename T, typename ... A> T max (T arg0, A ... argsN) {
-    static constexpr size_t arg_count = sizeof...(argsN);
+  template <typename T, typename ... A> constexpr T max (T arg0, A ... argsN) {
+    constexpr size_t arg_count = sizeof...(argsN);
     T args [arg_count] = { ((T) argsN)... };
     for (size_t i = 0; i < arg_count; i ++) {
       if (args[i] > arg0) arg0 = args[i];
@@ -287,17 +287,17 @@ namespace num {
   }
 
   /* Get the sign of number */
-  template <typename T> T sign (T v) {
+  template <typename T> constexpr T sign (T v) {
     return v < T(0)? T(-1) : T(1);
   }
 
   /* Clamp a value between some minimum and maximum */
-  template <typename T> T clamp (T value, T vmin, T vmax) {
+  template <typename T> constexpr T clamp (T value, T vmin, T vmax) {
     return max(vmin, min(value, vmax));
   }
 
   /* Linear interpolate between two numbers using an alpha (Recommend alpha be floating point 0 to 1) */
-  template <typename T, typename U> T lerp (U alpha, T start, T finish) {
+  template <typename T, typename U> constexpr T lerp (U alpha, T start, T finish) {
     T vmin = min(start, finish);
     T vmax = max(start, finish);
     return vmin + ((U) (vmax - vmin)) * alpha;
