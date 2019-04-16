@@ -13,6 +13,11 @@ namespace mod {
     return ((size_t) instance - (size_t) base) / size;
   }
 
+  /* Get the index offset of a pointer from the base address of its buffer */
+  template<typename T> size_t pointer_to_index (T const* base, T const* instance) {
+    return ((size_t) instance - (size_t) base) / sizeof(T);
+  }
+
   /* Load a file from disk, returns NULL if the file could not be loaded */
   ENGINE_API pair_t<void*, size_t> load_file (char const* path);
 
