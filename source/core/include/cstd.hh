@@ -87,7 +87,7 @@ inline constexpr u32_t operator ""_u32 (u64_t i) { return (u32_t) i; }
 inline constexpr u64_t operator ""_u64 (u64_t i) { return (u64_t) i; }
 
 
-template <typename A, typename B>
+template <typename A, typename B = A>
 struct pair_t {
   A a;
   B b;
@@ -97,7 +97,7 @@ struct pair_t {
   bool operator != (pair_t const& other) { return a != other.a || b != other.b; }
 };
 
-template <typename A, typename B, typename C>
+template <typename A, typename B = A, typename C = A>
 struct tri_t {
   A a;
   B b;
@@ -108,7 +108,7 @@ struct tri_t {
   bool operator != (tri_t const& other) { return a != other.a || b != other.b || c != other.c; }
 };
 
-template <typename A, typename B, typename C, typename D>
+template <typename A, typename B = A, typename C = A, typename D = A>
 struct quad_t {
   A a;
   B b;
@@ -266,6 +266,24 @@ namespace num {
       if (args[i] > arg0) arg0 = args[i];
     }
     return arg0;
+  }
+
+  /* Get the minimum value of an array of numbers */
+  template <typename T> T min_element (T const* buff, size_t element_count) {
+    T m = buff[0];
+    for (size_t i = 0; i < element_count; i ++) {
+      if (buff[i] < m) m = buff[i];
+    }
+    return m;
+  }
+
+  /* Get the maximum value of an array of numbers */
+  template <typename T> T max_element (T const* buff, size_t element_count) {
+    T m = buff[0];
+    for (size_t i = 0; i < element_count; i ++) {
+      if (buff[i] > m) m = buff[i];
+    }
+    return m;
   }
 
   /* Get the sign of number */
