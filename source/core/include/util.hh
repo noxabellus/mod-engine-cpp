@@ -25,12 +25,12 @@ namespace mod {
   /* Get the length of the parent directory part of a file path str.
   * For example, for the path `./a/b/c.xyz`, this will return the length of the substring `./a/b`.
   * Returns -1 if no directory separators are found in the str */
-  ENGINE_API int64_t str_dir_parent_length (char const* path, size_t max_len);
+  ENGINE_API s64_t str_dir_parent_length (char const* path, size_t max_len);
 
   /* Get the length of the directory chain `back` count above the end of a file path str.
   * For example, for the path `./a/b/c.xyz`, a `back` count of 2 will return the length of the substring `./a`.
   * Returns -1 if no directory seperators are found in the str */ 
-  ENGINE_API int64_t str_dir_traverse_back (char const* path, size_t back, size_t max_len);
+  ENGINE_API s64_t str_dir_traverse_back (char const* path, size_t back, size_t max_len);
 
   /* Get the number of `..\` or `../` at the beginning of `path` */
   ENGINE_API size_t str_dir_count_back_paths (char const* path, size_t max_len);
@@ -45,7 +45,7 @@ namespace mod {
   /* Get the index of the start of the file extension part of a path,
   * E.G. The part after the last `.` if it is not followed by `\` or `/`.
   * Returns -1 if no `.` was found meeting the requirements */
-  ENGINE_API int64_t str_file_extension (char const* str, size_t max_length);
+  ENGINE_API s64_t str_file_extension (char const* str, size_t max_length);
 
 
   /* Determine whether a str or subsection of a str `start` matches the beginning of `str` */
@@ -88,13 +88,13 @@ namespace mod {
 
     
   /* A generic quicksort implementation using a comparison callback */
-  template <typename T, typename FN> void quick_sort(T* buffer, int64_t low, int64_t high, FN fn) {
-    static auto partition = [] (T* buffer, int64_t low, int64_t high, FN fn) -> int64_t {
+  template <typename T, typename FN> void quick_sort(T* buffer, s64_t low, s64_t high, FN fn) {
+    static const auto partition = [] (T* buffer, s64_t low, s64_t high, FN fn) -> s64_t {
       T const& pivot = buffer[high];
 
-      int64_t i = (low - 1);
+      s64_t i = (low - 1);
 
-      for (int64_t j = low; j <= high- 1; j++) { 
+      for (s64_t j = low; j <= high- 1; j++) { 
         T const& item = buffer[j];
         
         if (fn(item, pivot)) {
@@ -110,7 +110,7 @@ namespace mod {
 
     if (low >= high) return;
     
-    int64_t pi = partition(buffer, low, high, fn);
+    s64_t pi = partition(buffer, low, high, fn);
 
     quick_sort(buffer, low, pi - 1, fn);
     quick_sort(buffer, pi + 1, high, fn);

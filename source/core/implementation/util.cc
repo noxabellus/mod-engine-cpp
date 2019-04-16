@@ -203,7 +203,7 @@ namespace mod {
 
 
 
-char const* glGetTypeName (uint32_t type) {
+char const* glGetTypeName (u32_t type) {
   switch (type) {
     case GL_FLOAT: return	"float";
     case GL_FLOAT_VEC2: return	"vec2";
