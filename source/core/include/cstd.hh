@@ -226,6 +226,8 @@ namespace mod {
     
     auto out = (char*) malloc(length + 1);
 
+    m_assert(out != NULL, "Out of memory or other null pointer error while allocating new str via str_clone with length %zu + 1", length);
+    
     memcpy(out, base, length);
 
     out[length] = '\0';
