@@ -443,6 +443,17 @@ namespace mod {
       };
     }
 
+
+    /* Take the minimum of all elements of a vector */
+    T min_element () const {
+      return num::min(x, y, z);
+    }
+
+    /* Take the maximum of all elements of a vector */
+    T max_element () const {
+      return num::max(x, y, z);
+    }
+
     
     /* Negate each component of a vector */
     Vector3 negate () const {
@@ -531,7 +542,7 @@ namespace mod {
 
     /* Get the unit-scale direction vector from one vector to another */
     template <typename U = typename std::conditional<std::is_floating_point<T>::value, T, f64_t>::type> Vector3<U> direction (Vector3 const& r) const {
-      return sub(r).normalize<U>();
+      return r.sub(*this).template normalize<U>();
     }
 
     /* Project a vector onto another vector */
@@ -576,7 +587,7 @@ namespace mod {
 
 
     /* Transform a vector using a matrix3 */
-    Vector3<f32_t> apply_matrix3 (Matrix3 const& m) const {
+    Vector3<f32_t> apply_matrix (Matrix3 const& m) const {
       return {
         m[0] * ((f32_t) x) + m[3] * ((f32_t) y) + m[6] * ((f32_t) z),
         m[1] * ((f32_t) x) + m[4] * ((f32_t) y) + m[7] * ((f32_t) z),
@@ -585,7 +596,7 @@ namespace mod {
     }
 
     /* Transform a vector using a matrix4 */
-    Vector3<f32_t> apply_matrix4 (Matrix4 const& m) const {
+    Vector3<f32_t> apply_matrix (Matrix4 const& m) const {
       return {
         m[0] * ((f32_t) x) + m[4] * ((f32_t) y) + m[8]  * ((f32_t) z) + m[12],
         m[1] * ((f32_t) x) + m[5] * ((f32_t) y) + m[9]  * ((f32_t) z) + m[13],
@@ -593,6 +604,13 @@ namespace mod {
       };
     }
 
+
+    /* Rotate a direction vector using a matrix3 */
+    Vector3<f32_t> transform_direction (Matrix3 const& m) const {
+      Matrix3 no_move = m;
+      no_move.set_position({ 0.0f, 0.0f });
+      return apply_matrix(no_move).normalize();
+    }
 
     /* Rotate a direction vector using a matrix4 */
     Vector3<f32_t> transform_direction (Matrix4 const& m) const {

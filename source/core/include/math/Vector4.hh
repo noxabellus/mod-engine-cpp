@@ -573,6 +573,17 @@ namespace mod {
       };
     }
 
+
+    /* Take the minimum of all elements of a vector */
+    T min_element () const {
+      return num::min(x, y, z, w);
+    }
+
+    /* Take the maximum of all elements of a vector */
+    T max_element () const {
+      return num::max(x, y, z, w);
+    }
+
     
     /* Negate each component of a vector */
     Vector4 negate () const {
@@ -652,7 +663,7 @@ namespace mod {
 
     /* Get the unit-scale direction vector from one vector to another */
     template <typename U = typename std::conditional<std::is_floating_point<T>::value, T, f64_t>::type> Vector4<U> direction (Vector4 const& r) const {
-      return sub(r).normalize<U>();
+      return r.sub(*this).normalize<U>();
     }
 
     /* Project a vector onto another vector */
@@ -672,7 +683,7 @@ namespace mod {
 
 
     /* Transform a vector using a matrix4 */
-    Vector4<f32_t> apply_matrix4 (Matrix4 const& m) const {
+    Vector4<f32_t> apply_matrix (Matrix4 const& m) const {
       return {
         m[0] * ((f32_t) x) + m[4] * ((f32_t) y) + m[8]  * ((f32_t) z) + m[12] * ((f32_t) w),
         m[1] * ((f32_t) x) + m[5] * ((f32_t) y) + m[9]  * ((f32_t) z) + m[13] * ((f32_t) w),
