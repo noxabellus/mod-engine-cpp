@@ -77,13 +77,13 @@ namespace mod {
     /* Disable a specific bit index of a Bitmask */
     void unset (u64_t index) {
       m_assert(index < bit_count, "Cannot unset out of range Bitmask index %" PRIu64 ", valid range is 0 - %" PRIu64, index, bit_count - 1);
-      b->bytes[index / 8] &= (~(1_u8 << (index % 8)));
+      bytes[index / 8] &= (~(1_u8 << (index % 8)));
     }
 
     /* Toggle a specific bit index of a Bitmask */
     void toggle (u64_t index) {
       m_assert(index < bit_count, "Cannot toggle out of range Bitmask index %" PRIu64 ", valid range is 0 - %" PRIu64, index, bit_count - 1);
-      b->bytes[index / 8] ^= (1_u8 << (index % 8));
+      bytes[index / 8] ^= (1_u8 << (index % 8));
     }
 
 
