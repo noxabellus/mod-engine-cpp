@@ -61,14 +61,14 @@ This is still very early in production, and code is being ported from the C-only
 + Source file editor with ImGuiColorTextEdit
 + JSON parser + stringifier
 + ECS (Highly experimental)
-<!-- + Application window abstraction with config file i/o -->
++ Application window abstraction with config file i/o
 + Extensive linear algebra library including:
   - 2d and 3d vectors
   - 3x3 and 4x4 matrices
   - Euler and Quaternion rotations
   - 2d and 3d component transforms (Scale + Rotation + Translation)
-  <!-- - 2d and 3d geometric primitives -->
-  <!-- - 2d and 3d intersection and distance tests -->
+  - 2d and 3d geometric primitives
+  - 2d and 3d intersection and distance tests
 <!-- + Image i/o and manipulation through FreeImage -->
 <!-- + Extensive graphics drawing abstractions with asset file i/o:
   - Shaders (Vertex, Fragment)
