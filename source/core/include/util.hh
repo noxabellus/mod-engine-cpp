@@ -31,34 +31,34 @@ namespace mod {
   /* Get the length of the parent directory part of a file path str.
   * For example, for the path `./a/b/c.xyz`, this will return the length of the substring `./a/b`.
   * Returns -1 if no directory separators are found in the str */
-  ENGINE_API s64_t str_dir_parent_length (char const* path, size_t max_len);
+  ENGINE_API s64_t str_dir_parent_length (char const* path, size_t max_length = SIZE_MAX);
 
   /* Get the length of the directory chain `back` count above the end of a file path str.
   * For example, for the path `./a/b/c.xyz`, a `back` count of 2 will return the length of the substring `./a`.
   * Returns -1 if no directory seperators are found in the str */ 
-  ENGINE_API s64_t str_dir_traverse_back (char const* path, size_t back, size_t max_len);
+  ENGINE_API s64_t str_dir_traverse_back (char const* path, size_t back, size_t max_length = SIZE_MAX);
 
   /* Get the number of `..\` or `../` at the beginning of `path` */
-  ENGINE_API size_t str_dir_count_back_paths (char const* path, size_t max_len);
+  ENGINE_API size_t str_dir_count_back_paths (char const* path, size_t max_length = SIZE_MAX);
 
   /* Combine two path strs by traversing back along `base_path` for each `../` or `..\` of `relative_path`.
   * Additionally, removes a proceeding `./` or `.\` if either is present in `relative_path`.
   * On success, the result is placed in `out`, and `true` is returned.
   * Failure conditions: `base_path` is not deep enough to cover all back traversals, 
   * or `max_length` of the output is not long enough to contain the combined path */
-  ENGINE_API bool str_dir_relativize_path (char const* base_path, char const* relative_path, char* out, size_t max_length);
+  ENGINE_API bool str_dir_relativize_path (char const* base_path, char const* relative_path, char* out, size_t max_length = SIZE_MAX);
 
   /* Get the index of the start of the file extension part of a path,
   * E.G. The part after the last `.` if it is not followed by `\` or `/`.
   * Returns -1 if no `.` was found meeting the requirements */
-  ENGINE_API s64_t str_file_extension (char const* str, size_t max_length);
+  ENGINE_API s64_t str_file_extension (char const* str, size_t max_length = SIZE_MAX);
 
 
   /* Determine whether a str or subsection of a str `start` matches the beginning of `str` */
-  ENGINE_API bool str_starts_with (char const* str, char const* start, size_t max_length);
+  ENGINE_API bool str_starts_with (char const* str, char const* start, size_t max_length = SIZE_MAX);
 
   /* Determine whether a str or subsection of a str `end` matches the end of `str` */
-  ENGINE_API bool str_ends_with (char const* str, char const* end, size_t max_length);
+  ENGINE_API bool str_ends_with (char const* str, char const* end, size_t max_length = 0);
 
   /* Get the last part of a type name after any ":", "`", or "'" characters */
   ENGINE_API char const* str_get_unscoped_type_name (char const* type_name);
