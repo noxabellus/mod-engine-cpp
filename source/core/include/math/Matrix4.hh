@@ -1,9 +1,12 @@
-#pragma once
+#ifndef MATRIX4_H
+#define MATRIX4_H
 
 #include "../cstd.hh"
 #include "Vector3.hh"
 #include "Euler.hh"
 #include "Quaternion.hh"
+
+
 
 namespace mod {
   struct Transform2D;
@@ -388,3 +391,5 @@ namespace mod {
     }
   }
 }
+
+#endif

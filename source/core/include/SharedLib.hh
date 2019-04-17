@@ -1,4 +1,5 @@
-#pragma once
+#ifndef SHAREDLIB_H
+#define SHAREDLIB_H
 
 #include "cstd.hh"
 
@@ -24,3 +25,5 @@ namespace mod {
     ENGINE_API void* get_address (char const* name);
   };
 }
+
+#endif

@@ -1,5 +1,5 @@
-#pragma once
-
+#ifndef APIS_H
+#define APIS_H
 
 #ifdef _WIN32
   #if defined(M_ENGINE)
@@ -34,4 +34,6 @@
   #define ENGINE_API
   #define GAME_API
   #define MODULE_API extern "C"
+#endif
+
 #endif

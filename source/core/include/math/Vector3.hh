@@ -1,4 +1,5 @@
-#pragma once
+#ifndef VECTOR3_H
+#define VECTOR3_H
 
 #include "../cstd.hh"
 
@@ -690,3 +691,5 @@ namespace mod {
     }
   }
 }
+
+#endif

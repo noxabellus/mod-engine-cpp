@@ -1,4 +1,5 @@
-#pragma once
+#ifndef MATHLIB_H
+#define MATHLIB_H
 
 #include "Vector2.hh"
 #include "Vector3.hh"
@@ -31,3 +32,5 @@
 
 #include "Contains.hh"
 #include "Intersects.hh"
+
+#endif

@@ -1,4 +1,5 @@
-#pragma once
+#ifndef CIRCLE_H
+#define CIRCLE_H
 
 #include "Vector2.hh"
 #include "Vector3.hh"
@@ -130,3 +131,5 @@ namespace mod {
     }
   };
 }
+
+#endif

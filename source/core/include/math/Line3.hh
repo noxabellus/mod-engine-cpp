@@ -1,4 +1,5 @@
-#pragma once
+#ifndef LINE3_H
+#define LINE3_H
 
 #include "Vector3.hh"
 
@@ -129,3 +130,5 @@ namespace mod {
     }
   };
 }
+
+#endif

@@ -1,4 +1,5 @@
-#pragma once
+#ifndef INTERSECTS_H
+#define INTERSECTS_H
 
 #include "AABB2.hh"
 #include "AABB3.hh"
@@ -207,3 +208,5 @@ namespace mod {
     ENGINE_API bool frustum_vector (Frustum const& frustum, Vector3f const& vector);
   }
 }
+
+#endif

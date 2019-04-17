@@ -1,4 +1,5 @@
-#pragma once
+#ifndef AABB2_H
+#define AABB2_H
 
 #include "Vector2.hh"
 
@@ -220,3 +221,5 @@ namespace mod {
     }
   }
 }
+
+#endif

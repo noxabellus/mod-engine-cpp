@@ -1,4 +1,5 @@
-#pragma once
+#ifndef FRUSTUM_H
+#define FRUSTUM_H
 
 #include "Plane.hh"
 
@@ -77,3 +78,5 @@ namespace mod {
     }
   };
 }
+
+#endif

@@ -1,4 +1,5 @@
-#pragma once
+#ifndef TRIANGLE_H
+#define TRIANGLE_H
 
 #include "Vector3.hh"
 #include "Matrix3.hh"
@@ -115,3 +116,5 @@ namespace mod {
     }
   };
 }
+
+#endif

@@ -1,4 +1,5 @@
-#pragma once
+#ifndef UTIL_H
+#define UTIL_H
 
 #include "cstd.hh"
 
@@ -154,3 +155,5 @@ ENGINE_API s64_t glWrapFromStr (char const* value);
 /* Convert a name of a GL texture filter enum to an integer value.
  * Returns -1 if the value is not a match for any enums in the category */
 ENGINE_API s64_t glFilterFromStr (char const* value);
+
+#endif

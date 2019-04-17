@@ -1,4 +1,5 @@
-#pragma once
+#ifndef MODENGINE_H
+#define MODENGINE_H
 
 #include "apis.h"
 #include "cstd.hh"
@@ -13,3 +14,5 @@
 #include "ECS.hh"
 
 #include "math/lib.hh"
+
+#endif

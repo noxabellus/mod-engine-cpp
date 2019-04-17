@@ -1,4 +1,5 @@
-#pragma once
+#ifndef ECS_H
+#define ECS_H
 
 #include "cstd.hh"
 #include "Bitmask.hh"
@@ -562,3 +563,5 @@ namespace mod {
       }
   };
 }
+
+#endif

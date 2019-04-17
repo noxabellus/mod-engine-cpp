@@ -1,7 +1,9 @@
-#pragma once
+#ifndef PLANE_H
+#define PLANE_H
 
 #include "Vector3.hh"
 #include "Matrix4.hh"
+
 
 
 namespace mod {
@@ -129,3 +131,5 @@ namespace mod {
     ENGINE_API Plane apply_matrix (Matrix4 const& m) const;
   };
 }
+
+#endif

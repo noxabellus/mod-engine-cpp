@@ -1,4 +1,5 @@
-#pragma once
+#ifndef EXTERN_H
+#define EXTERN_H
 
 #include "apis.h"
 
@@ -62,3 +63,5 @@ namespace ImGui {
 
 
 #include <extern/ImGuiColorTextEdit/TextEditor.h>
+
+#endif

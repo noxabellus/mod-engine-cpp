@@ -1,10 +1,12 @@
-#pragma once
+#ifndef QUATERNION_H
+#define QUATERNION_H
 
 #include "../cstd.hh"
 
 #include "Vector2.hh"
 #include "Vector3.hh"
 #include "Vector4.hh"
+
 
 
 namespace mod {
@@ -169,3 +171,5 @@ namespace mod {
     }
   }
 }
+
+#endif

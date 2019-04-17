@@ -1,4 +1,5 @@
-#pragma once
+#ifndef CONTAINS_H
+#define CONTAINS_H
 
 #include "AABB2.hh"
 #include "AABB3.hh"
@@ -84,3 +85,5 @@ namespace mod {
     ENGINE_API bool polygon_aabb2 (Vector2f const* vertices, size_t vertex_count, AABB2 const* aabb);
   }
 }
+
+#endif

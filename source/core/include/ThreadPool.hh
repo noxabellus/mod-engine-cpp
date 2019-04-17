@@ -1,4 +1,5 @@
-#pragma once
+#ifndef THREADPOOL_H
+#define THREADPOOL_H
 
 #include "cstd.hh"
 #include "Array.hh"
@@ -44,3 +45,5 @@ namespace mod {
     static ENGINE_API s32_t thread (ThreadPool* pool);
   };
 }
+
+#endif

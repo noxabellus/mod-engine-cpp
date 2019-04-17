@@ -1,4 +1,5 @@
-#pragma once
+#ifndef RAY3_H
+#define RAY3_H
 
 #include "Vector3.hh"
 
@@ -119,3 +120,5 @@ namespace mod {
     }
   };
 }
+
+#endif

@@ -1,4 +1,5 @@
-#pragma once
+#ifndef EULER_H
+#define EULER_H
 
 #include "Vector3.hh"
 
@@ -113,3 +114,5 @@ namespace mod {
     }
   }
 }
+
+#endif

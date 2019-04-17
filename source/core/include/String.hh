@@ -1,4 +1,5 @@
-#pragma once
+#ifndef STRING_H
+#define STRING_H
 
 #include "cstd.hh"
 #include "util.hh"
@@ -148,3 +149,5 @@ namespace mod {
     }
   };
 }
+
+#endif

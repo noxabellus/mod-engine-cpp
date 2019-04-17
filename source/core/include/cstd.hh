@@ -1,4 +1,5 @@
-#pragma once
+#ifndef CSTD_H
+#define CSTD_H
 
 #ifndef NOMINMAX
 #define NOMINMAX
@@ -401,3 +402,5 @@ void m_asset_error (char const* fmt, A ... args) {
 
 /* Runtime assertion with exception using formatted error message if the boolean condition is not true */
 #define m_asset_assert(COND,  ...) if (!(COND)) m_asset_error(__VA_ARGS__)
+
+#endif

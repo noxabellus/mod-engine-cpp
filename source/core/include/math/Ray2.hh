@@ -1,4 +1,5 @@
-#pragma once
+#ifndef RAY2_H
+#define RAY2_H
 
 #include "Vector2.hh"
 
@@ -103,3 +104,5 @@ namespace mod {
     }
   };
 }
+
+#endif

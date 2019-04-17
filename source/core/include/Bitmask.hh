@@ -1,4 +1,5 @@
-#pragma once
+#ifndef BITMASK_H
+#define BITMASK_H
 
 #include "cstd.hh"
 #include "util.hh"
@@ -240,3 +241,5 @@ namespace mod {
     }
   };
 }
+
+#endif

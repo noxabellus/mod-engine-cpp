@@ -1,4 +1,5 @@
-#pragma once
+#ifndef ARRAY_H
+#define ARRAY_H
 
 #include "cstd.hh"
 #include "util.hh"
@@ -271,3 +272,5 @@ namespace mod {
     }
   };
 }
+
+#endif

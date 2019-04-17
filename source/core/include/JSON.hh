@@ -1,4 +1,5 @@
-#pragma once
+#ifndef JSON_H
+#define JSON_H
 
 
 #include "cstd.hh"
@@ -860,3 +861,5 @@ namespace mod {
     }
   };
 }
+
+#endif

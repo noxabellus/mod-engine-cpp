@@ -1,4 +1,5 @@
-#pragma once
+#ifndef AABB3_H
+#define AABB3_H
 
 #include "AABB2.hh"
 
@@ -215,3 +216,5 @@ namespace mod {
     }
   }
 }
+
+#endif

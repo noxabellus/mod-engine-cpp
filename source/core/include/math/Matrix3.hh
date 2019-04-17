@@ -1,7 +1,10 @@
-#pragma once
+#ifndef MATRIX3_H
+#define MATRIX3_H
 
 #include "../cstd.hh"
 #include "Vector2.hh"
+
+
 
 namespace mod {
   struct Matrix4;
@@ -288,3 +291,5 @@ namespace mod {
     }
   }
 }
+
+#endif
