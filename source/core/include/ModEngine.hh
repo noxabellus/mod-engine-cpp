@@ -15,4 +15,6 @@
 
 #include "math/lib.hh"
 
+#include "Application.hh"
+
 #endif

@@ -10,3 +10,5 @@
 #include "ECS.cc"
 
 #include "math/lib.cc"
+
+#include "Application.cc"
