@@ -23,6 +23,7 @@
 #include <typeinfo>
 #include <type_traits>
 #include <limits>
+#include <functional>
 
 
 #include "extern.hh"

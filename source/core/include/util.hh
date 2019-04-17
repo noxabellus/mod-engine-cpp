@@ -59,6 +59,9 @@ namespace mod {
   /* Determine whether a str or subsection of a str `end` matches the end of `str` */
   ENGINE_API bool str_ends_with (char const* str, char const* end, size_t max_length);
 
+  /* Get the last part of a type name after any ":", "`", or "'" characters */
+  ENGINE_API char const* str_get_unscoped_type_name (char const* type_name);
+
 
   /* Determine whether two strs are the same if case (a vs A) is disregarded
    * Returns:

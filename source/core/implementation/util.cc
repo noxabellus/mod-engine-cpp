@@ -179,6 +179,18 @@ namespace mod {
     return true;
   }
 
+  
+  char const* str_get_unscoped_type_name (char const* type_name) {
+    int64_t last_special = -1;
+    size_t offset = 0;
+    while (type_name[offset] != '\0') {
+      if (type_name[offset] == ':' || type_name[offset] == '`' || type_name[offset] == '\'') last_special = offset;
+      ++ offset;
+    }
+    return type_name + last_special + 1;
+  }
+
+
   s32_t str_cmp_caseless (char const* str1, char const* str2, size_t num) {
     s32_t ret_code = -9999;
 
