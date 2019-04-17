@@ -14,11 +14,7 @@ namespace mod {
 
   Application_t Application = { };
 
-  static s32_t SDL_WINDOW_MODES [3] = {
-    0,
-    SDL_WINDOW_FULLSCREEN,
-    SDL_WINDOW_FULLSCREEN_DESKTOP
-  };
+  
 
   static ImFontConfig DEFAULT_FONT_CONFIG = { };
 
@@ -167,9 +163,9 @@ namespace mod {
     // TODO add string value option for vsync config
     JSONItem* vsync_item = json.get_object_item("vsync");
 
-    Application.vsync = vsync_item != NULL? vsync_item->get_number() : ApplicationVSyncModes::VBlank;
+    Application.vsync = vsync_item != NULL? vsync_item->get_number() : ApplicationVSyncMode::VBlank;
 
-    if (Application.vsync == ApplicationVSyncModes::VBlank) {
+    if (Application.vsync == ApplicationVSyncMode::VBlank) {
       m_assert(SDL_GL_SetSwapInterval(1) == 0, "Failed to enable VBlank VSync mode");
     } else {
       m_assert(SDL_GL_SetSwapInterval(0) == 0, "Failed to disable VBlank VSync mode");
@@ -189,7 +185,7 @@ namespace mod {
     // TODO add string value option for window mode config
     JSONItem* window_mode_item = json.get_object_item("window_mode");
 
-    Application.set_window_mode(window_mode_item != NULL? window_mode_item->get_number() : ApplicationWindowModes::Windowed);
+    Application.set_window_mode(window_mode_item != NULL? window_mode_item->get_number() : ApplicationWindowMode::Windowed);
 
 
     JSONItem* resolution_item = json.get_object_item("resolution");
@@ -202,7 +198,7 @@ namespace mod {
     }
 
 
-    if (Application.window_mode == ApplicationWindowModes::Windowed) {
+    if (Application.window_mode == ApplicationWindowMode::Windowed) {
       JSONItem* position_item = json.get_object_item("position");
 
       if (position_item != NULL) {
@@ -264,7 +260,7 @@ namespace mod {
       json.set_object_value((f64_t) Application.window_mode, "window_mode");
       json.set_object_value((f64_t) SDL_GetWindowDisplayIndex(Application.window), "display");
       
-      if (Application.vsync > ApplicationVSyncModes::VBlank) {
+      if (Application.vsync > ApplicationVSyncMode::VBlank) {
         json.set_object_value((f64_t) Application.target_framerate, "target_framerate");
       } else if (json.get_object_item("target_framerate") != NULL) {
         json.remove_object_item("target_framerate");
@@ -275,7 +271,7 @@ namespace mod {
         JSONItem { (f64_t) Application.resolution.y }
       ), "resolution");
 
-      if (Application.window_mode == ApplicationWindowModes::Windowed) {
+      if (Application.window_mode == ApplicationWindowMode::Windowed) {
         Vector2s pos;
 
         SDL_GetWindowPosition(Application.window, &pos.x, &pos.y);
@@ -423,18 +419,18 @@ namespace mod {
     SDL_GL_SwapWindow(window);
 
 
-    if (vsync > ApplicationVSyncModes::VBlank) {
+    if (vsync > ApplicationVSyncMode::VBlank) {
       f64_t frame_delay = 1000.0 / (f64_t) target_framerate;
 
       // TODO cleanup vsync lock code
-      if (vsync == ApplicationVSyncModes::SpinLock) {
+      if (vsync == ApplicationVSyncMode::SpinLock) {
         f64_t frame_time_ms;
         do {
           u64_t frame_end = SDL_GetPerformanceCounter();
           u64_t frame_time = (frame_end - frame_start) * 1000;
           frame_time_ms = (f64_t) frame_time / (f64_t) performance_frequency;
         } while (frame_delay > frame_time_ms);
-      } else if (vsync == ApplicationVSyncModes::SleepLock) {
+      } else if (vsync == ApplicationVSyncMode::SleepLock) {
         u64_t frame_end = SDL_GetPerformanceCounter();
         u64_t frame_time = (frame_end - frame_start) * 1000;
         f64_t frame_time_ms = (f64_t) frame_time / (f64_t) performance_frequency;
@@ -445,10 +441,27 @@ namespace mod {
       }
     }
   }
+  
 
+  void Application_t::set_vsync (u8_t new_vsync) {
+    if (!ApplicationVSyncMode::validate(new_vsync)) {
+      printf("Warning: Invalid VSync %u mode passed to Application.set_vsync; using ApplicationVSyncMode::VBlank instead\n", new_vsync);
+      new_vsync = ApplicationVSyncMode::VBlank;
+    }
+
+    if (new_vsync != vsync) {
+      vsync = new_vsync;
+
+      if (vsync == ApplicationVSyncMode::VBlank) {
+        m_assert(SDL_GL_SetSwapInterval(1) == 0, "Failed to enable VBlank vsync mode");
+      } else {
+        m_assert(SDL_GL_SetSwapInterval(0) == 0, "Failed to disable VBlank vsync mode");
+      }
+    }
+  }
 
   void Application_t::set_resolution (Vector2s const& new_resolution) {
-    if (window_mode == ApplicationWindowModes::FullscreenDesktop) {
+    if (window_mode == ApplicationWindowMode::FullscreenDesktop) {
       ResolutionSet res_set = get_resolution_set();
       resolution = res_set[0];
     } else if (new_resolution.x != resolution.x || new_resolution.y != resolution.y) {
@@ -456,7 +469,7 @@ namespace mod {
 
       resolution = new_resolution;
 
-      if (window_mode == ApplicationWindowModes::Windowed) {
+      if (window_mode == ApplicationWindowMode::Windowed) {
         s32_t display_index = SDL_GetWindowDisplayIndex(window);
 
         SDL_SetWindowPosition(window, SDL_WINDOWPOS_CENTERED_DISPLAY(display_index), SDL_WINDOWPOS_CENTERED_DISPLAY(display_index));
@@ -465,21 +478,33 @@ namespace mod {
   }
 
   void Application_t::set_display (u8_t new_display_index) {
+    s32_t total_displays = SDL_GetNumVideoDisplays();
+
+    if (new_display_index > total_displays - 1) {
+      printf("Warning: Invalid display index %u passed to Application.set_display; using display 0 instead\n", new_display_index);
+      new_display_index = 0;
+    }
+
     if (new_display_index != SDL_GetWindowDisplayIndex(window)) {
-      if (window_mode > ApplicationWindowModes::Windowed) SDL_SetWindowFullscreen(window, 0);
+      if (window_mode > ApplicationWindowMode::Windowed) SDL_SetWindowFullscreen(window, 0);
       SDL_SetWindowPosition(window, SDL_WINDOWPOS_CENTERED_DISPLAY(new_display_index), SDL_WINDOWPOS_CENTERED_DISPLAY(new_display_index));
-      if (window_mode > ApplicationWindowModes::Windowed) SDL_SetWindowFullscreen(window, SDL_WINDOW_MODES[window_mode]);;
+      if (window_mode > ApplicationWindowMode::Windowed) SDL_SetWindowFullscreen(window, ApplicationWindowMode::to_sdl(window_mode));
     }
   }
 
   void Application_t::set_window_mode (u8_t new_window_mode) {
+    if (!ApplicationWindowMode::validate(new_window_mode)) {
+      printf("Warning: Invalid window mode %u passed to Application.set_window_mode; using ApplicationWindowMode::Windowed instead\n", new_window_mode);
+      new_window_mode = ApplicationWindowMode::Windowed;
+    }
+
     if (window_mode != new_window_mode) {
       window_mode = new_window_mode;
-      SDL_SetWindowFullscreen(window, SDL_WINDOW_MODES[window_mode]);
+      SDL_SetWindowFullscreen(window, ApplicationWindowMode::to_sdl(window_mode));
       
       ResolutionSet res_set = get_resolution_set();
 
-      if (window_mode > ApplicationWindowModes::Windowed) set_resolution(res_set[0]);
+      if (window_mode > ApplicationWindowMode::Windowed) set_resolution(res_set[0]);
       else set_resolution(res_set[res_set.active_index]);
     }
   }

@@ -20,7 +20,7 @@ namespace mod {
     };
 
     /* Get the name of a JSONType as a str */
-    static char const* name (u8_t type) {
+    static constexpr char const* name (u8_t type) {
       switch (type) {
         case Boolean: return "Boolean";
         case Number: return "Number";
@@ -32,13 +32,19 @@ namespace mod {
     }
 
     /* Get a JSONType from its name in str form */
-    static s8_t from_name (char const* str) {
-      if (str_cmp_caseless(str, "boolean") == 0) return Boolean;
-      else if (str_cmp_caseless(str, "number") == 0) return Number;
-      else if (str_cmp_caseless(str, "string") == 0) return String;
-      else if (str_cmp_caseless(str, "array") == 0) return Array;
-      else if (str_cmp_caseless(str, "object") == 0) return Object;
+    static s8_t from_name (char const* str, size_t max_length = SIZE_MAX) {
+      if (str_cmp_caseless(str, "boolean", max_length) == 0) return Boolean;
+      else if (str_cmp_caseless(str, "number", max_length) == 0) return Number;
+      else if (str_cmp_caseless(str, "string", max_length) == 0) return String;
+      else if (str_cmp_caseless(str, "array", max_length) == 0) return Array;
+      else if (str_cmp_caseless(str, "object", max_length) == 0) return Object;
       else return Invalid;
+    }
+
+    /* Determine if a value is a valid JSONType */
+    static constexpr bool validate (u8_t type) {
+      return type >= Boolean
+          && type <= Object;
     }
   }
 

@@ -12,7 +12,8 @@ namespace mod {
 
   namespace EulerOrder {
     enum: u8_t {
-      XYZ,
+      Invalid = -1,
+      XYZ = 0,
       XZY,
 
       YXZ,
@@ -22,7 +23,8 @@ namespace mod {
       ZYX
     };
 
-    static char const* name (u8_t order) {
+    /* Get the name of a EulerOrder as a str */
+    static constexpr char const* name (u8_t order) {
       switch (order) {
         case XYZ: return "XYZ";
         case XZY: return "XZY";
@@ -34,14 +36,21 @@ namespace mod {
       }
     }
 
-    static s8_t from_name (char const* name) {
-      if (str_cmp_caseless(name, "xyz") == 0) return XYZ;
-      else if (str_cmp_caseless(name, "xzy") == 0) return XZY;
-      else if (str_cmp_caseless(name, "yxz") == 0) return YXZ;
-      else if (str_cmp_caseless(name, "yzx") == 0) return YZX;
-      else if (str_cmp_caseless(name, "zxy") == 0) return ZXY;
-      else if (str_cmp_caseless(name, "zyx") == 0) return ZYX;
-      else return -1;
+    /* Get a EulerOrder from its name in str form */
+    static s8_t from_name (char const* name, size_t max_length = SIZE_MAX) {
+      if (str_cmp_caseless(name, "xyz", max_length) == 0) return XYZ;
+      else if (str_cmp_caseless(name, "xzy", max_length) == 0) return XZY;
+      else if (str_cmp_caseless(name, "yxz", max_length) == 0) return YXZ;
+      else if (str_cmp_caseless(name, "yzx", max_length) == 0) return YZX;
+      else if (str_cmp_caseless(name, "zxy", max_length) == 0) return ZXY;
+      else if (str_cmp_caseless(name, "zyx", max_length) == 0) return ZYX;
+      else return Invalid;
+    }
+
+    /* Determine if a value is a valid EulerOrder */
+    static constexpr bool validate (u8_t order) {
+      return order >= XYZ
+          && order <= ZYX;
     }
   };
 
