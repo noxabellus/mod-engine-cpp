@@ -60,7 +60,7 @@ This is still very early in production, and code is being ported from the C-only
 + UI through SDL + ImGUI
 + Source file editor with ImGuiColorTextEdit
 + JSON parser + stringifier
-<!-- + ECS (Speculative) -->
++ ECS (Highly experimental)
 <!-- + Application window abstraction with config file i/o -->
 + Extensive linear algebra library including:
   - 2d and 3d vectors
