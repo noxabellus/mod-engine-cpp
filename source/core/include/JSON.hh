@@ -328,6 +328,72 @@ namespace mod {
     }
 
 
+    /* Assume a JSONItem is a JSONObject and get a value from a subitem associated with a particular key.
+     * Throws if no key matching the input is found,
+     * or if the active item is not actually a JSONObject,
+     * or if the subitem is not the correct type */
+    template <typename T> T& get_object_value (char const* key_value, size_t key_length = 0) const {
+      JSONItem* item = get_object_item(key_value, key_length);
+
+      asset_assert(
+        item != NULL,
+        "Expected a %s named %.*s",
+        str_get_unscoped_type_name(typeid(T).name()),
+        (s32_t) key_length == 0? strlen(key_value) : key_length,
+        key_value
+      );
+
+      if constexpr (std::is_same<T, bool>::value) return item->get_boolean();
+      if constexpr (std::is_same<T, f64_t>::value) return item->get_number();
+      if constexpr (std::is_same<T, String>::value) return item->get_string();
+      if constexpr (std::is_same<T, JSONArray>::value) return item->get_array();
+      if constexpr (std::is_same<T, JSONObject>::value) return item->get_object();
+      else {
+        item->asset_error("Could not get value of unsupported type %s", str_get_unscoped_type_name(typeid(T).name()));
+      }
+    }
+
+    /* Assume a JSONItem is a JSONObject and get a boolean value from a subitem associated with a particular key.
+     * Throws if no key matching the input is found,
+     * or if the active item is not actually a JSONObject,
+     * or if the subitem is not the correct type */
+    bool& get_object_boolean (char const* key_value, size_t key_length = 0) const {
+      return get_object_value<bool>(key_value, key_length);
+    }
+
+    /* Assume a JSONItem is a JSONObject and get a number value from a subitem associated with a particular key.
+     * Throws if no key matching the input is found,
+     * or if the active item is not actually a JSONObject,
+     * or if the subitem is not the correct type */
+    f64_t& get_object_number (char const* key_value, size_t key_length = 0) const {
+      return get_object_value<f64_t>(key_value, key_length);
+    }
+
+    /* Assume a JSONItem is a JSONObject and get a string value from a subitem associated with a particular key.
+     * Throws if no key matching the input is found,
+     * or if the active item is not actually a JSONObject,
+     * or if the subitem is not the correct type */
+    String& get_object_string (char const* key_value, size_t key_length = 0) const {
+      return get_object_value<String>(key_value, key_length);
+    }
+
+    /* Assume a JSONItem is a JSONObject and get an array value from a subitem associated with a particular key.
+     * Throws if no key matching the input is found,
+     * or if the active item is not actually a JSONObject,
+     * or if the subitem is not the correct type */
+    JSONArray& get_object_array (char const* key_value, size_t key_length = 0) const {
+      return get_object_value<JSONArray>(key_value, key_length);
+    }
+
+    /* Assume a JSONItem is a JSONObject and get an object value from a subitem associated with a particular key.
+     * Throws if no key matching the input is found,
+     * or if the active item is not actually a JSONObject,
+     * or if the subitem is not the correct type */
+    JSONObject& get_object_object (char const* key_value, size_t key_length = 0) const {
+      return get_object_value<JSONObject>(key_value, key_length);
+    }
+
+
     /* Assume a JSONItem is a JSONObject and set the value of a subitem associated with a particular key.
      * Throws if the active item is not actually a JSONObject */
     void set_object_item (JSONItem const* item, char const* key_value, size_t key_length = 0) {
@@ -421,6 +487,70 @@ namespace mod {
       return get_array().get_element(index);
     }
 
+    
+    /* Assume a JSONItem is a JSONArray and get the value of a subitem associated with a particular index, by reference.
+     * Throws if no index matching the input is found,
+     * or if the active item is not actually a JSONArray,
+     * or if the subitem is not the correct type */
+    template <typename T> T& get_array_value (size_t index) const {
+      JSONItem* item = get_array_item(index);
+
+      asset_assert(
+        item != NULL,
+        "Expected a value of type %s at index %zu",
+        str_get_unscoped_type_name(typeid(T).name()), index
+      );
+
+      if constexpr (std::is_same<T, bool>::value) return item->get_boolean();
+      if constexpr (std::is_same<T, f64_t>::value) return item->get_number();
+      if constexpr (std::is_same<T, String>::value) return item->get_string();
+      if constexpr (std::is_same<T, JSONArray>::value) return item->get_array();
+      if constexpr (std::is_same<T, JSONObject>::value) return item->get_object();
+      else {
+        item->asset_error("Could not get value of unsupported type %s", str_get_unscoped_type_name(typeid(T).name()));
+        abort(); // gives noreturn attribute
+      }
+    }
+
+    /* Assume a JSONItem is a JSONArray and get the boolean value of a subitem associated with a particular index, by reference.
+     * Throws if no index matching the input is found,
+     * or if the active item is not actually a JSONArray,
+     * or if the subitem is not the correct type */
+    bool& get_array_boolean (size_t index) const {
+      return get_array_value<bool>(index);
+    }
+
+    /* Assume a JSONItem is a JSONArray and get the number value of a subitem associated with a particular index, by reference.
+     * Throws if no index matching the input is found,
+     * or if the active item is not actually a JSONArray,
+     * or if the subitem is not the correct type */
+    f64_t& get_array_number (size_t index) const {
+      return get_array_value<f64_t>(index);
+    }
+
+    /* Assume a JSONItem is a JSONArray and get the string value of a subitem associated with a particular index, by reference.
+     * Throws if no index matching the input is found,
+     * or if the active item is not actually a JSONArray,
+     * or if the subitem is not the correct type */
+    String& get_array_string (size_t index) const {
+      return get_array_value<String>(index);
+    }
+
+    /* Assume a JSONItem is a JSONArray and get the array value of a subitem associated with a particular index, by reference.
+     * Throws if no index matching the input is found,
+     * or if the active item is not actually a JSONArray,
+     * or if the subitem is not the correct type */
+    JSONArray& get_array_array (size_t index) const {
+      return get_array_value<JSONArray>(index);
+    }
+
+    /* Assume a JSONItem is a JSONArray and get the object value of a subitem associated with a particular index, by reference.
+     * Throws if no index matching the input is found,
+     * or if the active item is not actually a JSONArray,
+     * or if the subitem is not the correct type */
+    JSONObject& get_array_object (size_t index) const {
+      return get_array_value<JSONObject>(index);
+    }
 
     /* Assume a JSONItem is a JSONArray and set the value of a subitem associated with a particular index.
      * Throws if the index is out of range, or if the active item is not actually a JSONArray */
@@ -709,6 +839,54 @@ namespace mod {
       return data.get_object().get(key_value, key_length);
     }
 
+    /* Assume a JSONItem is a JSONObject and get a value from a subitem associated with a particular key.
+     * Throws if no key matching the input is found,
+     * or if the active item is not actually a JSONObject,
+     * or if the subitem is not the correct type */
+    template <typename T> T& get_object_value (char const* key_value, size_t key_length = 0) const {
+      return data.get_object_value<T>(key_value, key_length);
+    }
+
+    /* Assume a JSONItem is a JSONObject and get a boolean value from a subitem associated with a particular key.
+     * Throws if no key matching the input is found,
+     * or if the active item is not actually a JSONObject,
+     * or if the subitem is not the correct type */
+    bool& get_object_boolean (char const* key_value, size_t key_length = 0) const {
+      return data.get_object_boolean(key_value, key_length);
+    }
+
+    /* Assume a JSONItem is a JSONObject and get a number value from a subitem associated with a particular key.
+     * Throws if no key matching the input is found,
+     * or if the active item is not actually a JSONObject,
+     * or if the subitem is not the correct type */
+    f64_t& get_object_number (char const* key_value, size_t key_length = 0) const {
+      return data.get_object_number(key_value, key_length);
+    }
+
+    /* Assume a JSONItem is a JSONObject and get a string value from a subitem associated with a particular key.
+     * Throws if no key matching the input is found,
+     * or if the active item is not actually a JSONObject,
+     * or if the subitem is not the correct type */
+    String& get_object_string (char const* key_value, size_t key_length = 0) const {
+      return data.get_object_string(key_value, key_length);
+    }
+
+    /* Assume a JSONItem is a JSONObject and get an array value from a subitem associated with a particular key.
+     * Throws if no key matching the input is found,
+     * or if the active item is not actually a JSONObject,
+     * or if the subitem is not the correct type */
+    JSONArray& get_object_array (char const* key_value, size_t key_length = 0) const {
+      return data.get_object_array(key_value, key_length);
+    }
+
+    /* Assume a JSONItem is a JSONObject and get an object value from a subitem associated with a particular key.
+     * Throws if no key matching the input is found,
+     * or if the active item is not actually a JSONObject,
+     * or if the subitem is not the correct type */
+    JSONObject& get_object_object (char const* key_value, size_t key_length = 0) const {
+      return data.get_object_object(key_value, key_length);
+    }
+
 
     /* Assume a JSONItem is a JSONObject and set the value of a subitem associated with a particular key.
      * Throws if the active item is not actually a JSONObject */
@@ -801,6 +979,54 @@ namespace mod {
      * Throws if the active item is not actually a JSONArray */
     JSONItem* get_array_item (size_t index) const {
       return data.get_array().get_element(index);
+    }
+
+    /* Assume a JSONItem is a JSONArray and get the value of a subitem associated with a particular index, by reference.
+     * Throws if no index matching the input is found,
+     * or if the active item is not actually a JSONArray,
+     * or if the subitem is not the correct type */
+    template <typename T> T& get_array_value (size_t index) const {
+      return data.get_array_value<T>(index);
+    }
+
+    /* Assume a JSONItem is a JSONArray and get the boolean value of a subitem associated with a particular index, by reference.
+     * Throws if no index matching the input is found,
+     * or if the active item is not actually a JSONArray,
+     * or if the subitem is not the correct type */
+    bool& get_array_boolean (size_t index) const {
+      return data.get_array_boolean(index);
+    }
+
+    /* Assume a JSONItem is a JSONArray and get the number value of a subitem associated with a particular index, by reference.
+     * Throws if no index matching the input is found,
+     * or if the active item is not actually a JSONArray,
+     * or if the subitem is not the correct type */
+    f64_t& get_array_number (size_t index) const {
+      return data.get_array_number(index);
+    }
+
+    /* Assume a JSONItem is a JSONArray and get the string value of a subitem associated with a particular index, by reference.
+     * Throws if no index matching the input is found,
+     * or if the active item is not actually a JSONArray,
+     * or if the subitem is not the correct type */
+    String& get_array_string (size_t index) const {
+      return data.get_array_string(index);
+    }
+
+    /* Assume a JSONItem is a JSONArray and get the array value of a subitem associated with a particular index, by reference.
+     * Throws if no index matching the input is found,
+     * or if the active item is not actually a JSONArray,
+     * or if the subitem is not the correct type */
+    JSONArray& get_array_array (size_t index) const {
+      return data.get_array_array(index);
+    }
+
+    /* Assume a JSONItem is a JSONArray and get the object value of a subitem associated with a particular index, by reference.
+     * Throws if no index matching the input is found,
+     * or if the active item is not actually a JSONArray,
+     * or if the subitem is not the correct type */
+    JSONObject& get_array_object (size_t index) const {
+      return data.get_array_object(index);
     }
 
 
