@@ -6,20 +6,20 @@
 
 
 namespace mod {
-  template <u64_t element_count = 1>
+  template <size_t in_bit_count = 8>
   struct Bitmask {
-    static constexpr u64_t byte_count = element_count * sizeof(u64_t);
-    static constexpr u64_t bit_count  = byte_count * 8;
+    static_assert(in_bit_count % 8 == 0, "Bitmask must have a bit count evenly divisible by 8");
 
-    union {
-      u64_t elements [element_count];
-      u8_t bytes [byte_count];
-    };
+    static constexpr size_t bit_count = in_bit_count;
+    static constexpr size_t byte_count = bit_count / 8;
+
+
+    u8_t bytes [byte_count];
 
 
     /* Create a new zero-initialized Bitmask */
     Bitmask ()
-    : elements { }
+    : bytes { }
     { }
 
     /* Create a new Bitmask from an initializer list of flag indices */
@@ -31,7 +31,7 @@ namespace mod {
     
 
     /* Create a new Bitmask from a buffer of flag indices */
-    static Bitmask from_indices (u64_t const* indices, u64_t index_count) {
+    static Bitmask from_indices (size_t const* indices, size_t index_count) {
       Bitmask mask;
       mask.set_multiple(indices, index_count);
       return mask;
@@ -61,8 +61,8 @@ namespace mod {
 
     /* Compare two Bitmasks */
     bool operator != (Bitmask const& r) {
-      for (u64_t i = 0; i < element_count; i ++) {
-        if (elements[i] != r.elements[i]) return true;
+      for (size_t i = 0; i < byte_count; i ++) {
+        if (bytes[i] != r.bytes[i]) return true;
       }
 
       return false;
@@ -70,58 +70,58 @@ namespace mod {
 
 
     /* Enable a specific bit index of a Bitmask */
-    void set (u64_t index) {
-      m_assert(index < bit_count, "Cannot set out of range Bitmask index %" PRIu64 ", valid range is 0 - %" PRIu64, index, bit_count - 1);
+    void set (size_t index) {
+      m_assert(index < bit_count, "Cannot set out of range Bitmask index %zu, valid range is 0 - %zu", index, bit_count - 1);
       bytes[index / 8] |= (1_u8 << (index % 8));
     }
 
     /* Disable a specific bit index of a Bitmask */
-    void unset (u64_t index) {
-      m_assert(index < bit_count, "Cannot unset out of range Bitmask index %" PRIu64 ", valid range is 0 - %" PRIu64, index, bit_count - 1);
+    void unset (size_t index) {
+      m_assert(index < bit_count, "Cannot unset out of range Bitmask index %zu, valid range is 0 - %zu", index, bit_count - 1);
       bytes[index / 8] &= (~(1_u8 << (index % 8)));
     }
 
     /* Toggle a specific bit index of a Bitmask */
-    void toggle (u64_t index) {
-      m_assert(index < bit_count, "Cannot toggle out of range Bitmask index %" PRIu64 ", valid range is 0 - %" PRIu64, index, bit_count - 1);
+    void toggle (size_t index) {
+      m_assert(index < bit_count, "Cannot toggle out of range Bitmask index %zu, valid range is 0 - %zu", index, bit_count - 1);
       bytes[index / 8] ^= (1_u8 << (index % 8));
     }
 
 
     /* Enable multiple bit indices of a Bitmask by iterating a buffer of indices */
-    void set_list (u64_t const* indices, u64_t index_count) {
-      for (u64_t i = 0; i < index_count; i ++) set(indices[i]);
+    void set_list (size_t const* indices, size_t index_count) {
+      for (size_t i = 0; i < index_count; i ++) set(indices[i]);
     }
 
     /* Disable multiple bit indices of a Bitmask by iterating a buffer of indices */
-    void unset_list (u64_t const* indices, u64_t index_count) {
-      for (u64_t i = 0; i < index_count; i ++) unset(indices[i]);
+    void unset_list (size_t const* indices, size_t index_count) {
+      for (size_t i = 0; i < index_count; i ++) unset(indices[i]);
     }
 
     /* Toggle multiple bit indices of a Bitmask by iterating a buffer of indices */
-    void toggle_list (u64_t const* indices, u64_t index_count) {
-      for (u64_t i = 0; i < index_count; i ++) toggle(indices[i]);
+    void toggle_list (size_t const* indices, size_t index_count) {
+      for (size_t i = 0; i < index_count; i ++) toggle(indices[i]);
     }
 
 
     /* Enable multiple bit indices of a Bitmask by iterating a parameter pack list of indices */
     template <typename ... A> void set_multiple (A ... args) {
       static constexpr size_t arg_count = sizeof...(args);
-      u64_t indices [arg_count] = { ((u64_t) args)... };
+      size_t indices [arg_count] = { ((size_t) args)... };
       set_list(indices, arg_count);
     }
 
     /* Disable multiple bit indices of a Bitmask by iterating a parameter pack list of indices */
     template <typename ... A> void unset_multiple (A ... args) {
       static constexpr size_t arg_count = sizeof...(args);
-      u64_t indices [arg_count] = { ((u64_t) args)... };
+      size_t indices [arg_count] = { ((size_t) args)... };
       unset_list(indices, arg_count);
     }
 
     /* Toggle multiple bit indices of a Bitmask by iterating a parameter pack list of indices */
     template <typename ... A> void toggle_multiple (A ... args) {
       static constexpr size_t arg_count = sizeof...(args);
-      u64_t indices [arg_count] = { ((u64_t) args)... };
+      size_t indices [arg_count] = { ((size_t) args)... };
       toggle_list(indices, arg_count);
     }
 
@@ -130,8 +130,8 @@ namespace mod {
     Bitmask bor (Bitmask const& r) {
       Bitmask o;
 
-      for (u64_t i = 0; i < element_count; i ++) {
-        o.elements[i] = (elements[i] | r.elements[i]);
+      for (size_t i = 0; i < byte_count; i ++) {
+        o.bytes[i] = (bytes[i] | r.bytes[i]);
       }
 
       return o;
@@ -141,8 +141,8 @@ namespace mod {
     Bitmask band (Bitmask const& r) {
       Bitmask o;
 
-      for (u64_t i = 0; i < element_count; i ++) {
-        o.elements[i] = (elements[i] & r.elements[i]);
+      for (size_t i = 0; i < byte_count; i ++) {
+        o.bytes[i] = (bytes[i] & r.bytes[i]);
       }
 
       return o;
@@ -152,8 +152,8 @@ namespace mod {
     Bitmask bxor (Bitmask const& r) {
       Bitmask o;
 
-      for (u64_t i = 0; i < element_count; i ++) {
-        o.elements[i] = (elements[i] ^ r.elements[i]);
+      for (size_t i = 0; i < byte_count; i ++) {
+        o.bytes[i] = (bytes[i] ^ r.bytes[i]);
       }
 
       return o;
@@ -163,8 +163,8 @@ namespace mod {
     Bitmask bnot () {
       Bitmask o;
 
-      for (u64_t i = 0; i < element_count; i ++) {
-        o.elements[i] = ~(elements[i]);
+      for (size_t i = 0; i < byte_count; i ++) {
+        o.bytes[i] = ~(bytes[i]);
       }
 
       return o;
@@ -172,8 +172,8 @@ namespace mod {
   
 
     /* Determine if a specific bit index is enabled for a Bitmask */
-    bool match_index (u64_t index) {
-      m_assert(index < bit_count, "Cannot match out of range Bitmask index %" PRIu64 ", valid range is 0 - %" PRIu64, index, bit_count - 1);
+    bool match_index (size_t index) {
+      m_assert(index < bit_count, "Cannot match out of range Bitmask index %zu, valid range is 0 - %zu", index, bit_count - 1);
 
       u8_t m = 1 << (index % 8);
 
@@ -182,8 +182,8 @@ namespace mod {
 
     /* Determine if any bits are enabled for a Bitmask */
     bool match_any () {
-      for (u64_t i = 0; i < element_count; i ++) {
-        if (elements[i] != 0) return true;
+      for (size_t i = 0; i < byte_count; i ++) {
+        if (bytes[i] != 0) return true;
       }
 
       return false;
@@ -191,8 +191,8 @@ namespace mod {
 
     /* Determine if another Bitmask is a subset of the caller instance */
     bool match_subset (Bitmask const& r) {
-      for (u64_t i = 0; i < element_count; i ++) {
-        if ((elements[i] & r.elements[i]) != r.elements[i]) return false;
+      for (size_t i = 0; i < byte_count; i ++) {
+        if ((bytes[i] & r.bytes[i]) != r.bytes[i]) return false;
       }
 
       return true;
@@ -200,8 +200,8 @@ namespace mod {
 
     /* Determine if two Bitmasks are exactly the same */
     bool match_exact (Bitmask const& r) {
-      for (u64_t i = 0; i < element_count; i ++) {
-        if (elements[i] != r.elements[i]) return false;
+      for (size_t i = 0; i < byte_count; i ++) {
+        if (bytes[i] != r.bytes[i]) return false;
       }
 
       return true;
@@ -210,9 +210,9 @@ namespace mod {
 
     /* Print the indices of the enabled bits of a Bitmask */
     void print (FILE* stream = stdout) {
-      fprintf(stream, "Bitmask<%zu> {", element_count);
-      for (u64_t i = 0; i < bit_count; i ++) {
-        if (match_index(i)) fprintf(stream, " %" PRIu64, i);
+      fprintf(stream, "Bitmask<%zu> {", byte_count);
+      for (size_t i = 0; i < bit_count; i ++) {
+        if (match_index(i)) fprintf(stream, " %zu", i);
       }
       fprintf(stream, " }");
     }
@@ -226,8 +226,8 @@ namespace mod {
 
     /* Print a full Bitmask as binary */
     void print_binary (FILE* stream = stdout) {
-      fprintf(stream, "Bitmask<%zu> (Binary) {", element_count);
-      for (u64_t i = 0; i < bit_count; i ++) {
+      fprintf(stream, "Bitmask<%zu> (Binary) {", byte_count);
+      for (size_t i = 0; i < bit_count; i ++) {
         if (match_index(i)) fprintf(stream, "1");
         else fprintf(stream, "0");
       }

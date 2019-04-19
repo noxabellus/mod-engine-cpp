@@ -7,10 +7,10 @@
 
 
 namespace mod {
-  #ifndef CUSTOM_COMPONENT_BITMASK
-    using ComponentBitmask = Bitmask<1>;
+  #ifndef CUSTOM_COMPONENT_MASK_SIZE
+    using ComponentMask = Bitmask<64>;
   #else
-    using ComponentBitmask = CUSTOM_COMPONENT_BITMASK;
+    using ComponentMask = Bitmask<CUSTOM_COMPONENT_MASK_SIZE>;
   #endif
 
 
@@ -26,14 +26,14 @@ namespace mod {
     using ID = u32_t;
 
     ID id;
-    ComponentBitmask enabled_components;
+    ComponentMask enabled_components;
 
 
     Entity () { };
 
 
     private: friend ECS;
-      Entity (ID in_id, ComponentBitmask in_enabled_components)
+      Entity (ID in_id, ComponentMask in_enabled_components)
       : id(in_id)
       , enabled_components(in_enabled_components)
       { }
@@ -47,9 +47,10 @@ namespace mod {
     #else
       using ID = CUSTOM_COMPONENT_TYPE_ID;
     #endif
+    
+    static_assert(std::numeric_limits<ID>::max() >= ComponentMask::bit_count, "ComponentType ID type max value must be greater than or equal to the ComponentMask bit_count");
 
-
-    static constexpr size_t max_component_types = num::min(ComponentBitmask::bit_count, std::numeric_limits<ID>::max());
+    static constexpr size_t max_component_types = ComponentMask::bit_count;
     
 
     ID id;
@@ -125,7 +126,7 @@ namespace mod {
     union {
       struct {
         bool parallel;
-        ComponentBitmask required_components;
+        ComponentMask required_components;
         IteratorCallback iterator_callback;
       };
       CustomCallback custom_callback;
@@ -173,7 +174,7 @@ namespace mod {
       , custom_callback(in_custom_callback)
       { }
 
-      System (char const* in_name, ID in_id, bool in_parallel, ComponentBitmask in_required_components, IteratorCallback in_iterator_callback)
+      System (char const* in_name, ID in_id, bool in_parallel, ComponentMask in_required_components, IteratorCallback in_iterator_callback)
       : name (str_clone(in_name))
       , id(in_id)
       , enabled(true)
@@ -529,15 +530,15 @@ namespace mod {
     ENGINE_API System::ID create_system_after (char const* after_name, char const* name, System::CustomCallback callback);
 
 
-    ENGINE_API System::ID create_system (char const* name, bool parallel, ComponentBitmask required_components, System::IteratorCallback callback);
+    ENGINE_API System::ID create_system (char const* name, bool parallel, ComponentMask required_components, System::IteratorCallback callback);
 
-    ENGINE_API System::ID create_system_before (System::ID before_target, char const* name, bool parallel, ComponentBitmask required_components, System::IteratorCallback callback);
+    ENGINE_API System::ID create_system_before (System::ID before_target, char const* name, bool parallel, ComponentMask required_components, System::IteratorCallback callback);
 
-    ENGINE_API System::ID create_system_before (char const* before_name, char const* name, bool parallel, ComponentBitmask required_components, System::IteratorCallback callback);
+    ENGINE_API System::ID create_system_before (char const* before_name, char const* name, bool parallel, ComponentMask required_components, System::IteratorCallback callback);
 
-    ENGINE_API System::ID create_system_after (System::ID after_target, char const* name, bool parallel, ComponentBitmask required_components, System::IteratorCallback callback);
+    ENGINE_API System::ID create_system_after (System::ID after_target, char const* name, bool parallel, ComponentMask required_components, System::IteratorCallback callback);
 
-    ENGINE_API System::ID create_system_after (char const* after_name, char const* name, bool parallel, ComponentBitmask required_components, System::IteratorCallback callback);
+    ENGINE_API System::ID create_system_after (char const* after_name, char const* name, bool parallel, ComponentMask required_components, System::IteratorCallback callback);
 
 
     ENGINE_API void update ();
@@ -546,7 +547,7 @@ namespace mod {
     private:
       ENGINE_API System::ID init_system (System::ID index, char const* name, System::CustomCallback callback);
 
-      ENGINE_API System::ID init_system (System::ID index, char const* name, bool parallel, ComponentBitmask required_components, System::IteratorCallback callback);
+      ENGINE_API System::ID init_system (System::ID index, char const* name, bool parallel, ComponentMask required_components, System::IteratorCallback callback);
 
       void validate_system_count () const {
         m_assert(
