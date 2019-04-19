@@ -5,8 +5,9 @@
 #include "cstd.hh"
 #include "util.hh"
 
-#include "Array.hh"
 #include "String.hh"
+#include "Exception.hh"
+#include "Array.hh"
 #include "Bitmask.hh"
 #include "SharedLib.hh"
 #include "ThreadPool.hh"

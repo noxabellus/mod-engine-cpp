@@ -3,6 +3,9 @@
 
 #include "cstd.hh"
 #include "util.hh"
+#include "Exception.hh"
+
+
 
 namespace mod {
   template <typename T>

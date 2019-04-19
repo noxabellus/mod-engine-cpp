@@ -2,6 +2,8 @@
 #define APIS_H
 
 #ifdef _WIN32
+  #define NORETURN __declspec(noreturn)
+
   #if defined(M_ENGINE)
     #if defined(M_GAME) || defined(M_MODULE)
       #error Only one of M_ENGINE, M_GAME, or M_MODULE may be defined while compiling
@@ -31,6 +33,7 @@
     #error One of either M_ENGINE, M_GAME, or M_MODULE must be defined while compiling
   #endif
 #else
+  #define NORETURN __attribute__((noreturn))
   #define ENGINE_API
   #define GAME_API
   #define MODULE_API extern "C"

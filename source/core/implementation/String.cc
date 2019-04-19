@@ -1,4 +1,6 @@
 #include "../include/String.hh"
+#include "../include/Exception.hh"
+
 
 
 namespace mod {
@@ -34,6 +36,12 @@ namespace mod {
     value[length] = '\0';
 
     return String { value, length, capacity };
+  }
+
+  String String::from_file (char const* path) {
+    auto [ value, length ] = load_file(path);
+    m_asset_assert(value != NULL, path, "Failed to load String from file");
+    return from_ex((char*) value, length);
   }
 
 

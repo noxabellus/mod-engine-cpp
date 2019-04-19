@@ -6,6 +6,7 @@
 
 #include "Array.hh"
 #include "String.hh"
+#include "Exception.hh"
 
 
 namespace mod {
@@ -491,7 +492,7 @@ namespace mod {
 
 
     /* Throw an exception using the location information of this item along with its root */
-    template <typename ... A> void asset_error (char const* fmt, A ... args) const {
+    template <typename ... A> NORETURN void asset_error (char const* fmt, A ... args) const {
       if (root != NULL) {
         root->asset_error(origin_offset != 0? origin_offset + 1 : 0, fmt, args...);
       } else {
@@ -599,7 +600,7 @@ namespace mod {
     ENGINE_API pair_t<s32_t, s32_t> get_line_column_info (size_t origin_offset) const;
 
     /* Throw an asset exception associated with a JSON's origin, after looking up line and column information from a JSONItem's origin_offset */
-    template <typename ... A> void asset_error (size_t origin_offset, char const* fmt, A ... args) const {
+    template <typename ... A> NORETURN void asset_error (size_t origin_offset, char const* fmt, A ... args) const {
       pair_t lc = get_line_column_info(origin_offset);
 
       m_asset_error(origin, lc.a, lc.b, fmt, args...);
@@ -616,7 +617,7 @@ namespace mod {
 
 
     /* Throw an asset exception associated with a JSON's origin */
-    template <typename ... A> void asset_error (char const* fmt, A ... args) const {
+    template <typename ... A> NORETURN void asset_error (char const* fmt, A ... args) const {
       m_asset_error(origin, -1, -1, fmt, args...);
     }
 

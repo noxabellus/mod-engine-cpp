@@ -43,11 +43,7 @@ namespace mod {
 
     /* Create a String by copying it from a file.
      * Throws an exception if the file could not be loaded */
-    static String from_file (char const* path) {
-      auto [ value, length ] = load_file(path);
-      m_asset_assert(value != NULL, path, "Failed to load String from file");
-      return from_ex((char*) value, length);
-    }
+    ENGINE_API static String from_file (char const* path);
 
     /* Create a new String by cloning an existing String */
     String clone () {

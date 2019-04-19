@@ -142,54 +142,6 @@ struct Version {
 
 
 namespace mod {
-  struct Exception {
-    char* file = NULL;
-    s32_t line = -1;
-    s32_t column = -1;
-
-    char* message = NULL;
-
-    void handle () {
-      if (file != NULL) free(file);
-      if (message != NULL) free(message);
-    }
-
-    void print (FILE* stream = stderr) {
-      fprintf(stream, "Exception at [");
-
-      if (file != NULL) {
-        fprintf(stream, "%s", file);
-      }
-
-      if (line != -1) {
-        if (file != NULL) fprintf(stream, ":");
-
-        fprintf(stream, "%" PRId32, line);
-
-        if (column != -1) {
-          fprintf(stream, ":");
-          fprintf(stream, "%" PRId32, column);
-        }
-      }
-
-      fprintf(stream, "]");
-
-      if (message != NULL) {
-        fprintf(stream, ": %s", message);
-      }
-
-      fprintf(stream, "\n");
-    }
-
-    void panic (FILE* stream = stderr) {
-      fprintf(stream, "Unhandled ");
-      print(stream);
-      handle();
-      abort();
-    }
-  };
-
-
   /* Wrapper for snprintf that produces a new heap-allocated str */
   static char* str_fmt_va (char const* fmt, va_list args) {
     va_list args_copy;
@@ -362,45 +314,5 @@ namespace num {
     }
   }
 }
-
-
-/* Runtime exception with formatted error message */
-template <typename ... A>
-void m_asset_error (char const* file, s32_t line, s32_t column, char const* fmt, A ... args) {
-  throw mod::Exception { .file = mod::str_clone(file), .line = line, .column = column, .message = mod::str_fmt(fmt, args...) };
-}
-
-/* Runtime exception with formatted error message */
-template <typename ... A>
-void m_asset_error (char const* file, s32_t line, char const* fmt, A ... args) {
-  throw mod::Exception { .file = mod::str_clone(file), .line = line, .message = mod::str_fmt(fmt, args...) };
-}
-
-/* Runtime exception with formatted error message */
-template <typename ... A>
-void m_asset_error (char const* file, char const* fmt, A ... args) {
-  throw mod::Exception { .file = mod::str_clone(file), .message = mod::str_fmt(fmt, args...) };
-}
-
-/* Runtime exception with formatted error message */
-template <typename ... A>
-void m_asset_error (s32_t line, s32_t column, char const* fmt, A ... args) {
-  throw mod::Exception { .line = line, .column = column, .message = mod::str_fmt(fmt, args...) };
-}
-
-/* Runtime exception with formatted error message */
-template <typename ... A>
-void m_asset_error (s32_t line, char const* fmt, A ... args) {
-  throw mod::Exception { .line = line, .message = mod::str_fmt(fmt, args...) };
-}
-
-/* Runtime exception with formatted error message */
-template <typename ... A>
-void m_asset_error (char const* fmt, A ... args) {
-  throw mod::Exception { .message = mod::str_fmt(fmt, args...) };
-}
-
-/* Runtime assertion with exception using formatted error message if the boolean condition is not true */
-#define m_asset_assert(COND,  ...) if (!(COND)) m_asset_error(__VA_ARGS__)
 
 #endif
