@@ -34,11 +34,8 @@ namespace mod {
 
     /* Create a new Array with a specific capacity */
     Array (size_t new_capacity)
-    : elements((T*) malloc(capacity * sizeof(T)))
-    , count(0)
-    , capacity(new_capacity)
     {
-      m_assert(elements != NULL, "Out of memory or other null pointer error while allocating Array elements with capacity %zu", capacity);
+      grow_allocation(new_capacity);
     }
 
     /* Create a new Array with explicit initialization of all members */
@@ -99,6 +96,17 @@ namespace mod {
     /* Create a new Array by cloning an existing Array */
     Array clone () const {
       return { elements, count };
+    }
+
+    /* Reset an Array's count to 0 but keep its capacity */
+    void clear () {
+      count = 0;
+    }
+
+    /* Copy all the elements of an Array into another array, overwriting existing elements in the target array */
+    void copy (Array const& other) const {
+      clear();
+      for (auto [ i, v ] : other) append(v);
     }
 
 
@@ -215,6 +223,12 @@ namespace mod {
       }
     }
 
+    /* Grow the allocation if necessary to encompass a new count.
+     * This is different from grow_allocation in that it takes a new total rather than an addition */
+    void reallocate (size_t new_count) {
+      if (new_count > count) grow_allocation(new_count - count);
+    }
+
 
     /* Get a pointer to a specific element of an Array.
      * Returns NULL if the index is out of range */
@@ -223,9 +237,18 @@ namespace mod {
       else return NULL;
     }
 
-    /* Set a specific element of an Array */
+    /* Set a specific element of an Array
+     * Causes an error if the element is out of range */
     void set_element (size_t index, T const* value) {
-      *get_element(index) = *value;
+      T* element = get_element(index);
+
+      m_assert(
+        element != NULL,
+        "Out of range access for Array<%s>: Cannot set element %zu, count is %zu",
+        str_get_unscoped_type_name(typeid(T).name()), index, count
+      );
+
+      *element = *value;
     }
 
     /* Set a specific element of an Array, by reference */
@@ -242,6 +265,16 @@ namespace mod {
 
     /* Append an element to the end of an Array, by reference */
     void append (T const& value) { return append(&value); }
+
+    /* Append multiple elements from a buffer to the end of an Array.
+     * Does not use the new operator, so only safe for POD types */
+    void append_multiple (T const* values, size_t value_count) {
+      grow_allocation(value_count);
+
+      memcpy(elements + count, values, sizeof(T) * value_count);
+
+      count += value_count;
+    }
 
     /* Insert an element at a designated point inside an Array */
     void insert (size_t index, T const* value) {

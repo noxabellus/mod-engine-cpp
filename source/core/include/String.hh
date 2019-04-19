@@ -50,6 +50,12 @@ namespace mod {
       return { value, length };
     }
 
+    /* Reset a String's length to 0 but keep its capacity */
+    void clear () {
+      length = 0;
+      if (value != NULL) value[0] = '\0';
+    }
+
 
     /* Save a String to file. 
      * Returns true if the file was successfully saved */
@@ -86,6 +92,12 @@ namespace mod {
 
     /* Grow the allocation of a String (if necessary) to support some additional length (Defaults to 1) */
     ENGINE_API void grow_allocation (size_t additional_length = 1);
+
+    /* Grow the allocation if necessary to encompass a new length.
+     * This is different from grow_allocation in that it takes a new total rather than an addition */
+    void reallocate (size_t new_length) {
+      if (new_length > length) grow_allocation(new_length - length);
+    }
 
 
     /* Set the value of String by copying from a str or substr */
