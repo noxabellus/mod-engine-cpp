@@ -60,7 +60,7 @@ namespace mod {
       #ifdef OPENGL_EXTREME_DEBUG
         if (severity != GL_DEBUG_SEVERITY_NOTIFICATION)
       #endif
-      abort();
+        abort();
     }
 
     #define gl_error_handler STANDARD_GL_ERROR_HANDLER
@@ -381,6 +381,12 @@ namespace mod {
     ImGui_ImplOpenGL3_NewFrame();
     ImGui_ImplSDL2_NewFrame(window);
     ImGui::NewFrame();
+    
+    SDL_GL_MakeCurrent(window, gl_context);
+
+    glViewport(0, 0, (int)ig_io->DisplaySize.x, (int)ig_io->DisplaySize.y);
+    glClearColor(0, 0, 0, 1);
+    glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
   }
 
   void Application_t::end_frame () {
@@ -416,12 +422,6 @@ namespace mod {
       End();
     }
 
-
-    SDL_GL_MakeCurrent(window, gl_context);
-
-    glViewport(0, 0, (int)ig_io->DisplaySize.x, (int)ig_io->DisplaySize.y);
-    glClearColor(0, 0, 0, 1);
-    glClear(GL_COLOR_BUFFER_BIT);
 
     Render();
     ImGui_ImplOpenGL3_RenderDrawData(GetDrawData());
