@@ -217,6 +217,15 @@ namespace mod {
     }
 
 
+    ENGINE_API void* add_component_by_id (ComponentType::ID type_id, void const* data);
+    
+    ENGINE_API void* add_component_by_name (char const* name, void const* data);
+
+    template <typename T> T& add_component (T const& data) {
+      return ecs->add_component<T>(*this, data);
+    }
+
+
     ENGINE_API void* get_component_by_id (ComponentType::ID type_id);
 
     ENGINE_API void* get_component_by_name (char const* name);
@@ -336,6 +345,11 @@ namespace mod {
 
     ENGINE_API EntityHandle create_entity ();
 
+    EntityHandle get_handle (u32_t index) const {
+      m_assert(index < entity_count, "Out of range ECS access for Entity at index %" PRIu64 ", (count is %" PRIu64 ")", (u64_t) index, (u64_t) entity_count);
+      return { (ECS*) this, index, entities[index].id };
+    }
+
 
     u32_t get_entity_index (Entity const* entity) const {
       return pointer_to_index(entities, entity);
@@ -442,6 +456,57 @@ namespace mod {
       auto new_instance = (T*) type.get_instance_by_id(handle.index);
 
       new (new_instance) T { args... };
+
+      return *new_instance;
+    }
+
+
+    ENGINE_API void* add_component_by_id (u32_t index, ComponentType::ID type_id, void const* data);
+
+    ENGINE_API void* add_component_by_id (EntityHandle& handle, ComponentType::ID type_id, void const* data);
+
+    void* add_component_by_name (u32_t index, char const* name, void const* data) {
+      return add_component_by_id(index, get_component_type_by_name(name).id, data);
+    }
+
+    void* add_component_by_name (EntityHandle& handle, char const* name, void const* data) {
+      return add_component_by_id(handle, get_component_type_by_name(name).id, data);
+    }
+
+    template <typename T> T& add_component (u32_t index, T const& data) {
+      Entity& entity = get_entity(index);
+      ComponentType& type = get_component_type_by_instance_type<T>();
+
+      m_assert(
+        !entity.enabled_components.match_index(type.id),
+        "Cannot add Component of type %s on Entity with ID %" PRIu64 " because a Component of this type already exists",
+        type.name, (u64_t) entity.id
+      );
+
+      entity.enabled_components.set(type_id);
+
+      auto new_instance = (T*) type.get_instance_by_id(index);
+
+      new (new_instance) T { data };
+
+      return *new_instance;
+    }
+
+    template <typename T> T& add_component (EntityHandle& handle, T const& data) {
+      Entity& entity = *handle;
+      ComponentType& type = get_component_type_by_instance_type<T>();
+
+      m_assert(
+        !entity.enabled_components.match_index(type.id),
+        "Cannot add Component of type %s on Entity with ID %" PRIu64 " because a Component of this type already exists",
+        type.name, (u64_t) entity.id
+      );
+
+      entity.enabled_components.set(type.id);
+
+      auto new_instance = (T*) type.get_instance_by_id(handle.index);
+
+      new (new_instance) T { data };
 
       return *new_instance;
     }

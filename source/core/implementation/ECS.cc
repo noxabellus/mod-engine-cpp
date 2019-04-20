@@ -331,6 +331,48 @@ namespace mod {
     return ptr;
   }
 
+  void* ECS::add_component_by_id (u32_t index, ComponentType::ID type_id, void const* data) {
+    m_assert(type_id < component_type_count, "Cannot get out of range ComponentType with id %" PRIu64, (u64_t) type_id);
+
+    Entity& entity = get_entity(index);
+    ComponentType& type = component_types[type_id];
+
+    m_assert(
+      !entity.enabled_components.match_index(type_id),
+      "Cannot add Component of type %s on Entity with ID %" PRIu64 " because a Component of this type already exists",
+      type.name, (u64_t) entity.id
+    );
+
+    entity.enabled_components.set(type_id);
+    
+    void* ptr = type.get_instance_by_id(index);
+
+    memcpy(ptr, data, type.instance_size);
+
+    return ptr;
+  }
+
+  void* ECS::add_component_by_id (EntityHandle& handle, ComponentType::ID type_id, void const* data) {
+    m_assert(type_id < component_type_count, "Cannot get out of range ComponentType with id %" PRIu64, (u64_t) type_id);
+
+    Entity& entity = *handle;
+    ComponentType& type = component_types[type_id];
+
+    m_assert(
+      !entity.enabled_components.match_index(type_id),
+      "Cannot add Component of type %s on Entity with ID %" PRIu64 " because a Component of this type already exists",
+      type.name, (u64_t) entity.id
+    );
+
+    entity.enabled_components.set(type_id);
+    
+    void* ptr = type.get_instance_by_id(handle.index);
+
+    memcpy(ptr, data, type.instance_size);
+
+    return ptr;
+  }
+
 
   void* ECS::get_component_by_id (u32_t index, ComponentType::ID type_id) const {
     m_assert(type_id < component_type_count, "Cannot get out of range ComponentType with id %" PRIu64, (u64_t) type_id);
@@ -455,13 +497,13 @@ namespace mod {
   }
 
 
-  System::ID ECS::create_system (char const* name, bool parallel, ComponentBitmask required_components, System::IteratorCallback callback) {
+  System::ID ECS::create_system (char const* name, bool parallel, ComponentMask required_components, System::IteratorCallback callback) {
     validate_system_count();
 
     return init_system(system_count, name, parallel, required_components, callback);
   }
 
-  System::ID ECS::create_system_before (System::ID before_target, char const* name, bool parallel, ComponentBitmask required_components, System::IteratorCallback callback) {
+  System::ID ECS::create_system_before (System::ID before_target, char const* name, bool parallel, ComponentMask required_components, System::IteratorCallback callback) {
     validate_system_count();
 
     s32_t index = get_system_index_by_id(before_target);
@@ -473,7 +515,7 @@ namespace mod {
     return init_system(index, name, parallel, required_components, callback);
   }
 
-  System::ID ECS::create_system_before (char const* before_name, char const* name, bool parallel, ComponentBitmask required_components, System::IteratorCallback callback) {
+  System::ID ECS::create_system_before (char const* before_name, char const* name, bool parallel, ComponentMask required_components, System::IteratorCallback callback) {
     validate_system_count();
 
     s32_t index = get_system_index_by_name(before_name);
@@ -485,7 +527,7 @@ namespace mod {
     return init_system(index, name, parallel, required_components, callback);
   }
 
-  System::ID ECS::create_system_after (System::ID after_target, char const* name, bool parallel, ComponentBitmask required_components, System::IteratorCallback callback) {
+  System::ID ECS::create_system_after (System::ID after_target, char const* name, bool parallel, ComponentMask required_components, System::IteratorCallback callback) {
     validate_system_count();
 
     s32_t index = get_system_index_by_id(after_target);
@@ -499,7 +541,7 @@ namespace mod {
     return init_system(index, name, parallel, required_components, callback);
   }
 
-  System::ID ECS::create_system_after (char const* after_name, char const* name, bool parallel, ComponentBitmask required_components, System::IteratorCallback callback) {
+  System::ID ECS::create_system_after (char const* after_name, char const* name, bool parallel, ComponentMask required_components, System::IteratorCallback callback) {
     validate_system_count();
 
     s32_t index = get_system_index_by_name(after_name);
@@ -535,7 +577,7 @@ namespace mod {
     return id;
   }
 
-  System::ID ECS::init_system (System::ID index, char const* name, bool parallel, ComponentBitmask required_components, System::IteratorCallback callback) {
+  System::ID ECS::init_system (System::ID index, char const* name, bool parallel, ComponentMask required_components, System::IteratorCallback callback) {
     System::ID id = system_id_counter;
 
     new (systems + index) System { name, id, parallel, required_components, callback };
