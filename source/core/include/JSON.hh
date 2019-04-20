@@ -335,21 +335,30 @@ namespace mod {
     template <typename T> T& get_object_value (char const* key_value, size_t key_length = 0) const {
       JSONItem* item = get_object_item(key_value, key_length);
 
-      asset_assert(
-        item != NULL,
-        "Expected a %s named %.*s",
-        str_get_unscoped_type_name(typeid(T).name()),
-        (s32_t) key_length == 0? strlen(key_value) : key_length,
-        key_value
+      static_assert(
+           std::is_same<T, bool>::value
+        || std::is_same<T, f64_t>::value
+        || std::is_same<T, String>::value
+        || std::is_same<T, JSONArray>::value
+        || std::is_same<T, JSONObject>::value,
+        "JSON::get_object_value only supports values of types serializable to json form"
       );
 
-      if constexpr (std::is_same<T, bool>::value) return item->get_boolean();
-      if constexpr (std::is_same<T, f64_t>::value) return item->get_number();
-      if constexpr (std::is_same<T, String>::value) return item->get_string();
-      if constexpr (std::is_same<T, JSONArray>::value) return item->get_array();
-      if constexpr (std::is_same<T, JSONObject>::value) return item->get_object();
-      else {
-        item->asset_error("Could not get value of unsupported type %s", str_get_unscoped_type_name(typeid(T).name()));
+      if constexpr (std::is_same<T, bool>::value) {
+        asset_assert(item != NULL, "Expected a Boolean at key %.*s",  (s32_t) key_length == 0? strlen(key_value) : key_length, key_value);
+        return item->get_boolean();
+      } else if constexpr (std::is_same<T, f64_t>::value) {
+        asset_assert(item != NULL, "Expected a Number at key %.*s",  (s32_t) key_length == 0? strlen(key_value) : key_length, key_value);
+        return item->get_number();
+      } else if constexpr (std::is_same<T, String>::value) {
+        asset_assert(item != NULL, "Expected a String at key %.*s",  (s32_t) key_length == 0? strlen(key_value) : key_length, key_value);
+        return item->get_string();
+      } else if constexpr (std::is_same<T, JSONArray>::value) {
+        asset_assert(item != NULL, "Expected an Array at key %.*s",  (s32_t) key_length == 0? strlen(key_value) : key_length, key_value);
+        return item->get_array();
+      } else if constexpr (std::is_same<T, JSONObject>::value) {
+        asset_assert(item != NULL, "Expected an Object at key %.*s",  (s32_t) key_length == 0? strlen(key_value) : key_length, key_value);
+        return item->get_object();
       }
     }
 
@@ -495,20 +504,30 @@ namespace mod {
     template <typename T> T& get_array_value (size_t index) const {
       JSONItem* item = get_array_item(index);
 
-      asset_assert(
-        item != NULL,
-        "Expected a value of type %s at index %zu",
-        str_get_unscoped_type_name(typeid(T).name()), index
+      static_assert(
+           std::is_same<T, bool>::value
+        || std::is_same<T, f64_t>::value
+        || std::is_same<T, String>::value
+        || std::is_same<T, JSONArray>::value
+        || std::is_same<T, JSONObject>::value,
+        "JSON::get_array_value only supports values of types serializable to json form"
       );
 
-      if constexpr (std::is_same<T, bool>::value) return item->get_boolean();
-      if constexpr (std::is_same<T, f64_t>::value) return item->get_number();
-      if constexpr (std::is_same<T, String>::value) return item->get_string();
-      if constexpr (std::is_same<T, JSONArray>::value) return item->get_array();
-      if constexpr (std::is_same<T, JSONObject>::value) return item->get_object();
-      else {
-        item->asset_error("Could not get value of unsupported type %s", str_get_unscoped_type_name(typeid(T).name()));
-        abort(); // gives noreturn attribute
+      if constexpr (std::is_same<T, bool>::value) {
+        asset_assert(item != NULL, "Expected a Boolean at index %zu", index);
+        return item->get_boolean();
+      } else if constexpr (std::is_same<T, f64_t>::value) {
+        asset_assert(item != NULL, "Expected a Number at index %zu", index);        
+        return item->get_number();
+      } else if constexpr (std::is_same<T, String>::value) {
+        asset_assert(item != NULL, "Expected a String at index %zu", index);        
+        return item->get_string();
+      } else if constexpr (std::is_same<T, JSONArray>::value) {
+        asset_assert(item != NULL, "Expected an Array at index %zu", index);        
+        return item->get_array();
+      } else if constexpr (std::is_same<T, JSONObject>::value) {
+        asset_assert(item != NULL, "Expected an Object at index %zu", index);        
+        return item->get_object();
       }
     }
 

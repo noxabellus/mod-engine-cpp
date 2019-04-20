@@ -54,7 +54,7 @@ namespace mod {
     
 
     ID id;
-    char const* name;
+    char* name;
     void* instances;
     size_t instance_size;
     size_t hash_code;
@@ -64,7 +64,7 @@ namespace mod {
 
 
     template <typename T> T& get_instance (u32_t index) const {
-      m_assert(typeid(T).hash_code() == hash_code, "Cannot get ComponentType %s instance as type %s, the type hash codes do not match", name, str_get_unscoped_type_name(typeid(T).name()));
+      m_assert(typeid(T).hash_code() == hash_code, "Cannot get ComponentType %s instance as type %s, the type hash codes do not match", name, typeid(T).name());
 
       return ((T*) instances)[index];
     }
@@ -82,7 +82,7 @@ namespace mod {
     private: friend ECS;
       ComponentType (u32_t capacity, ID in_id, char const* in_name, size_t in_instance_size, size_t in_hash_code)
       : id(in_id)
-      , name(in_name)
+      , name(str_clone(in_name))
       , instances(malloc(capacity * in_instance_size))
       , instance_size(in_instance_size)
       , hash_code(in_hash_code)
@@ -101,6 +101,7 @@ namespace mod {
 
 
       void destroy () {
+        free(name);
         free(instances);
       }
   };
@@ -351,11 +352,11 @@ namespace mod {
     ENGINE_API void destroy_entity (EntityHandle& handle);
 
 
-    template <typename T> ComponentType::ID create_component_type () {
+    template <typename T> ComponentType::ID create_component_type (char const* name = NULL) {
       ComponentType::ID type_id = component_type_count;
       
       type_info const& t_info = typeid(T);
-      char const* name = str_get_unscoped_type_name(t_info.name());
+      if (name == NULL) name = t_info.name();
       size_t hash_code = t_info.hash_code();
 
       m_assert(
@@ -391,7 +392,7 @@ namespace mod {
 
       String types;
       for (ComponentType::ID i = 0; i < component_type_count; i ++) types.fmt_append("'%s',\n", component_types[i].name);
-      m_error("Could not find ComponentType matching instance type %s, registered type names are:\n%s", str_get_unscoped_type_name(typeid(T).name()), types.value);
+      m_error("Could not find ComponentType matching instance type %s, registered type names are:\n%s", typeid(T).name(), types.value);
     }
 
 

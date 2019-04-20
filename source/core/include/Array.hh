@@ -245,7 +245,7 @@ namespace mod {
       m_assert(
         element != NULL,
         "Out of range access for Array<%s>: Cannot set element %zu, count is %zu",
-        str_get_unscoped_type_name(typeid(T).name()), index, count
+        typeid(T).name(), index, count
       );
 
       *element = *value;
