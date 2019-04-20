@@ -152,4 +152,18 @@ ENGINE_API s64_t glWrapFromStr (char const* value);
  * Returns -1 if the value is not a match for any enums in the category */
 ENGINE_API s64_t glFilterFromStr (char const* value);
 
+/* Get a str containing information about an OpenGL error */
+ENGINE_API char const* glGetErrorMsg (GLenum err);
+
+/* Catch any OpenGL errors, log their messages, and abort if any errors were caught */
+void glCatchErrors () {
+  GLenum err;
+  bool ok = true;
+  while ((err = glGetError()) != GL_NO_ERROR) {
+    printf("Uncaught OpenGL error detected:\n%s", glGetErrorMsg(err));
+    ok = false;
+  }
+  if (!ok) abort();
+}
+
 #endif
