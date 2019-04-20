@@ -38,10 +38,21 @@ namespace mod {
     , y(scalar)
     { }
 
+    /* Convert an imgui vector to a modengine vector */
+    constexpr Vector2 (ImVec2 const& imvec)
+    : x(imvec.x)
+    , y(imvec.y)
+    { }
+
 
     /* Convert a vector to another type of vector */
     template <typename U> constexpr operator Vector2<U> () const {
       return { (U) x, (U) y };
+    }
+
+    /* Convert a vector to an imgui vector */
+    operator ImVec2 () const {
+      return { x, y };
     }
 
 
