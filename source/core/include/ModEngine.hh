@@ -15,6 +15,10 @@
 #include "ECS.hh"
 
 #include "math/lib.hh"
+#include "graphics/lib.hh"
+
+#include "AssetHandle.hh"
+#include "AssetManager.hh"
 
 #include "Application.hh"
 

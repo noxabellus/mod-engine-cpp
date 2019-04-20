@@ -10,5 +10,8 @@
 #include "ECS.cc"
 
 #include "math/lib.cc"
+#include "graphics/lib.cc"
+
+#include "AssetManager.cc"
 
 #include "Application.cc"
