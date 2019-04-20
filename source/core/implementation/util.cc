@@ -105,11 +105,11 @@ namespace mod {
   }
 
   bool str_dir_relativize_path (char const* base_path, char const* relative_path, char* out, size_t max_length) {
-    size_t back = str_dir_count_back_paths(relative_path, 0);
+    size_t back = str_dir_count_back_paths(relative_path);
     size_t rel_total_len = strlen(relative_path);
     size_t back_len = back * 3;
 
-    s64_t base_back_len = str_dir_traverse_back(base_path, back + 1, 0);
+    s64_t base_back_len = str_dir_traverse_back(base_path, back + 1);
 
     if (base_back_len == -1) return false;
 
