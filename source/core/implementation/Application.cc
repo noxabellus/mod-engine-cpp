@@ -28,6 +28,11 @@ namespace mod {
       const GLchar* message,
       const void* user_param
     ) {
+      #ifndef OPENGL_EXTREME_DEBUG
+        // ignore non-significant error/warning codes
+        if(id == 131169 || id == 131185 || id == 131218 || id == 131204) return; 
+      #endif
+
       printf("OpenGL Error detected\n");
 
       printf("Type: ");
@@ -40,17 +45,21 @@ namespace mod {
         default: printf("Other\n");
       }
 
-      printf("ID: %" PRIu32, id);
+      printf("ID: %" PRIu32 "\n", id);
 
       printf("Severity: ");
       switch (severity) {
         case GL_DEBUG_SEVERITY_LOW: printf("Low\n"); break;
         case GL_DEBUG_SEVERITY_MEDIUM: printf("Medium\n"); break;
         case GL_DEBUG_SEVERITY_HIGH: printf("High\n"); break;
+        case GL_DEBUG_SEVERITY_NOTIFICATION: printf("Notification\n"); break;
       }
 
-      printf("Message:\n%s\n", message);
+      printf("Message: %s\n", message);
 
+      #ifdef OPENGL_EXTREME_DEBUG
+        if (severity != GL_DEBUG_SEVERITY_NOTIFICATION)
+      #endif
       abort();
     }
 
@@ -92,6 +101,7 @@ namespace mod {
     m_assert(IMGUI_CHECKVERSION(), "ImGui version check failed");
 
     if (glDebugMessageCallback && gl_error_handler) {
+      glEnable(GL_DEBUG_OUTPUT);
       glEnable(GL_DEBUG_OUTPUT_SYNCHRONOUS);
       glDebugMessageCallback(gl_error_handler, NULL);
       uint32_t unused_ids = 0;
