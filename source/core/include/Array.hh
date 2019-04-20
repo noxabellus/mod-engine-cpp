@@ -104,7 +104,7 @@ namespace mod {
     }
 
     /* Copy all the elements of an Array into another array, overwriting existing elements in the target array */
-    void copy (Array const& other) const {
+    void copy (Array const& other) {
       clear();
       for (auto [ i, v ] : other) append(v);
     }
@@ -119,7 +119,13 @@ namespace mod {
     
     /* Free the heap allocation of an Array */
     void destroy () {
-      if (elements != NULL) free(elements);
+      if (elements != NULL) {
+        free(elements);
+        elements = NULL;
+      }
+      
+      count = 0;
+      capacity = 0;
     }
 
 
