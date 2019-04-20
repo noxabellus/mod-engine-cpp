@@ -155,7 +155,6 @@ namespace mod {
 
     ~System () {
       if (id != 0) {
-        printf("Destructing system %u", id);
         if (custom) custom_callback.~CustomCallback();
         else iterator_callback.~IteratorCallback();
         id = 0;
