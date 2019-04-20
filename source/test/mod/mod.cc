@@ -15,8 +15,6 @@ MODULE_API void module_init () {
   
   MaterialHandle ma = AssetManager.get<Material>("Minimal3DA");
 
-  ma->face_culling.enabled = false;
-
   RenderMesh3DHandle c = AssetManager.get<RenderMesh3D>("Test Cube");
   RenderMesh3DHandle q = AssetManager.get<RenderMesh3D>("Test Quad 3D");
 
