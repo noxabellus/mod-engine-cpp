@@ -1,12 +1,12 @@
 {
   "shader_program": "Minimal3D",
 
-  "culling": {
+  "face_culling": {
     "side": "back",
-    "winding": "ccw"
+    "winding": "counterClockwise"
   },
 
-  "depth": "less",
+  "depth": "lesser",
   
   "uniforms": [
     {

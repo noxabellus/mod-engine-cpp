@@ -1,14 +1,16 @@
 {
   "shader_program": "Minimal3D",
 
-  "culling": {
+  "face_culling": {
     "side": "back",
-    "winding": "ccw"
+    "winding": "counterClockwise"
   },
 
-  "blending": {
-    "src_factor": "src_alpha",
-    "dest_factor": "one_minus_src_alpha"
+  "depth": "lesser",
+
+  "alpha_blending": {
+    "source_factor": "sourceAlpha",
+    "destination_factor": "oneMinusSourceAlpha"
   },
   
   "uniforms": [

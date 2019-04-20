@@ -1,9 +1,9 @@
 {
   "shader_program": "Minimal2D",
 
-  "culling": {
+  "face_culling": {
     "side": "back",
-    "winding": "ccw"
+    "winding": "counterClockwise"
   },
   
   "uniforms": [

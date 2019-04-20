@@ -25,7 +25,7 @@
     2, 3, 0
   ],
 
-  "material_set": [
+  "material_config": [
     {
       "material_index": 0,
       "cast_shadow": true,

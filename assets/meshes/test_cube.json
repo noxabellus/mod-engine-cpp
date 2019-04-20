@@ -96,5 +96,10 @@
 
     20, 21, 22,
     22, 23, 20
-  ]
+  ],
+
+  "material_config": {
+    "material_index": 0,
+    "cast_shadow": true
+  }
 }
