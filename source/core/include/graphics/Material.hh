@@ -1301,7 +1301,10 @@ namespace mod {
     void unset_uniform (s32_t location) {
       s64_t index = get_uniform_index(location);
 
-      if (index != -1) uniforms.remove(index);
+      if (index != -1) {
+        uniforms[index].destroy();
+        uniforms.remove(index);
+      }
     }
 
 
