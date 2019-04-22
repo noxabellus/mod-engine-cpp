@@ -58,6 +58,8 @@ namespace mod {
   struct JSON;
 
   using JSONArray = Array<JSONItem>;
+
+  struct JSONObjectIterator;
   
   struct JSONObject {
     Array<String> keys;
@@ -67,9 +69,15 @@ namespace mod {
     /* Create a new zero-initialized JSONObject */
     JSONObject () { };
 
-
     /* Destroy a JSONObject and clean up its arrays */
     ENGINE_API void destroy ();
+
+
+    /* Get a JSONObjectIterator representing the start of a JSONObject's key/value pairs */ 
+    ENGINE_API JSONObjectIterator begin () const;
+
+    /* Get a JSONObjectIterator representing the end of a JSONObject's key/value pairs */
+    ENGINE_API JSONObjectIterator end () const;
 
 
     /* Get the index of a key within a JSONObject.
@@ -658,6 +666,20 @@ namespace mod {
       if (!cond) asset_error(fmt, args...);
     }
   };
+
+
+  struct JSONObjectIterator {
+    String* keys;
+    JSONItem* items;
+    size_t index;
+    
+    JSONObjectIterator& operator ++ () { ++ index; return *this; }
+
+    bool operator != (JSONObjectIterator const& other) const { return index != other.index; }
+
+    pair_t<String&, JSONItem&> operator * () const { return { keys[index], items[index] }; }
+  };
+
 
   struct JSON {
     char* origin = NULL;

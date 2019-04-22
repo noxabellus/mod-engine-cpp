@@ -11,6 +11,15 @@ namespace mod {
   }
 
 
+  JSONObjectIterator JSONObject::begin () const {
+    return { keys.elements, items.elements, 0 };
+  }
+
+  JSONObjectIterator JSONObject::end () const {
+    return { keys.elements, items.elements, items.count };
+  }
+
+
   s64_t JSONObject::get_index (char const* key_value, size_t key_length) const {
     for (auto [ i, key ] : keys) {
       if (key.equal_caseless(key_value, key_length)) return i;
