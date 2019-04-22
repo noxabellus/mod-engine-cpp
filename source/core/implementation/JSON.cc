@@ -13,7 +13,7 @@ namespace mod {
 
   s64_t JSONObject::get_index (char const* key_value, size_t key_length) const {
     for (auto [ i, key ] : keys) {
-      if (key.equal(key_value, key_length)) return i;
+      if (key.equal_caseless(key_value, key_length)) return i;
     }
 
     return -1;

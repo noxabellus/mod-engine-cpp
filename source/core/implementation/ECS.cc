@@ -280,7 +280,7 @@ namespace mod {
 
   ComponentType& ECS::get_component_type_by_name (char const* name) const {
     for (ComponentType::ID i = 0; i < component_type_count; i ++) {
-      if (strcmp(component_types[i].name, name) == 0) return (ComponentType&) component_types[i];
+      if (str_cmp_caseless(component_types[i].name, name) == 0) return (ComponentType&) component_types[i];
     }
     
     String types;
@@ -415,7 +415,7 @@ namespace mod {
 
   s32_t ECS::get_system_index_by_name (char const* name) const {
     for (System::ID i = 0; i < system_count; i ++) {
-      if (strcmp(systems[i].name, name) == 0) return i;
+      if (str_cmp_caseless(systems[i].name, name) == 0) return i;
     }
 
     return -1;
@@ -431,7 +431,7 @@ namespace mod {
 
   System& ECS::get_system_by_name (char const* name) const {
     for (System::ID i = 0; i < system_count; i ++) {
-      if (strcmp(systems[i].name, name) == 0) return (System&) systems[i];
+      if (str_cmp_caseless(systems[i].name, name) == 0) return (System&) systems[i];
     }
 
     m_error("Could not find System with name %s", name);

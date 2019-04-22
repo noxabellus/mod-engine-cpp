@@ -209,63 +209,63 @@ char const* glGetTypeName (u32_t type) {
 
 
 s64_t glBlendFactorFromStr (char const* value) {
-  if (strcmp("ZERO", value) == 0 || strcmp("zero", value) == 0) return GL_ZERO;
-  else if (strcmp("ONE", value) == 0 || strcmp("one", value) == 0) return GL_ONE;
-  else if (strcmp("SRC_COLOR", value) == 0 || strcmp("src_color", value) == 0) return GL_SRC_COLOR;
-  else if (strcmp("ONE_MINUS_SRC_COLOR", value) == 0 || strcmp("one_minus_src_color", value) == 0) return GL_ONE_MINUS_SRC_COLOR;
-  else if (strcmp("DST_COLOR", value) == 0 || strcmp("dst_color", value) == 0) return GL_DST_COLOR;
-  else if (strcmp("ONE_MINUS_DST_COLOR", value) == 0 || strcmp("one_minus_dst_color", value) == 0) return GL_ONE_MINUS_DST_COLOR;
-  else if (strcmp("SRC_ALPHA", value) == 0 || strcmp("src_alpha", value) == 0) return GL_SRC_ALPHA;
-  else if (strcmp("ONE_MINUS_SRC_ALPHA", value) == 0 || strcmp("one_minus_src_alpha", value) == 0) return GL_ONE_MINUS_SRC_ALPHA;
-  else if (strcmp("DST_ALPHA", value) == 0 || strcmp("dst_alpha", value) == 0) return GL_DST_ALPHA;
-  else if (strcmp("ONE_MINUS_DST_ALPHA", value) == 0 || strcmp("one_minus_dst_alpha", value) == 0) return GL_ONE_MINUS_DST_ALPHA;
-  else if (strcmp("CONSTANT_COLOR", value) == 0 || strcmp("constant_color", value) == 0) return GL_CONSTANT_COLOR;
-  else if (strcmp("ONE_MINUS_CONSTANT_COLOR", value) == 0 || strcmp("one_minus_constant_color", value) == 0) return GL_ONE_MINUS_CONSTANT_COLOR;
-  else if (strcmp("CONSTANT_ALPHA", value) == 0 || strcmp("constant_alpha", value) == 0) return GL_CONSTANT_ALPHA;
-  else if (strcmp("ONE_MINUS_CONSTANT_ALPHA", value) == 0 || strcmp("one_minus_constant_alpha", value) == 0) return GL_ONE_MINUS_CONSTANT_ALPHA;
-  else if (strcmp("SRC_ALPHA_SATURATE", value) == 0 || strcmp("src_alpha_sature", value) == 0) return GL_SRC_ALPHA_SATURATE;
+  if (mod::str_cmp_caseless("zero", value) == 0) return GL_ZERO;
+  else if (mod::str_cmp_caseless("one", value) == 0) return GL_ONE;
+  else if (mod::str_cmp_caseless("src_color", value) == 0) return GL_SRC_COLOR;
+  else if (mod::str_cmp_caseless("one_minus_src_color", value) == 0) return GL_ONE_MINUS_SRC_COLOR;
+  else if (mod::str_cmp_caseless("dst_color", value) == 0) return GL_DST_COLOR;
+  else if (mod::str_cmp_caseless("one_minus_dst_color", value) == 0) return GL_ONE_MINUS_DST_COLOR;
+  else if (mod::str_cmp_caseless("src_alpha", value) == 0) return GL_SRC_ALPHA;
+  else if (mod::str_cmp_caseless("one_minus_src_alpha", value) == 0) return GL_ONE_MINUS_SRC_ALPHA;
+  else if (mod::str_cmp_caseless("dst_alpha", value) == 0) return GL_DST_ALPHA;
+  else if (mod::str_cmp_caseless("one_minus_dst_alpha", value) == 0) return GL_ONE_MINUS_DST_ALPHA;
+  else if (mod::str_cmp_caseless("constant_color", value) == 0) return GL_CONSTANT_COLOR;
+  else if (mod::str_cmp_caseless("one_minus_constant_color", value) == 0) return GL_ONE_MINUS_CONSTANT_COLOR;
+  else if (mod::str_cmp_caseless("constant_alpha", value) == 0) return GL_CONSTANT_ALPHA;
+  else if (mod::str_cmp_caseless("one_minus_constant_alpha", value) == 0) return GL_ONE_MINUS_CONSTANT_ALPHA;
+  else if (mod::str_cmp_caseless("src_alpha_sature", value) == 0) return GL_SRC_ALPHA_SATURATE;
   else return -1;
 }
 
 s64_t glDepthFactorFromStr (char const* value) {
-  if (strcmp("NEVER", value) == 0 || strcmp("never", value) == 0) return GL_NEVER;
-  else if (strcmp("LESS", value) == 0 || strcmp("less", value) == 0) return GL_LESS;
-  else if (strcmp("EQUAL", value) == 0 || strcmp("equal", value) == 0) return GL_EQUAL;
-  else if (strcmp("LEQUAL", value) == 0 || strcmp("lequal", value) == 0) return GL_LEQUAL;
-  else if (strcmp("GREATER", value) == 0 || strcmp("greater", value) == 0) return GL_GREATER;
-  else if (strcmp("NOTEQUAL", value) == 0 || strcmp("notequal", value) == 0) return GL_NOTEQUAL;
-  else if (strcmp("GEQUAL", value) == 0 || strcmp("gequal", value) == 0) return GL_GEQUAL;
-  else if (strcmp("ALWAYS", value) == 0 || strcmp("always", value) == 0) return GL_ALWAYS;
+  if (mod::str_cmp_caseless("never", value) == 0) return GL_NEVER;
+  else if (mod::str_cmp_caseless("less", value) == 0) return GL_LESS;
+  else if (mod::str_cmp_caseless("equal", value) == 0) return GL_EQUAL;
+  else if (mod::str_cmp_caseless("lequal", value) == 0) return GL_LEQUAL;
+  else if (mod::str_cmp_caseless("greater", value) == 0) return GL_GREATER;
+  else if (mod::str_cmp_caseless("notequal", value) == 0) return GL_NOTEQUAL;
+  else if (mod::str_cmp_caseless("gequal", value) == 0) return GL_GEQUAL;
+  else if (mod::str_cmp_caseless("always", value) == 0) return GL_ALWAYS;
   else return -1;
 }
 
 s64_t glFaceFromStr (char const* value) {
-  if (strcmp("FRONT", value) == 0 || strcmp("front", value) == 0) return GL_FRONT;
-  else if (strcmp("BACK", value) == 0 || strcmp("back", value) == 0) return GL_BACK;
-  else if (strcmp("FRONT_AND_BACK", value) == 0 || strcmp("front_and_back", value) == 0) return GL_FRONT_AND_BACK;
+  if (mod::str_cmp_caseless("front", value) == 0) return GL_FRONT;
+  else if (mod::str_cmp_caseless("back", value) == 0) return GL_BACK;
+  else if (mod::str_cmp_caseless("front_and_back", value) == 0) return GL_FRONT_AND_BACK;
   else return -1;
 }
 
 s64_t glWindFromStr (char const* value) {
-  if (strcmp("CW", value) == 0 || strcmp("cw", value) == 0) return GL_CW;
-  else if (strcmp("CCW", value) == 0 || strcmp("ccw", value) == 0) return GL_CCW;
+  if (mod::str_cmp_caseless("cw", value) == 0) return GL_CW;
+  else if (mod::str_cmp_caseless("ccw", value) == 0) return GL_CCW;
   else return -1;
 }
 
 s64_t glWrapFromStr (char const* value) {
-  if (strcmp("CLAMP_TO_EDGE", value) == 0 || strcmp("clamp_to_edge", value) == 0) return GL_CLAMP_TO_EDGE;
-  else if (strcmp("MIRRORED_REPEAT", value) == 0 || strcmp("mirrored_repeat", value) == 0) return GL_MIRRORED_REPEAT;
-  else if (strcmp("REPEAT", value) == 0 || strcmp("repeat", value) == 0) return GL_REPEAT;
+  if (mod::str_cmp_caseless("clamp_to_edge", value) == 0) return GL_CLAMP_TO_EDGE;
+  else if (mod::str_cmp_caseless("mirrored_repeat", value) == 0) return GL_MIRRORED_REPEAT;
+  else if (mod::str_cmp_caseless("repeat", value) == 0) return GL_REPEAT;
   else return -1;
 }
 
 s64_t glFilterFromStr (char const* value) {
-  if (strcmp("NEAREST", value) == 0 || strcmp("nearest", value) == 0) return GL_NEAREST;
-  else if (strcmp("LINEAR", value) == 0 || strcmp("linear", value) == 0) return GL_LINEAR;
-  else if (strcmp("NEAREST_MIPMAP_NEAREST", value) == 0 || strcmp("nearest_mipmap_nearest", value) == 0) return GL_NEAREST_MIPMAP_NEAREST;
-  else if (strcmp("LINEAR_MIPMAP_NEAREST", value) == 0 || strcmp("linear_mipmap_nearest", value) == 0) return GL_LINEAR_MIPMAP_NEAREST;
-  else if (strcmp("NEAREST_MIPMAP_LINEAR", value) == 0 || strcmp("nearest_mipmap_linear", value) == 0) return GL_NEAREST_MIPMAP_LINEAR;
-  else if (strcmp("LINEAR_MIPMAP_LINEAR", value) == 0 || strcmp("linear_mipmap_linear", value) == 0) return GL_LINEAR_MIPMAP_LINEAR;
+  if (mod::str_cmp_caseless("nearest", value) == 0) return GL_NEAREST;
+  else if (mod::str_cmp_caseless("linear", value) == 0) return GL_LINEAR;
+  else if (mod::str_cmp_caseless("nearest_mipmap_nearest", value) == 0) return GL_NEAREST_MIPMAP_NEAREST;
+  else if (mod::str_cmp_caseless("linear_mipmap_nearest", value) == 0) return GL_LINEAR_MIPMAP_NEAREST;
+  else if (mod::str_cmp_caseless("nearest_mipmap_linear", value) == 0) return GL_NEAREST_MIPMAP_LINEAR;
+  else if (mod::str_cmp_caseless("linear_mipmap_linear", value) == 0) return GL_LINEAR_MIPMAP_LINEAR;
   else return -1;
 }
 

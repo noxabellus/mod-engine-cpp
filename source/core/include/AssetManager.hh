@@ -60,7 +60,7 @@ namespace mod {
 
     T* get_asset_by_name (char const* name) const {
       for (auto [ i, asset_name ] : names) {
-        if (strcmp(asset_name.value, name) == 0) return &assets[i];
+        if (str_cmp_caseless(asset_name.value, name) == 0) return &assets[i];
       }
 
       return NULL;
@@ -68,7 +68,7 @@ namespace mod {
 
     AssetHandle<T> get_handle_by_name (char const* name) const {
       for (auto [ i, asset_name ] : names) {
-        if (strcmp(asset_name.value, name) == 0) return { assets[i].asset_id };
+        if (str_cmp_caseless(asset_name.value, name) == 0) return { assets[i].asset_id };
       }
 
       return { };
@@ -196,7 +196,7 @@ namespace mod {
 
     s64_t get_index_from_path (char const* path) {
       for (auto [ i, i_path ] : paths) {
-        if (strcmp(path, i_path.value) == 0) return i;
+        if (str_cmp_caseless(path, i_path.value) == 0) return i;
       }
 
       return -1;
@@ -321,7 +321,7 @@ namespace mod {
       }
 
       for (auto [ i, existing_path ] : watch_list.paths) {
-        if (strcmp(existing_path.value, path) == 0) {
+        if (str_cmp_caseless(existing_path.value, path) == 0) {
           if (took_lock) {
             mtx_unlock_safe(&watch_list.mtx);
             have_lock = false;

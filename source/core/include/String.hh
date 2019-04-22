@@ -155,6 +155,30 @@ namespace mod {
     bool not_equal (String const* other_string) const {
       return not_equal(other_string->value, other_string->length);
     }
+
+
+    
+    /* Compare a String to a str, ignoring character case */
+    bool equal_caseless (char const* other_value, size_t other_value_length = 0) const {
+      if (other_value_length == 0) other_value_length = strlen(other_value);
+      return length == other_value_length && str_cmp_caseless(value, other_value, other_value_length) == 0;
+    }
+
+    /* Compare a String to another String, ignoring character case */
+    bool equal_caseless (String const* other_string) const {
+      return equal_caseless(other_string->value, other_string->length);
+    }
+
+    /* Compare a String to a str, ignoring character case */
+    bool not_equal_caseless (char const* other_value, size_t other_value_length = 0) const {
+      if (other_value_length == 0) other_value_length = strlen(other_value);
+      return length != other_value_length || str_cmp_caseless(value, other_value, other_value_length) != 0;
+    }
+
+    /* Compare a String to another String, ignoring character case */
+    bool not_equal_caseless (String const* other_string) const {
+      return not_equal_caseless(other_string->value, other_string->length);
+    }
   };
 }
 
