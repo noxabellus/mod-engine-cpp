@@ -45,22 +45,57 @@ namespace mod {
     
 
     /* Bitwise OR two Bitmasks together */
-    Bitmask operator | (Bitmask const& r) { return bor(r); }
+    Bitmask operator | (Bitmask const& r) const {
+      return bor(r);
+    }
 
     /* Bitwise AND two Bitmasks together */
-    Bitmask operator & (Bitmask const& r) { return band(r); }
+    Bitmask operator & (Bitmask const& r) const {
+      return band(r);
+    }
     
     /* Bitwise XOR two Bitmasks together */
-    Bitmask operator ^ (Bitmask const& r) { return bxor(r); }
+    Bitmask operator ^ (Bitmask const& r) const {
+      return bxor(r);
+    }
 
     /* Bitwise NOT a Bitmask */
-    Bitmask operator ~ () { return bnot(); }
+    Bitmask operator ~ () const {
+      return bnot();
+    }
+
+
+    /* Bitwise OR two Bitmasks together */
+    Bitmask& operator |= (Bitmask const& r) {
+      *this = bor(r);
+      return *this;
+    }
+
+    /* Bitwise AND two Bitmasks together */
+    Bitmask& operator &= (Bitmask const& r) {
+      *this = band(r);
+      return *this;
+    }
+    
+    /* Bitwise XOR two Bitmasks together */
+    Bitmask& operator ^= (Bitmask const& r) {
+      *this = bxor(r);
+      return *this;
+    }
+
+    /* Get an index of a Bitmask as a bool */
+    bool operator [] (size_t index) const {
+      return match_index(index);
+    }
+
 
     /* Compare two Bitmasks */
-    bool operator == (Bitmask const& r) { return match_exact(r); }
+    bool operator == (Bitmask const& r) const {
+      return match_exact(r);
+    }
 
     /* Compare two Bitmasks */
-    bool operator != (Bitmask const& r) {
+    bool operator != (Bitmask const& r) const {
       for (size_t i = 0; i < byte_count; i ++) {
         if (bytes[i] != r.bytes[i]) return true;
       }
@@ -127,7 +162,7 @@ namespace mod {
 
     
     /* Bitwise OR two Bitmasks together */
-    Bitmask bor (Bitmask const& r) {
+    Bitmask bor (Bitmask const& r) const {
       Bitmask o;
 
       for (size_t i = 0; i < byte_count; i ++) {
@@ -138,7 +173,7 @@ namespace mod {
     }
 
     /* Bitwise AND two Bitmasks together */
-    Bitmask band (Bitmask const& r) {
+    Bitmask band (Bitmask const& r) const {
       Bitmask o;
 
       for (size_t i = 0; i < byte_count; i ++) {
@@ -149,7 +184,7 @@ namespace mod {
     }
 
     /* Bitwise XOR two Bitmasks together */
-    Bitmask bxor (Bitmask const& r) {
+    Bitmask bxor (Bitmask const& r) const {
       Bitmask o;
 
       for (size_t i = 0; i < byte_count; i ++) {
@@ -160,7 +195,7 @@ namespace mod {
     }
 
     /* Bitwise NOT a Bitmask */
-    Bitmask bnot () {
+    Bitmask bnot () const {
       Bitmask o;
 
       for (size_t i = 0; i < byte_count; i ++) {
@@ -172,7 +207,7 @@ namespace mod {
   
 
     /* Determine if a specific bit index is enabled for a Bitmask */
-    bool match_index (size_t index) {
+    bool match_index (size_t index) const {
       m_assert(index < bit_count, "Cannot match out of range Bitmask index %zu, valid range is 0 - %zu", index, bit_count - 1);
 
       u8_t m = 1 << (index % 8);
@@ -181,7 +216,7 @@ namespace mod {
     }
 
     /* Determine if any bits are enabled for a Bitmask */
-    bool match_any () {
+    bool match_any () const {
       for (size_t i = 0; i < byte_count; i ++) {
         if (bytes[i] != 0) return true;
       }
@@ -190,7 +225,7 @@ namespace mod {
     }
 
     /* Determine if another Bitmask is a subset of the caller instance */
-    bool match_subset (Bitmask const& r) {
+    bool match_subset (Bitmask const& r) const {
       for (size_t i = 0; i < byte_count; i ++) {
         if ((bytes[i] & r.bytes[i]) != r.bytes[i]) return false;
       }
@@ -199,7 +234,7 @@ namespace mod {
     }
 
     /* Determine if two Bitmasks are exactly the same */
-    bool match_exact (Bitmask const& r) {
+    bool match_exact (Bitmask const& r) const {
       for (size_t i = 0; i < byte_count; i ++) {
         if (bytes[i] != r.bytes[i]) return false;
       }
@@ -209,7 +244,7 @@ namespace mod {
 
 
     /* Print the indices of the enabled bits of a Bitmask */
-    void print (FILE* stream = stdout) {
+    void print (FILE* stream = stdout) const {
       fprintf(stream, "Bitmask<%zu> {", byte_count);
       for (size_t i = 0; i < bit_count; i ++) {
         if (match_index(i)) fprintf(stream, " %zu", i);
@@ -218,14 +253,14 @@ namespace mod {
     }
 
     /* Print the indices of the enabled bits of a Bitmask, followed by a newline character */
-    void print_ln (FILE* stream = stdout) {
+    void print_ln (FILE* stream = stdout) const {
       print(stream);
       fprintf(stream, "\n");
     }
 
 
     /* Print a full Bitmask as binary */
-    void print_binary (FILE* stream = stdout) {
+    void print_binary (FILE* stream = stdout) const {
       fprintf(stream, "Bitmask<%zu> (Binary) {", byte_count);
       for (size_t i = 0; i < bit_count; i ++) {
         if (match_index(i)) fprintf(stream, "1");
@@ -235,7 +270,7 @@ namespace mod {
     }
 
     /* Print a full Bitmask as binary, followed by a newline character */
-    void print_binary_ln (FILE* stream = stdout) {
+    void print_binary_ln (FILE* stream = stdout) const {
       print_binary(stream);
       fprintf(stream, "\n");
     }
