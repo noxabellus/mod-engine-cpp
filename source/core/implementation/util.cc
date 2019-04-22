@@ -63,46 +63,7 @@ namespace mod {
     struct stat file_stats;
     return (stat(path, &file_stats) == 0);
   }
-
-
-  s64_t str_dir_parent_length (char const* path, size_t max_length) {
-    s64_t last_sep = -1;
-    size_t i = 0;
-
-    while (path[i] != '\0' && i < max_length) {
-      if (path[i] == '\\' || path[i] == '/') last_sep = i;
-      ++ i;
-    }
-
-    return last_sep;
-  }
-
-  s64_t str_dir_traverse_back (char const* path, size_t back, size_t max_length) {
-    s64_t parent_len = max_length;
-
-    for (size_t i = 0; i < back; i ++) {
-      parent_len = str_dir_parent_length(path, parent_len);
-      if (parent_len == -1) break;
-    }
-
-    return parent_len;
-  }
-
-  size_t str_dir_count_back_paths (char const* path, size_t max_length) {
-    size_t i = 0;
-    size_t count = 0;
-
-    while (path[i] != '\0' && i < max_length) {
-      if (path[i] == '.' && path[i + 1] == '.' && (path[i + 2] == '\\' || path[i + 2] == '/')) {
-        i += 3;
-        ++ count;
-      } else {
-        break;
-      }
-    }
-
-    return count;
-  }
+  
 
   bool str_dir_relativize_path (char const* base_path, char const* relative_path, char* out, size_t max_length) {
     size_t back = str_dir_count_back_paths(relative_path);
@@ -129,68 +90,6 @@ namespace mod {
     memcpy(out + base_back_len, relative_path + back_len, rel_len + 1);
 
     return true;
-  }
-
-
-  s64_t str_file_extension (char const* str, size_t max_length) {
-    s64_t dot = -1;
-    size_t i = 0;
-    
-    while (str[i] != '\0' && i < max_length) {
-      if (str[i] == '.') dot = i;
-      else if (str[i] == '\\' || str[i] == '/') dot = -1;
-      
-      ++ i;
-    }
-
-    return dot;
-  }
-
-
-  bool str_starts_with (char const* str, char const* start, size_t max_length) {
-    size_t i = 0;
-    while (start[i] != '\0' && i < max_length) {
-      if (str[i] != start[i]) return false;
-      ++ i;
-    }
-
-    return true;
-  }
-
-  bool str_ends_with (char const* str, char const* end, size_t max_length) {
-    if (max_length == 0) max_length = strlen(end);
-
-    size_t str_len = strlen(str);
-
-    if (max_length > str_len) return false;
-
-    for (size_t i = 0; i < max_length; i ++) {
-      if (str[str_len - max_length + i] != end[i]) return false;
-    }
-
-    return true;
-  }
-
-
-  s32_t str_cmp_caseless (char const* str1, char const* str2, size_t num) {
-    s32_t ret_code = -9999;
-
-    size_t i = 0;
-
-    if (str1 == NULL || str2== NULL) goto done;
-
-    while ((*str1 || *str2) && (i < num)) {
-      ret_code = tolower((s32_t)(*str1)) - tolower((s32_t)(*str2));
-
-      if (ret_code != 0) break;
-
-      ++ i;
-      
-      ++ str1;
-      ++ str2;
-    }
-
-    done: return ret_code;
   }
 }
 

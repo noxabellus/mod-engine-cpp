@@ -31,15 +31,48 @@ namespace mod {
   /* Get the length of the parent directory part of a file path str.
   * For example, for the path `./a/b/c.xyz`, this will return the length of the substring `./a/b`.
   * Returns -1 if no directory separators are found in the str */
-  ENGINE_API s64_t str_dir_parent_length (char const* path, size_t max_length = SIZE_MAX);
+  static constexpr s64_t str_dir_parent_length (char const* path, size_t max_length = SIZE_MAX) {
+    s64_t last_sep = -1;
+    size_t i = 0;
+
+    while (path[i] != '\0' && i < max_length) {
+      if (path[i] == '\\' || path[i] == '/') last_sep = i;
+      ++ i;
+    }
+
+    return last_sep;
+  }
 
   /* Get the length of the directory chain `back` count above the end of a file path str.
   * For example, for the path `./a/b/c.xyz`, a `back` count of 2 will return the length of the substring `./a`.
   * Returns -1 if no directory seperators are found in the str */ 
-  ENGINE_API s64_t str_dir_traverse_back (char const* path, size_t back, size_t max_length = SIZE_MAX);
+  static constexpr s64_t str_dir_traverse_back (char const* path, size_t back, size_t max_length = SIZE_MAX) {
+    s64_t parent_len = max_length;
+
+    for (size_t i = 0; i < back; i ++) {
+      parent_len = str_dir_parent_length(path, parent_len);
+      if (parent_len == -1) break;
+    }
+
+    return parent_len;
+  }
 
   /* Get the number of `..\` or `../` at the beginning of `path` */
-  ENGINE_API size_t str_dir_count_back_paths (char const* path, size_t max_length = SIZE_MAX);
+  static constexpr size_t str_dir_count_back_paths (char const* path, size_t max_length = SIZE_MAX) {
+    size_t i = 0;
+    size_t count = 0;
+
+    while (path[i] != '\0' && i < max_length) {
+      if (path[i] == '.' && path[i + 1] == '.' && (path[i + 2] == '\\' || path[i + 2] == '/')) {
+        i += 3;
+        ++ count;
+      } else {
+        break;
+      }
+    }
+
+    return count;
+  }
 
   /* Combine two path strs by traversing back along `base_path` for each `../` or `..\` of `relative_path`.
   * Additionally, removes a proceeding `./` or `.\` if either is present in `relative_path`.
@@ -51,14 +84,60 @@ namespace mod {
   /* Get the index of the start of the file extension part of a path,
   * E.G. The part after the last `.` if it is not followed by `\` or `/`.
   * Returns -1 if no `.` was found meeting the requirements */
-  ENGINE_API s64_t str_file_extension (char const* str, size_t max_length = SIZE_MAX);
+  static constexpr s64_t str_file_extension (char const* str, size_t max_length = SIZE_MAX) {
+    s64_t dot = -1;
+    size_t i = 0;
+    
+    while (str[i] != '\0' && i < max_length) {
+      if (str[i] == '.') dot = i;
+      else if (str[i] == '\\' || str[i] == '/') dot = -1;
+      
+      ++ i;
+    }
+
+    return dot;
+  }
 
 
   /* Determine whether a str or subsection of a str `start` matches the beginning of `str` */
-  ENGINE_API bool str_starts_with (char const* str, char const* start, size_t max_length = SIZE_MAX);
+  static constexpr bool str_starts_with (char const* str, char const* start, size_t max_length = SIZE_MAX) {
+    size_t i = 0;
+
+    while (start[i] != '\0' && i < max_length) {
+      if (str[i] != start[i]) return false;
+      ++ i;
+    }
+
+    return true;
+  }
 
   /* Determine whether a str or subsection of a str `end` matches the end of `str` */
-  ENGINE_API bool str_ends_with (char const* str, char const* end, size_t max_length = 0);
+  static constexpr bool str_ends_with (char const* str, char const* end, size_t max_length = 0) {
+    if (max_length == 0) max_length = strlen(end);
+
+    size_t str_len = strlen(str);
+
+    if (max_length > str_len) return false;
+
+    for (size_t i = 0; i < max_length; i ++) {
+      if (str[str_len - max_length + i] != end[i]) return false;
+    }
+
+    return true;
+  }
+
+
+  
+
+  static constexpr char char_to_lower (char c) {
+    if (c > '@' && c < '[') return c ^ ' ';
+    else return c;
+  }
+
+  static constexpr char char_to_upper (char c) {
+    if (c > '`' && c < '{') return c ^ ' ';
+    else return c;
+  }
 
   /* Determine whether two strs are the same if case (a vs A) is disregarded
    * Returns:
@@ -66,11 +145,31 @@ namespace mod {
    * < 0 if the first character that does not match has a lower value in str1 than in str2.
    * 0 if the contents of both strings are equal.
    * > 0 if the first character that does not match has a greater value in str1 than in str2 */
-  ENGINE_API int str_cmp_caseless (char const* str1, char const* str2, size_t num = SIZE_MAX);
+  static constexpr s32_t str_cmp_caseless (char const* str1, char const* str2, size_t num = SIZE_MAX) {
+    s32_t ret_code = -9999;
+
+    size_t i = 0;
+
+    if (str1 != NULL && str2 != NULL) {
+      while ((*str1 || *str2) && (i < num)) {
+        ret_code = char_to_lower(*str1) - char_to_lower(*str2);
+
+        if (ret_code != 0) break;
+
+        ++ i;
+        
+        ++ str1;
+        ++ str2;
+      }
+    }
+
+    return ret_code;
+  }
+
 
 
   /* Determine if an ASCII character is whitespace ' ', '\n', etc */
-  static bool char_is_whitespace (char c) {
+  static constexpr bool char_is_whitespace (char c) {
     return c == ' '
         || c == '\n'
         || c == '\t'
@@ -78,7 +177,7 @@ namespace mod {
   }
 
   /* Determine if an ASCII character is '0' thru '9' */
-  static bool char_is_numeric (char c) {
+  static constexpr bool char_is_numeric (char c) {
     return c >= '0'
         && c <= '9';
   }
