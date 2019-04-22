@@ -128,7 +128,7 @@ namespace mod {
 
     String& type_name = item.get_object_string("type");
 
-    s8_t type = UniformType::from_name(type_name.value);
+    u8_t type = UniformType::from_name(type_name.value);
 
     if (type == UniformType::Invalid) {
       item.get_object_item("type")->asset_error(

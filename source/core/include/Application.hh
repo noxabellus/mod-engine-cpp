@@ -26,82 +26,102 @@ namespace mod {
   };
 
   namespace ApplicationWindowMode {
-    enum: s8_t {
-      Invalid = -1,
-      Windowed = 0,
+    enum: u8_t {
+      Windowed,
       Fullscreen,
-      FullscreenDesktop
+      FullscreenDesktop,
+
+      total_mode_count,
+      
+      Invalid = (u8_t) -1
+    };
+
+    static constexpr char const* names [total_mode_count] = {
+      "Windowed",
+      "Fullscreen",
+      "FullscreenDesktop"
     };
 
     /* Get the name of an ApplicationWindowMode as a str */
     static constexpr char const* name (u8_t mode) {
-      switch (mode) {
-        case Windowed: return "Windowed";
-        case Fullscreen: return "Fullscreen";
-        case FullscreenDesktop: return "Fullscreen Desktop";
-        default: return "Invalid";
-      }
+      if (mode < total_mode_count) return names[mode];
+      else return "Invalid";
     }
 
     /* Get an ApplicationWindowMode from its name in str form */
-    static s8_t from_name (char const* name, size_t max_length = SIZE_MAX) {
-      if (str_cmp_caseless(name, "Windowed", max_length) == 0) return Windowed;
-      else if (str_cmp_caseless(name, "Fullscreen", max_length) == 0) return Fullscreen;
-      else if (str_cmp_caseless(name, "FullscreenDesktop", max_length) == 0) return FullscreenDesktop;
-      else return Invalid;
+    static constexpr u8_t from_name (char const* name, size_t max_length = SIZE_MAX) {
+      for (u8_t mode = 0; mode < total_mode_count; mode ++) {
+        if (str_cmp_caseless(name, names[mode], max_length) == 0) return mode;
+      }
+      
+      return Invalid;
     }
+
+    static constexpr s32_t sdl_versions [total_mode_count] = {
+      0,
+      SDL_WINDOW_FULLSCREEN,
+      SDL_WINDOW_FULLSCREEN_DESKTOP
+    };
 
     /* Convert an ApplicationWindowMode to an SDL enum.
      * Returns SDL_WINDOW_LACKS_SHAPE if the mode was invalid */
-    static s32_t to_sdl (u8_t mode) {
-      switch (mode) {
-        case Windowed: return 0;
-        case Fullscreen: return SDL_WINDOW_FULLSCREEN;
-        case FullscreenDesktop: return SDL_WINDOW_FULLSCREEN_DESKTOP;
-        default: return SDL_WINDOW_LACKS_SHAPE;
+    static constexpr s32_t to_sdl (u8_t mode) {
+      if (mode < total_mode_count) return sdl_versions[mode];
+      else return SDL_WINDOW_LACKS_SHAPE;
+    }
+
+    /* Convert an SDL enum to an ApplicationWindowMode */
+    static constexpr u8_t from_sdl (s32_t sdl_mode) {
+      for (u8_t mode = 0; mode < total_mode_count; mode ++) {
+        if (sdl_versions[mode] == sdl_mode) return mode;
       }
+
+      return Invalid;
     }
 
     /* Determine if a value is a valid ApplicationWindowMode */
-    static constexpr bool validate (s8_t mode) {
-      return mode >= Windowed
-          && mode <= FullscreenDesktop;
+    static constexpr bool validate (u8_t mode) {
+      return mode < total_mode_count;
     }
   }
 
   namespace ApplicationVSyncMode {
-    enum: s8_t {
-      Invalid = -1,
-      None = 0,
+    enum: u8_t {
+      None,
       VBlank,
       SleepLock,
-      SpinLock
+      SpinLock,
+
+      total_mode_count,
+
+      Invalid = (u8_t) -1
+    };
+
+    static constexpr char const* names [total_mode_count] = {
+      "None",
+      "VBlank",
+      "SleepLock",
+      "SpinLock"
     };
     
     /* Get the name of an ApplicationVSyncMode as a str */
     static constexpr char const* name (u8_t mode) {
-      switch (mode) {
-        case None: return "None";
-        case VBlank: return "VBlank";
-        case SleepLock: return "SleepLock";
-        case SpinLock: return "SpinLock";
-        default: return "Invalid";
-      }
+      if (mode < total_mode_count) return names[mode];
+      else return "Invalid";
     }
     
     /* Get an ApplicationVSyncMode from its name in str form */
-    static s8_t from_name (char const* name, size_t max_length = SIZE_MAX) {
-      if (str_cmp_caseless(name, "None", max_length) == 0) return None;
-      else if (str_cmp_caseless(name, "VBlank", max_length) == 0) return VBlank;
-      else if (str_cmp_caseless(name, "SleepLock", max_length) == 0) return SleepLock;
-      else if (str_cmp_caseless(name, "SpinLock", max_length) == 0) return SpinLock;
-      else return Invalid;
+    static constexpr u8_t from_name (char const* name, size_t max_length = SIZE_MAX) {
+      for (u8_t mode = 0; mode < total_mode_count; mode ++) {
+        if (str_cmp_caseless(name, names[mode], max_length) == 0) return mode;
+      }
+
+      return Invalid;
     }
     
     /* Determine if a value is a valid ApplicationVSyncMode */
     static constexpr bool validate (u8_t mode) {
-      return mode >= None
-          && mode <= SpinLock;
+      return mode < total_mode_count;
     }
   }
 

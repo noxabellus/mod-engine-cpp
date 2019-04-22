@@ -310,7 +310,7 @@ namespace mod {
     }
 
     /* Get a Keycode from its name in str form */
-    static u8_t from_name (char const* name, size_t max_length = SIZE_MAX) {
+    static constexpr u8_t from_name (char const* name, size_t max_length = SIZE_MAX) {
       for (size_t code = 0; code < total_key_count; code ++) {
         if (str_cmp_caseless(name, names[code], max_length) == 0) return code;
       }
@@ -516,9 +516,9 @@ namespace mod {
     /* Get a Keycode from a visual character.
      * Returns Invalid if the visual character was not typable under normal circumstances, or was invalid itself
      * (E.g. backspace, though it does have a character representation, is not allowed) */
-    static u8_t from_char (char ch) {
+    static constexpr u8_t from_char (char ch) {
       for (u8_t code = 0; code < Up; code ++) {
-        if (char_versions[code] == tolower(ch)) return code;
+        if (char_versions[code] == char_to_lower(ch)) return code;
       }
 
       return Invalid;
@@ -537,7 +537,7 @@ namespace mod {
       Invalid = (u8_t) -1
     };
 
-    constexpr char const* names [total_lock_count] = {
+    static constexpr char const* names [total_lock_count] = {
       "Caps",
       "Num",
       "Scroll"
@@ -550,7 +550,7 @@ namespace mod {
     }
 
     /* Get a LockKey from its name in str form */
-    static u8_t from_name (char const* name, size_t max_length = SIZE_MAX) {
+    static constexpr u8_t from_name (char const* name, size_t max_length = SIZE_MAX) {
       for (u8_t lock = 0; lock < total_lock_count; lock ++) {
         if (str_cmp_caseless(name, names[lock], max_length) == 0) return lock;
       }
@@ -558,7 +558,7 @@ namespace mod {
       return Invalid;
     }
 
-    constexpr u8_t keycode_versions [total_lock_count] = {
+    static constexpr u8_t keycode_versions [total_lock_count] = {
       Keycode::CapsLock,
       Keycode::NumLock,
       Keycode::ScrollLock,
@@ -606,7 +606,7 @@ namespace mod {
       Invalid = (u8_t) -1
     };
 
-    constexpr char const* names [total_modifier_count] = {
+    static constexpr char const* names [total_modifier_count] = {
       "Shift",
       "Ctrl",
       "Alt"
@@ -619,7 +619,7 @@ namespace mod {
     }
 
     /* Get a ModifierKey from its name in str form */
-    static u8_t from_name (char const* name, size_t max_length = SIZE_MAX) {
+    static constexpr u8_t from_name (char const* name, size_t max_length = SIZE_MAX) {
       for (u8_t modifier = 0; modifier < total_modifier_count; modifier ++) {
         if (str_cmp_caseless(name, names[modifier], max_length) == 0) return modifier;
       }
@@ -627,7 +627,7 @@ namespace mod {
       return Invalid;
     }
 
-    constexpr u8_t keycode_versions [total_modifier_count] = {
+    static constexpr u8_t keycode_versions [total_modifier_count] = {
       Keycode::ShiftL,
       Keycode::CtrlL,
       Keycode::AltL
@@ -676,7 +676,7 @@ namespace mod {
       Invalid = (u8_t) -1
     };
 
-    constexpr char const* names [total_button_count] = {
+    static constexpr char const* names [total_button_count] = {
       "Left", "Middle", "Right",
       "Back", "Forward",
       "WheelUp", "WheelDown",
@@ -690,7 +690,7 @@ namespace mod {
     }
 
     /* Get a MouseButton from its name in str form */
-    static u8_t from_name (char const* name, size_t max_length = SIZE_MAX) {
+    static constexpr u8_t from_name (char const* name, size_t max_length = SIZE_MAX) {
       for (u8_t button = 0; button < total_button_count; button ++) {
         if (str_cmp_caseless(name, names[button], max_length) == 0) return button;
       }
@@ -698,7 +698,7 @@ namespace mod {
       return Invalid;
     }
 
-    constexpr s32_t sdl_versions [WheelUp] = {
+    static constexpr s32_t sdl_versions [WheelUp] = {
       SDL_BUTTON_LEFT, SDL_BUTTON_MIDDLE, SDL_BUTTON_RIGHT,
       SDL_BUTTON_X1, SDL_BUTTON_X2
     };

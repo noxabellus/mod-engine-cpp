@@ -11,43 +11,47 @@
 
 namespace mod {
   namespace JSONType {
-    enum: s8_t {
-      Invalid = -1,
-      Boolean = 0,
+    enum: u8_t {
+      Boolean,
       Number,
       String,
       Array,
-      Object
+      Object,
+
+      total_type_count,
+
+      Invalid = (u8_t) -1,
+    };
+
+    static constexpr char const* names [total_type_count] = {
+      "Boolean",
+      "Number",
+      "String",
+      "Array",
+      "Object"
     };
 
     /* Get the name of a JSONType as a str */
     static constexpr char const* name (u8_t type) {
-      switch (type) {
-        case Boolean: return "Boolean";
-        case Number: return "Number";
-        case String: return "String";
-        case Array: return "Array";
-        case Object: return "Object";
-        default: return "Invalid";
-      }
+      if (type < total_type_count) return names[type];
+      else return "Invalid";
     }
 
     /* Get a JSONType from its name in str form */
-    static s8_t from_name (char const* str, size_t max_length = SIZE_MAX) {
-      if (str_cmp_caseless(str, "boolean", max_length) == 0) return Boolean;
-      else if (str_cmp_caseless(str, "number", max_length) == 0) return Number;
-      else if (str_cmp_caseless(str, "string", max_length) == 0) return String;
-      else if (str_cmp_caseless(str, "array", max_length) == 0) return Array;
-      else if (str_cmp_caseless(str, "object", max_length) == 0) return Object;
-      else return Invalid;
+    static constexpr u8_t from_name (char const* str, size_t max_length = SIZE_MAX) {
+      for (u8_t type = 0; type < total_type_count; type ++) {
+        if (str_cmp_caseless(str, names[type], max_length) == 0) return type;
+      }
+
+      return Invalid;
     }
 
     /* Determine if a value is a valid JSONType */
     static constexpr bool validate (u8_t type) {
-      return type >= Boolean
-          && type <= Object;
+      return type < total_type_count;
     }
   }
+  
 
   struct JSONItem;
   

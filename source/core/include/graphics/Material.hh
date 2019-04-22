@@ -30,10 +30,8 @@ namespace mod {
   };
 
   namespace UniformType {
-    enum: s8_t {
-      Invalid = -1,
-
-      Bool = 0,
+    enum: u8_t {
+      Bool,
       F32,
       F64,
       S32,
@@ -76,60 +74,66 @@ namespace mod {
       Vector4uArray,
 
       Matrix3Array,
-      Matrix4Array
+      Matrix4Array,
+
+      total_type_count,
+
+      Invalid = (u8_t) -1
+    };
+
+
+    static constexpr char const* names [total_type_count] = {
+      "Bool",
+      "F32",
+      "F64",
+      "S32",
+      "U32",
+
+      "Vector2f",
+      "Vector2d",
+      "Vector2s",
+      "Vector2u",
+      "Vector3f",
+      "Vector3d",
+      "Vector3s",
+      "Vector3u",
+      "Vector4f",
+      "Vector4d",
+      "Vector4s",
+      "Vector4u",
+
+      "Matrix3",
+      "Matrix4",
+
+      "Texture",
+
+      "BoolArray",
+      "F32Array",
+      "F64Array",
+      "S32Array",
+      "U32Array",
+
+      "Vector2fArray",
+      "Vector2dArray",
+      "Vector2sArray",
+      "Vector2uArray",
+      "Vector3fArray",
+      "Vector3dArray",
+      "Vector3sArray",
+      "Vector3uArray",
+      "Vector4fArray",
+      "Vector4dArray",
+      "Vector4sArray",
+      "Vector4uArray",
+
+      "Matrix3Array",
+      "Matrix4Array"
     };
 
     /* Get the name of a UniformType as a str */
     static constexpr char const* name (u8_t type) {
-      switch (type) {
-        case Bool: return "Bool";
-        case F32: return "F32";
-        case F64: return "F64";
-        case S32: return "S32";
-        case U32: return "U32";
-
-        case Vector2f: return "Vector2f";
-        case Vector2d: return "Vector2d";
-        case Vector2s: return "Vector2s";
-        case Vector2u: return "Vector2u";
-        case Vector3f: return "Vector3f";
-        case Vector3d: return "Vector3d";
-        case Vector3s: return "Vector3s";
-        case Vector3u: return "Vector3u";
-        case Vector4f: return "Vector4f";
-        case Vector4d: return "Vector4d";
-        case Vector4s: return "Vector4s";
-        case Vector4u: return "Vector4u";
-
-        case Matrix3: return "Matrix3";
-        case Matrix4: return "Matrix4";
-
-        case Texture: return "Texture";
-
-        case BoolArray: return "BoolArray";
-        case F32Array: return "F32Array";
-        case F64Array: return "F64Array";
-        case S32Array: return "S32Array";
-        case U32Array: return "U32Array";
-
-        case Vector2fArray: return "Vector2fArray";
-        case Vector2dArray: return "Vector2dArray";
-        case Vector2sArray: return "Vector2sArray";
-        case Vector2uArray: return "Vector2uArray";
-        case Vector3fArray: return "Vector3fArray";
-        case Vector3dArray: return "Vector3dArray";
-        case Vector3sArray: return "Vector3sArray";
-        case Vector3uArray: return "Vector3uArray";
-        case Vector4fArray: return "Vector4fArray";
-        case Vector4dArray: return "Vector4dArray";
-        case Vector4sArray: return "Vector4sArray";
-        case Vector4uArray: return "Vector4uArray";
-
-        case Matrix3Array: return "Matrix3Array";
-        case Matrix4Array: return "Matrix4Array";
-
-        default: return "Invalid";
-      }
+      if (type < total_type_count) return names[type];
+      else return "Invalid";
     }
 
     static constexpr char const* valid_values = (
@@ -175,132 +179,88 @@ namespace mod {
     );
 
     /* Get a UniformType from its name in str form */
-    static s8_t from_name (char const* name, size_t max_length = SIZE_MAX) {
-      if (str_cmp_caseless(name, "Bool", max_length) == 0) return Bool;
-      else if (str_cmp_caseless(name, "F32", max_length) == 0) return F32;
-      else if (str_cmp_caseless(name, "F64", max_length) == 0) return F64;
-      else if (str_cmp_caseless(name, "S32", max_length) == 0) return S32;
-      else if (str_cmp_caseless(name, "U32", max_length) == 0) return U32;
+    static constexpr u8_t from_name (char const* name, size_t max_length = SIZE_MAX) {
+      for (u8_t type = 0; type < total_type_count; type ++) {
+        if (str_cmp_caseless(name, names[type], max_length) == 0) return type;
+      }
 
-      else if (str_cmp_caseless(name, "Vector2f", max_length) == 0) return Vector2f;
-      else if (str_cmp_caseless(name, "Vector2d", max_length) == 0) return Vector2d;
-      else if (str_cmp_caseless(name, "Vector2s", max_length) == 0) return Vector2s;
-      else if (str_cmp_caseless(name, "Vector2u", max_length) == 0) return Vector2u;
-      else if (str_cmp_caseless(name, "Vector3f", max_length) == 0) return Vector3f;
-      else if (str_cmp_caseless(name, "Vector3d", max_length) == 0) return Vector3d;
-      else if (str_cmp_caseless(name, "Vector3s", max_length) == 0) return Vector3s;
-      else if (str_cmp_caseless(name, "Vector3u", max_length) == 0) return Vector3u;
-      else if (str_cmp_caseless(name, "Vector4f", max_length) == 0) return Vector4f;
-      else if (str_cmp_caseless(name, "Vector4d", max_length) == 0) return Vector4d;
-      else if (str_cmp_caseless(name, "Vector4s", max_length) == 0) return Vector4s;
-      else if (str_cmp_caseless(name, "Vector4u", max_length) == 0) return Vector4u;
-
-      else if (str_cmp_caseless(name, "Matrix3", max_length) == 0) return Matrix3;
-      else if (str_cmp_caseless(name, "Matrix4", max_length) == 0) return Matrix4;
-
-      else if (str_cmp_caseless(name, "Texture", max_length) == 0) return Texture;
-
-      else if (str_cmp_caseless(name, "BoolArray", max_length) == 0) return BoolArray;
-      else if (str_cmp_caseless(name, "F32Array", max_length) == 0) return F32Array;
-      else if (str_cmp_caseless(name, "F64Array", max_length) == 0) return F64Array;
-      else if (str_cmp_caseless(name, "S32Array", max_length) == 0) return S32Array;
-      else if (str_cmp_caseless(name, "U32Array", max_length) == 0) return U32Array;
-
-      else if (str_cmp_caseless(name, "Vector2fArray", max_length) == 0) return Vector2fArray;
-      else if (str_cmp_caseless(name, "Vector2dArray", max_length) == 0) return Vector2dArray;
-      else if (str_cmp_caseless(name, "Vector2sArray", max_length) == 0) return Vector2sArray;
-      else if (str_cmp_caseless(name, "Vector2uArray", max_length) == 0) return Vector2uArray;
-      else if (str_cmp_caseless(name, "Vector3fArray", max_length) == 0) return Vector3fArray;
-      else if (str_cmp_caseless(name, "Vector3dArray", max_length) == 0) return Vector3dArray;
-      else if (str_cmp_caseless(name, "Vector3sArray", max_length) == 0) return Vector3sArray;
-      else if (str_cmp_caseless(name, "Vector3uArray", max_length) == 0) return Vector3uArray;
-      else if (str_cmp_caseless(name, "Vector4fArray", max_length) == 0) return Vector4fArray;
-      else if (str_cmp_caseless(name, "Vector4dArray", max_length) == 0) return Vector4dArray;
-      else if (str_cmp_caseless(name, "Vector4sArray", max_length) == 0) return Vector4sArray;
-      else if (str_cmp_caseless(name, "Vector4uArray", max_length) == 0) return Vector4uArray;
-
-      else if (str_cmp_caseless(name, "Matrix3Array", max_length) == 0) return Matrix3Array;
-      else if (str_cmp_caseless(name, "Matrix4Array", max_length) == 0) return Matrix4Array;
-      else return Invalid;
+      return Invalid;
     }
+
+    static constexpr size_t sizes [BoolArray] = {
+      sizeof(bool),
+      sizeof(f32_t),
+      sizeof(f64_t),
+      sizeof(s32_t),
+      sizeof(u32_t),
+      sizeof(Vector2f),
+      sizeof(Vector2d),
+      sizeof(Vector2s),
+      sizeof(Vector2u),
+      sizeof(Vector3f),
+      sizeof(Vector3d),
+      sizeof(Vector3s),
+      sizeof(Vector3u),
+      sizeof(Vector4f),
+      sizeof(Vector4d),
+      sizeof(Vector4s),
+      sizeof(Vector4u),
+      sizeof(Matrix3),
+      sizeof(Matrix4),
+      sizeof(TextureSlot)
+    };
 
     /* Get the size in bytes of a UniformType
      * Returns -1 for invalid or array types */
     static constexpr s64_t size (u8_t type) {
-      switch (type) {
-        case Bool: return sizeof(bool);
-        case F32: return sizeof(f32_t);
-        case F64: return sizeof(f64_t);
-        case S32: return sizeof(s32_t);
-        case U32: return sizeof(u32_t);
-
-        case Vector2f: return sizeof(Vector2f);
-        case Vector2d: return sizeof(Vector2d);
-        case Vector2s: return sizeof(Vector2s);
-        case Vector2u: return sizeof(Vector2u);
-        case Vector3f: return sizeof(Vector3f);
-        case Vector3d: return sizeof(Vector3d);
-        case Vector3s: return sizeof(Vector3s);
-        case Vector3u: return sizeof(Vector3u);
-        case Vector4f: return sizeof(Vector4f);
-        case Vector4d: return sizeof(Vector4d);
-        case Vector4s: return sizeof(Vector4s);
-        case Vector4u: return sizeof(Vector4u);
-
-        case Matrix3: return sizeof(Matrix3);
-        case Matrix4: return sizeof(Matrix4);
-
-        case Texture: return sizeof(TextureSlot);
-
-        default: return -1;
-      }
+      if (type < BoolArray) return sizes[type];
+      else return -1;
     }
 
+    static constexpr u8_t element_types [total_type_count - BoolArray] = {
+      Bool,
+      F32,
+      F64,
+      S32,
+      U32,
+
+      Vector2f,
+      Vector2d,
+      Vector2s,
+      Vector2u,
+      Vector3f,
+      Vector3d,
+      Vector3s,
+      Vector3u,
+      Vector4f,
+      Vector4d,
+      Vector4s,
+      Vector4u,
+
+      Matrix3,
+      Matrix4
+    };
+
     /* Get the value UniformType associated with an array UniformType */
-    static constexpr s8_t element_type (u8_t type) {
-      switch (type) {
-        case BoolArray: return Bool;
-        case F32Array: return F32;
-        case F64Array: return F64;
-        case S32Array: return S32;
-        case U32Array: return U32;
-
-        case Vector2fArray: return Vector2f;
-        case Vector2dArray: return Vector2d;
-        case Vector2sArray: return Vector2s;
-        case Vector2uArray: return Vector2u;
-        case Vector3fArray: return Vector3f;
-        case Vector3dArray: return Vector3d;
-        case Vector3sArray: return Vector3s;
-        case Vector3uArray: return Vector3u;
-        case Vector4fArray: return Vector4f;
-        case Vector4dArray: return Vector4d;
-        case Vector4sArray: return Vector4s;
-        case Vector4uArray: return Vector4u;
-
-        case Matrix3Array: return Matrix3;
-        case Matrix4Array: return Matrix4;
-
-        default: return Invalid;
-      }
+    static constexpr u8_t element_type (u8_t type) {
+      if (type > Texture && type < total_type_count) return element_types[type - BoolArray];
+      else return Invalid;
     }
 
     /* Determine if a value is a valid UniformType */
     static constexpr bool validate (u8_t type) {
-      return type >= Bool
-          && type <= Matrix4Array;
+      return type < total_type_count;
     }
 
     /* Determine if a value is a valid value UniformType */
     static constexpr bool validate_value (u8_t type) {
-      return type >= Bool
-          && type <= Texture;
+      return type < BoolArray;
     }
 
     /* Determine if a value is a valid array UniformType */
     static constexpr bool validate_array (u8_t type) {
-      return type >= BoolArray
-          && type <= Matrix4Array;
+      return type > Texture
+          && type < total_type_count;
     }
 
     /* Get a UniformType from a real type */

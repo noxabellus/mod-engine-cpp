@@ -12,23 +12,28 @@
 
 namespace mod {
   namespace TextureWrap {
-    enum: s8_t {
-      Invalid = -1,
-      Repeat = 0,
+    enum: u8_t {
+      Repeat,
       Mirror,
       ClampEdge,
-      ClampBorder
+      ClampBorder,
+
+      total_wrap_count,
+
+      Invalid = (u8_t) -1
+    };
+
+    static constexpr char const* names [total_wrap_count] = {
+      "Repeat",
+      "Mirror",
+      "ClampEdge",
+      "ClampBorder"
     };
 
     /* Get the name of a TextureWrap as a str */
     static constexpr char const* name (u8_t wrap) {
-      switch (wrap) {
-        case Repeat: return "Repeat";
-        case Mirror: return "Mirror";
-        case ClampEdge: return "ClampEdge";
-        case ClampBorder: return "ClampBorder";
-        default: return "Invalid";
-      }
+      if (wrap < total_wrap_count) return names[wrap];
+      else return "Invalid";
     }
 
     static constexpr char const* valid_values = (
@@ -39,69 +44,73 @@ namespace mod {
     );
 
     /* Get a TextureWrap from its name in str form */
-    static s8_t from_name (char const* name, size_t max_length = SIZE_MAX) {
-      if (str_cmp_caseless(name, "Repeat", max_length) == 0) return Repeat;
-      else if (str_cmp_caseless(name, "Mirror", max_length) == 0) return Mirror;
-      else if (str_cmp_caseless(name, "ClampEdge", max_length) == 0) return ClampEdge;
-      else if (str_cmp_caseless(name, "ClampBorder", max_length) == 0) return ClampBorder;
-      else return Invalid;
+    static u8_t from_name (char const* name, size_t max_length = SIZE_MAX) {
+      for (u8_t wrap = 0; wrap < total_wrap_count; wrap ++) {
+        if (str_cmp_caseless(name, names[wrap], max_length) == 0) return wrap;
+      }
+
+      return Invalid;
     }
+
+    static constexpr s32_t gl_versions [total_wrap_count] = {
+      GL_REPEAT,
+      GL_MIRRORED_REPEAT,
+      GL_CLAMP_TO_EDGE,
+      GL_CLAMP_TO_BORDER
+    };
 
     /* Convert an internal TextureWrap to an OpenGL enum.
      * Returns GL_INVALID_ENUM if the wrap was invalid */
     static constexpr s32_t to_gl (u8_t wrap) {
-      switch (wrap) {
-        case Repeat: return GL_REPEAT;
-        case Mirror: return GL_MIRRORED_REPEAT;
-        case ClampEdge: return GL_CLAMP_TO_EDGE;
-        case ClampBorder: return GL_CLAMP_TO_BORDER;
-        default: return GL_INVALID_ENUM;
-      }
+      if (wrap < total_wrap_count) return gl_versions[wrap];
+      else return GL_INVALID_ENUM;
     }
 
     /* Convert an OpenGL enum to a TextureWrap */
-    static constexpr s8_t from_gl (s32_t gl_enum) {
-      switch (gl_enum) {
-        case GL_REPEAT: return Repeat;
-        case GL_MIRRORED_REPEAT: return Mirror;
-        case GL_CLAMP_TO_EDGE: return ClampEdge;
-        case GL_CLAMP_TO_BORDER: return ClampBorder;
-        default: return Invalid;
+    static constexpr u8_t from_gl (s32_t gl_enum) {
+      for (u8_t wrap = 0; wrap < total_wrap_count; wrap ++) {
+        if (gl_versions[wrap] == gl_enum) return wrap;
       }
+
+      return Invalid;
     }
 
     /* Determine if a value is a valid TextureWrap */
     static constexpr bool validate (u8_t wrap) {
-      return wrap >= Repeat
-          && wrap <= ClampBorder;
+      return wrap < total_wrap_count;
     }
   }
 
 
   namespace TextureFilter {
-    enum: s8_t {
-      Invalid = -1,
-
-      Nearest = 0,
+    enum: u8_t {
+      Nearest,
       Linear,
 
       NearestNearest,
       LinearLinear,
       NearestLinear,
-      LinearNearest
+      LinearNearest,
+
+      total_filter_count,
+
+      Invalid = (u8_t) -1,
+    };
+
+    static constexpr char const* names [total_filter_count] = {
+      "Nearest",
+      "Linear",
+
+      "NearestNearest",
+      "LinearLinear",
+      "NearestLinear",
+      "LinearNearest"
     };
 
     /* Get the name of a TextureFilter as a str */
     static constexpr char const* name (u8_t filter) {
-      switch (filter) {
-        case Nearest: return "Nearest";
-        case Linear: return "Linear";
-        case NearestNearest: return "NearestNearest";
-        case LinearLinear: return "LinearLinear";
-        case NearestLinear: return "NearestLinear";
-        case LinearNearest: return "LinearNearest";
-        default: return "Invalid";
-      }
+      if (filter < total_filter_count) return names[filter];
+      else return "Invalid";
     }
 
     static constexpr char const* valid_min_values = (
@@ -119,47 +128,42 @@ namespace mod {
     );
 
     /* Get a TextureFilter from its name in str form */
-    static s8_t from_name (char const* name, size_t max_length = SIZE_MAX) {
-      if (str_cmp_caseless(name, "Nearest", max_length) == 0) return Nearest;
-      else if (str_cmp_caseless(name, "Linear", max_length) == 0) return Linear;
-      else if (str_cmp_caseless(name, "NearestNearest", max_length) == 0) return NearestNearest;
-      else if (str_cmp_caseless(name, "LinearLinear", max_length) == 0) return LinearLinear;
-      else if (str_cmp_caseless(name, "NearestLinear", max_length) == 0) return NearestLinear;
-      else if (str_cmp_caseless(name, "LinearNearest", max_length) == 0) return LinearNearest;
-      else return Invalid;
+    static constexpr u8_t from_name (char const* name, size_t max_length = SIZE_MAX) {
+      for (u8_t filter = 0; filter < total_filter_count; filter ++) {
+        if (str_cmp_caseless(name, names[filter], max_length) == 0) return filter;
+      }
+
+      return Invalid;
     }
+
+    static constexpr s32_t gl_versions [total_filter_count] = {
+      GL_NEAREST,
+      GL_LINEAR,
+      GL_NEAREST_MIPMAP_NEAREST,
+      GL_LINEAR_MIPMAP_LINEAR,
+      GL_NEAREST_MIPMAP_LINEAR,
+      GL_LINEAR_MIPMAP_NEAREST
+    };
 
     /* Convert an internal TextureFilter to an OpenGL enum.
      * Returns GL_INVALID_ENUM if the filter was invalid */
     static constexpr s32_t to_gl (u8_t filter) {
-      switch (filter) {
-        case Nearest: return GL_NEAREST;
-        case Linear: return GL_LINEAR;
-        case NearestNearest: return GL_NEAREST_MIPMAP_NEAREST;
-        case LinearLinear: return GL_LINEAR_MIPMAP_LINEAR;
-        case NearestLinear: return GL_NEAREST_MIPMAP_LINEAR;
-        case LinearNearest: return GL_LINEAR_MIPMAP_NEAREST;
-        default: return GL_INVALID_ENUM;
-      }
+      if (filter < total_filter_count) return gl_versions[filter];
+      else return GL_INVALID_ENUM;
     }
 
     /* Convert an OpenGL enum to a TextureFilter */
-    static constexpr s8_t from_gl (s32_t gl_enum) {
-      switch (gl_enum) {
-        case GL_NEAREST: return Nearest;
-        case GL_LINEAR: return Linear;
-        case GL_NEAREST_MIPMAP_NEAREST: return NearestNearest;
-        case GL_LINEAR_MIPMAP_LINEAR: return LinearLinear;
-        case GL_NEAREST_MIPMAP_LINEAR: return NearestLinear;
-        case GL_LINEAR_MIPMAP_NEAREST: return LinearNearest;
-        default: return Invalid;
+    static constexpr u8_t from_gl (s32_t gl_enum) {
+      for (u8_t filter = 0; filter < total_filter_count; filter ++) {
+        if (gl_versions[filter] == gl_enum) return filter;
       }
+
+      return Invalid;
     }
 
     /* Determine if a value is a valid TextureFilter */
     static constexpr bool validate (u8_t filter) {
-      return filter >= Nearest
-          && filter <= LinearNearest;
+      return filter < total_filter_count;
     }
 
     /* Determine if a value is a valid TextureFilter for use in the mag filter slot */
@@ -170,8 +174,8 @@ namespace mod {
 
     /* Determine if a TextureFilter uses a mipmap */
     static constexpr bool uses_mipmap (u8_t filter) {
-      return filter >= NearestNearest
-          && filter <= LinearNearest;
+      return filter > Linear
+          && filter < total_filter_count;
     }
   }
 

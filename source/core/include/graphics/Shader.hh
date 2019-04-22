@@ -11,89 +11,112 @@
 
 namespace mod {
   namespace ShaderType {
-    enum: s8_t {
-      Invalid = -1,
-      Vertex = 0,
+    enum: u8_t {
+      Vertex,
       Fragment,
       TesselationControl,
       TesselationEvaluation,
       Geometry,
-      Compute
+      Compute,
+
+      total_type_count,
+
+      Invalid = (u8_t) -1,
+    };
+
+    static constexpr char const* names [total_type_count] = {
+      "Vertex",
+      "Fragment",
+      "TesselationControl",
+      "TesselationEvaluation",
+      "Geometry",
+      "Compute"
     };
 
     /* Get the name of a ShaderType as a str */
     static constexpr char const* name (u8_t type) {
-      switch (type) {
-        case Vertex: return "Vertex";
-        case Fragment: return "Fragment";
-        case TesselationControl: return "TesselationControl";
-        case TesselationEvaluation: return "TesselationEvaluation";
-        case Geometry: return "Geometry";
-        case Compute: return "Compute";
-        default: return "Invalid";
-      }
+      if (type < total_type_count) return names[type];
+      else return "Invalid";
     }
 
     /* Get a ShaderType from its name in str form */
-    static s8_t from_name (char const* name, size_t max_length = SIZE_MAX) {
-      if (str_cmp_caseless(name, "Vertex", max_length) == 0) return Vertex;
-      else if (str_cmp_caseless(name, "Fragment", max_length) == 0) return Fragment;
-      else if (str_cmp_caseless(name, "TesselationControl", max_length) == 0) return TesselationControl;
-      else if (str_cmp_caseless(name, "TesselationEvaluation", max_length) == 0) return TesselationEvaluation;
-      else if (str_cmp_caseless(name, "Geometry", max_length) == 0) return Geometry;
-      else if (str_cmp_caseless(name, "Compute", max_length) == 0) return Compute;
-      else return Invalid;
+    static constexpr u8_t from_name (char const* name, size_t max_length = SIZE_MAX) {
+      for (u8_t type = 0; type < total_type_count; type ++) {
+        if (str_cmp_caseless(name, names[type], max_length) == 0) return type;
+      }
+
+      return Invalid;
     }
+
+    static constexpr char const* extensions [total_type_count] = {
+      "vert",
+      "frag",
+      "tesc",
+      "tese",
+      "geom",
+      "comp"
+    };
 
     /* Get a ShaderType from a file extension.
      * Accepts whole path or extension only */
-    static s8_t from_file_ext (char const* path, size_t max_length = SIZE_MAX) {
+    static constexpr u8_t from_file_ext (char const* path, size_t max_length = SIZE_MAX) {
       s64_t ext_offset = str_file_extension(path, max_length);
 
-      static const auto match = [] (char const* str, size_t max) -> s8_t {
-        if (str_cmp_caseless(str, "vert", max) == 0) return Vertex;
-        else if (str_cmp_caseless(str, "frag", max) == 0) return Fragment;
-        else if (str_cmp_caseless(str, "tesc", max) == 0) return TesselationControl;
-        else if (str_cmp_caseless(str, "tese", max) == 0) return TesselationEvaluation;
-        else if (str_cmp_caseless(str, "geom", max) == 0) return Geometry;
-        else if (str_cmp_caseless(str, "comp", max) == 0) return Compute;
-        else return Invalid;
-      };
+      char const* offset_path = ext_offset == -1? path : path + ext_offset + 1;
+      size_t offset_max = ext_offset == -1? max_length : max_length - ext_offset - 1;
 
-      if (ext_offset == -1) {
-        return match(path, max_length);
-      } else {
-        return match(path + ext_offset + 1, max_length - ext_offset - 1);
+      for (u8_t type = 0; type < total_type_count; type ++) {
+        if (str_cmp_caseless(offset_path, extensions[type], offset_max) == 0) return type;
       }
+
+      return Invalid;
+    }
+
+    /* Get a file extension from a ShaderType.
+     * Returns NULL if the ShaderType was invalid */
+    static constexpr char const* to_file_ext (u8_t type) {
+      if (type < total_type_count) return extensions[type];
+      else return NULL;
     }
 
     /* A list of accepted file formats */
-    static char const* known_file_exts =
+    static constexpr char const* known_file_exts = (
       "Vertex: .vert\n"
       "Fragment: .frag\n"
       "TesselationControl: .tesc\n"
       "TesselationEvaluation: .tese\n"
       "Geometry: .geom\n"
-      "Compute: .comp";
+      "Compute: .comp"
+    );
+
+    static constexpr s32_t gl_versions [total_type_count] = {
+      GL_VERTEX_SHADER,
+      GL_FRAGMENT_SHADER,
+      GL_TESS_CONTROL_SHADER,
+      GL_TESS_EVALUATION_SHADER,
+      GL_GEOMETRY_SHADER,
+      GL_COMPUTE_SHADER
+    };
 
     /* Convert an internal ShaderType to an OpenGL enum.
      * Returns GL_INVALID_ENUM if the type was invalid */
     static constexpr s32_t to_gl (u8_t type) {
-      switch (type) {
-        case Vertex: return GL_VERTEX_SHADER;
-        case Fragment: return GL_FRAGMENT_SHADER;
-        case TesselationControl: return GL_TESS_CONTROL_SHADER;
-        case TesselationEvaluation: return GL_TESS_EVALUATION_SHADER;
-        case Geometry: return GL_GEOMETRY_SHADER;
-        case Compute: return GL_COMPUTE_SHADER;
-        default: return GL_INVALID_ENUM;
+      if (type < total_type_count) return gl_versions[type];
+      else return GL_INVALID_ENUM;
+    }
+
+    /* Convert an OpenGL enum to an internal ShaderType */
+    static constexpr u8_t from_gl (s32_t gl_type) {
+      for (u8_t type = 0; type < total_type_count; type ++) {
+        if (gl_versions[type] == gl_type) return type;
       }
+
+      return Invalid;
     }
 
     /* Determine if a value is a valid ShaderType */
     static constexpr bool validate (u8_t type) {
-      return type >= Vertex
-          && type <= Compute;
+      return type < total_type_count;
     }
   }
 

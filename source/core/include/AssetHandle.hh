@@ -16,47 +16,48 @@ namespace mod {
 
 
   namespace AssetType {
-    enum: s8_t {
-      Invalid = -1,
-      Shader = 0,
+    enum: u8_t {
+      Shader,
       ShaderProgram,
       Texture,
       Material,
       MaterialSet,
       RenderMesh2D,
-      RenderMesh3D
+      RenderMesh3D,
+
+      total_type_count,
+
+      Invalid = (u8_t) -1
+    };
+
+    static constexpr char const* names [total_type_count] = {
+      "Shader",
+      "ShaderProgram",
+      "Texture",
+      "Material",
+      "MaterialSet",
+      "RenderMesh2D",
+      "RenderMesh3D"
     };
 
     /* Get the name of an AssetType as a str */
     static constexpr char const* name (u8_t type) {
-      switch (type) {
-        case Shader: return "Shader";
-        case ShaderProgram: return "ShaderProgram";
-        case Texture: return "Texture";
-        case Material: return "Material";
-        case MaterialSet: return "MaterialSet";
-        case RenderMesh2D: return "RenderMesh2D";
-        case RenderMesh3D: return "RenderMesh3D";
-        default: return "Invalid";
-      }
+      if (type < total_type_count) return names[type];
+      return "Invalid";
     }
     
     /* Get an AssetType from its name in str form */
-    static s8_t from_name (char const* name, size_t max_length = SIZE_MAX) {
-      if (str_cmp_caseless(name, "Shader", max_length) == 0) return Shader;
-      else if (str_cmp_caseless(name, "ShaderProgram", max_length) == 0) return ShaderProgram;
-      else if (str_cmp_caseless(name, "Texture", max_length) == 0) return Texture;
-      else if (str_cmp_caseless(name, "Material", max_length) == 0) return Material;
-      else if (str_cmp_caseless(name, "MaterialSet", max_length) == 0) return MaterialSet;
-      else if (str_cmp_caseless(name, "RenderMesh2D", max_length) == 0) return RenderMesh2D;
-      else if (str_cmp_caseless(name, "RenderMesh3D", max_length) == 0) return RenderMesh3D;
-      else return Invalid;
+    static constexpr u8_t from_name (char const* name, size_t max_length = SIZE_MAX) {
+      for (u8_t type = 0; type < total_type_count; type ++) {
+        if (str_cmp_caseless(name, names[type], max_length) == 0) return type;
+      }
+
+      return Invalid;
     }
 
     /* Determine if a value is a valid AssetType */
     static constexpr bool validate (u8_t type) {
-      return type >= Shader
-          && type <= RenderMesh3D;
+      return type < total_type_count;
     }
 
     /* Get an AssetType enum from a type */
