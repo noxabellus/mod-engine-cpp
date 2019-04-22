@@ -66,12 +66,6 @@ namespace mod {
 
 
 
-  MouseInput MouseInput::from_sdl_state () {
-    MouseInput out;
-    SDL_GetMouseState(&out.position.x, &out.position.y);
-    return out;
-  }
-
   void MouseInput::begin_frame () {
     using namespace MouseButton;
 
@@ -122,13 +116,6 @@ namespace mod {
     position = { 0, 0 };
   }
 
-
-
-  RawInput RawInput::from_sdl_state () {
-    RawInput out;
-    out.mouse = MouseInput::from_sdl_state();
-    return out;
-  }
 
   void RawInput::begin_frame () {
     mouse.begin_frame();

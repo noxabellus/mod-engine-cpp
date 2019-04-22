@@ -135,6 +135,7 @@ namespace mod {
 
     Application.performance_frequency = SDL_GetPerformanceFrequency();
     Application.frame_start = SDL_GetPerformanceCounter();
+    Application.first_frame = true;
 
 
     JSON json;
@@ -429,7 +430,7 @@ namespace mod {
           } break;
 
           case SDL_MOUSEMOTION: {
-            if (ig_io->WantCaptureMouse) {
+            if (ig_io->WantCaptureMouse || first_frame) {
               event.motion.x = -1;
               event.motion.y = -1;
             }
@@ -502,6 +503,8 @@ namespace mod {
     ImGui_ImplOpenGL3_RenderDrawData(GetDrawData());
 
     SDL_GL_SwapWindow(window);
+
+    first_frame = false;
 
 
     if (vsync > ApplicationVSyncMode::VBlank) {

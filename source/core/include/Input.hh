@@ -781,14 +781,12 @@ namespace mod {
     using ButtonMask = Bitmask<16>;
 
     ButtonMask active_buttons = { };
-    Vector2s position = { 0, 0 };
+    Vector2s position = { -1, -1 };
 
 
     /* Create a new zero-initialized MouseInput */
     MouseInput () { }
 
-    /* Create a MouseInput and poll SDL for the position of the mouse */
-    ENGINE_API static MouseInput from_sdl_state ();
 
     /* Clear state data to begin a new frame (This is to simulate button presses for wheel) */
     ENGINE_API void begin_frame ();
@@ -816,8 +814,6 @@ namespace mod {
     /* Create a new zero-initialized RawInput state set */
     RawInput () { }
 
-    /* Create a new RawInput state set initialized by polling sdl for MouseState */
-    ENGINE_API static RawInput from_sdl_state ();
 
     /* Start a new frame of input */
     ENGINE_API void begin_frame ();

@@ -160,6 +160,8 @@ namespace mod {
 
     u64_t frame_start;
     f64_t frame_delta;
+    
+    bool first_frame;
 
     Input input;
 
