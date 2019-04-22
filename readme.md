@@ -69,22 +69,23 @@ This is still very early in production, and code is being ported from the C-only
   - 2d and 3d component transforms (Scale + Rotation + Translation)
   - 2d and 3d geometric primitives
   - 2d and 3d intersection and distance tests
-<!-- + Image i/o and manipulation through FreeImage -->
-<!-- + Extensive graphics drawing abstractions with asset file i/o:
++ Image i/o and manipulation through FreeImage
++ Extensive graphics drawing abstractions with asset file i/o:
   - Shaders (Vertex, Fragment)
   - Shader programs
   - Textures
   - Materials
   - Material sets
   - Renderable meshes
-  - Batched rendering (Speculative) -->
-<!-- + Asset manager:
+  <!-- - Batched rendering (Speculative) -->
++ Asset manager:
   - JSON database files
   - Inline definitions for most asset types
   - Relative file path references to individual files
   - Assets are accessible by name or index
   - Definition priority is load order, later loads overwrite earlier loads
-  - Automatic reloading of assets when source files are modified -->
+  - Automatic reloading of assets when source files are modified
+  - Utilizes exceptions to prevent crashes from loading improperly formatted assets
 
 
 
