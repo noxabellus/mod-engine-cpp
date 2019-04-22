@@ -527,14 +527,19 @@ namespace mod {
 
     using namespace ImGui;
 
+    Columns(2, "Input Binding Columns");
     for (auto [ i, control ] : control_binding) {
       control_string.clear();
       control.input_combination.generate_string(control_string);
 
-      Text("%s: ", control.name);
-      SameLine();
-      if (Button(control_string.value)) begin_capture_binding(control.id);
+      Text("%s", control.name);
+      NextColumn();
+      if (Button(control_string.value, { GetContentRegionAvailWidth(), 0 })) {
+        begin_capture_binding(control.id);
+      }
+      NextColumn();
     }
+    Columns(1);
   }
 
   void Input::show_binding_modal () const {
@@ -548,7 +553,6 @@ namespace mod {
         Text("Binding Control %s (Press escape to cancel)", get_control(capture_id).name);
 
         control_string.clear();
-
         capture_combo.generate_string(control_string);
 
         Text("to: %s", control_string.value);
