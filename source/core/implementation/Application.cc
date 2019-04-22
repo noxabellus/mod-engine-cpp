@@ -253,7 +253,22 @@ namespace mod {
     JSONItem* controls = json.get_object_item("controls");
 
     if (controls != NULL) {
-      m_error("JSON Controls not yet implemented");
+      for (auto [ i, control ] : default_controls) {
+        JSONItem* control_item = controls->get_object_item(control.name);
+
+        if (control_item != NULL) {
+          try {
+            Application.input.bind(control.name, InputCombination::from_json_item(*control_item));
+          } catch (Exception& exception) {
+            printf("Application config warning: ");
+            exception.print();
+            exception.handle();
+            Application.input.bind(control);
+          }
+        } else {
+          Application.input.bind(control);
+        }
+      }
     } else {
       for (auto [ i, control ] : default_controls) Application.input.bind(control);
     }
@@ -288,26 +303,26 @@ namespace mod {
         json = { JSONType::Object, "New outbound application config" };
       }
 
-      json.set_object_value(Application.ui_scale, "ui_scale");
-      json.set_object_value((f64_t) Application.vsync, "vsync");
-      json.set_object_value((f64_t) Application.window_mode, "window_mode");
-      json.set_object_value((f64_t) SDL_GetWindowDisplayIndex(Application.window), "display");
+      json.set_object_value(ui_scale, "ui_scale");
+      json.set_object_value((f64_t) vsync, "vsync");
+      json.set_object_value((f64_t) window_mode, "window_mode");
+      json.set_object_value((f64_t) SDL_GetWindowDisplayIndex(window), "display");
       
-      if (Application.vsync > ApplicationVSyncMode::VBlank) {
-        json.set_object_value((f64_t) Application.target_framerate, "target_framerate");
+      if (vsync > ApplicationVSyncMode::VBlank) {
+        json.set_object_value((f64_t) target_framerate, "target_framerate");
       } else if (json.get_object_item("target_framerate") != NULL) {
         json.remove_object_item("target_framerate");
       }
 
       json.set_object_item(JSONArray::from_elements(
-        JSONItem { (f64_t) Application.resolution.x },
-        JSONItem { (f64_t) Application.resolution.y }
+        JSONItem { (f64_t) resolution.x },
+        JSONItem { (f64_t) resolution.y }
       ), "resolution");
 
-      if (Application.window_mode == ApplicationWindowMode::Windowed) {
+      if (window_mode == ApplicationWindowMode::Windowed) {
         Vector2s pos;
 
-        SDL_GetWindowPosition(Application.window, &pos.x, &pos.y);
+        SDL_GetWindowPosition(window, &pos.x, &pos.y);
 
         json.set_object_item(JSONArray::from_elements(
           JSONItem { (f64_t) pos.x },
@@ -317,8 +332,10 @@ namespace mod {
         json.remove_object_item("position");
       }
 
-      json.set_object_value(Application.show_fps, "show_fps");
-      json.set_object_value(Application.show_info, "show_info");
+      json.set_object_value(show_fps, "show_fps");
+      json.set_object_value(show_info, "show_info");
+
+      json.set_object_item(input.to_json_item(), "controls");
 
       if (!json.to_file(config_path)) {
         printf("Warning: Failed to save Application config file at path '%s', make sure the containing folder exists\n", config_path);

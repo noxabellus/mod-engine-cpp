@@ -132,6 +132,106 @@ namespace mod {
   }
 
 
+  InputCombination InputCombination::from_json_item (JSONItem const& item) {
+    JSONItem* modifiers_item = item.get_object_item("modifiers");
+    JSONItem* keys_item = item.get_object_item("keys");
+    JSONItem* buttons_item = item.get_object_item("buttons");
+
+    InputCombination input_combo;
+
+    if (modifiers_item != NULL) {
+      for (auto [ i, modifier_item ] : modifiers_item->get_array()) {
+        String& modifier_s = modifier_item.get_string();
+        u8_t modifier = ModifierKey::from_name(modifier_s.value);
+
+        modifier_item.asset_assert(
+          ModifierKey::validate(modifier),
+          "%s is not a valid ModifierKey name. Valid options are:\n%s",
+          modifier_s.value, ModifierKey::valid_values
+        );
+        
+        input_combo.modifiers.set(modifier);
+      }
+    }
+
+    if (keys_item != NULL) {
+      for (auto [ i, key_item ] : keys_item->get_array()) {
+        String& key_s = key_item.get_string();
+        u8_t key = Keycode::from_name(key_s.value);
+
+        key_item.asset_assert(
+          Keycode::validate(key),
+          "%s is not a valid Keycode name. Valid options are:\n%s",
+          key_s.value, Keycode::valid_values
+        );
+        
+        input_combo.keys.set(key);
+      }
+    }
+
+    if (buttons_item != NULL) {
+      for (auto [ i, button_item ] : buttons_item->get_array()) {
+        String& button_s = button_item.get_string();
+        u8_t button = MouseButton::from_name(button_s.value);
+
+        button_item.asset_assert(
+          MouseButton::validate(button),
+          "%s is not a valid MouseButton name. Valid options are:\n%s",
+          button_s.value, MouseButton::valid_values
+        );
+        
+        input_combo.buttons.set(button);
+      }
+    }
+
+    return input_combo;
+  }
+
+  JSONItem InputCombination::to_json_item () const {
+    JSONObject object;
+
+
+    if (modifiers.match_any()) {
+      JSONArray modifier_arr;
+
+      for (u8_t modifier = 0; modifier < ModifierKey::total_modifier_count; modifier ++) {
+        if (modifiers.match_index(modifier)) {
+          modifier_arr.append({ ModifierKey::name(modifier) });
+        }
+      }
+
+      object.set(modifier_arr, "modifiers");
+    }
+
+    if (keys.match_any()) {
+      JSONArray key_arr;
+
+      for (u8_t key = 0; key < Keycode::total_key_count; key ++) {
+        if (keys.match_index(key)) {
+          key_arr.append({ Keycode::name(key) });
+        }
+      }
+
+      object.set(key_arr, "keys");
+    }
+
+
+    if (buttons.match_any()) {
+      JSONArray button_arr;
+
+      for (u8_t button = 0; button < MouseButton::total_button_count; button ++) {
+        if (buttons.match_index(button)) {
+          button_arr.append({ MouseButton::name(button) });
+        }
+      }
+
+      object.set(button_arr, "buttons");
+    }
+
+
+    return { object };
+  }
+
   bool InputCombination::test (RawInput const& raw_input) const {
     return raw_input.keyboard.active_modifiers.match_subset(modifiers)
         && raw_input.keyboard.active_keys.match_subset(keys)
@@ -195,6 +295,17 @@ namespace mod {
     }
   }
 
+
+  
+  JSONItem ControlBinding::to_json_item () const {
+    JSONObject object;
+    
+    for (auto [ i, control ] : controls) {
+      object.set({ control.input_combination.to_json_item() }, control.name);
+    }
+
+    return { object };
+  }
 
 
   s64_t ControlBinding::get_index (u32_t id) const {
@@ -357,6 +468,10 @@ namespace mod {
 
 
   
+  JSONItem Input::to_json_item () const {
+    return control_binding.to_json_item();
+  }
+
   s64_t Input::get_control_index (u32_t id) const {
     return control_binding.get_index(id);
   }

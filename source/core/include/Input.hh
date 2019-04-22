@@ -6,6 +6,7 @@
 #include "Array.hh"
 #include "String.hh"
 #include "Bitmask.hh"
+#include "JSON.hh"
 #include "math/Vector2.hh"
 
 
@@ -160,6 +161,150 @@ namespace mod {
 
       Invalid = (u8_t) -1
     };
+
+    static constexpr char const* valid_values = (
+      "Zero,\n" "One,\n" "Two,\n" "Three,\n" "Four,\n" "Five,\n" "Six,\n" "Seven,\n" "Eight,\n" "Nine,\n"
+
+      "A,\n" "B,\n" "C,\n" "D,\n" "E,\n" "F,\n" "G,\n" "H,\n" "I,\n" "J,\n" "K,\n" "L,\n" "M,\n" "N,\n" "O,\n" "P,\n" "Q,\n" "R,\n" "S,\n" "T,\n" "U,\n" "V,\n" "W,\n" "X,\n" "Y,\n" "Z,\n"
+
+      "BackSlash,\n"
+      "ForwardSlash,\n"
+      "Comma,\n"
+      "Tilde,\n"
+      "BracketL,\n"
+      "BracketR,\n"
+      "Minus,\n"
+      "Equal,\n"
+      "Period,\n"
+      "Semicolon,\n"
+      "Apostrophe,\n"
+
+      "Space,\n"
+      "Tab,\n"
+
+      "Up,\n" "Down,\n" "Left,\n" "Right,\n"
+
+      "Escape,\n"
+      "Backspace,\n"
+      "Return,\n"
+      "PageUp,\n"
+      "PageDown,\n"
+      "Pause,\n"
+      "PrintScreen,\n"
+
+      "CapsLock,\n"
+      "NumLock,\n"
+      "ScrollLock,\n"
+
+      "ShiftL,\n"
+      "ShiftR,\n"
+      "CtrlL,\n"
+      "CtrlR,\n"
+      "AltL,\n"
+      "AltR,\n"
+      
+      "LeftGUI,\n"
+      "RightGUI,\n"
+
+      "F1,\n" "F2,\n" "F3,\n" "F4,\n" "F5,\n" "F6,\n" "F7,\n" "F8,\n" "F9,\n" "F10,\n" "F11,\n" "F12,\n"
+      "F13,\n" "F14,\n" "F15,\n" "F16,\n" "F17,\n" "F18,\n" "F19,\n" "F20,\n" "F21,\n" "F22,\n" "F23,\n" "F24,\n"
+
+      "Keypad0,\n" "Keypad00,\n" "Keypad000,\n" "Keypad1,\n" "Keypad2,\n" "Keypad3,\n" "Keypad4,\n" "Keypad5,\n" "Keypad6,\n" "Keypad7,\n" "Keypad8,\n" "Keypad9,\n"
+      "KeypadA,\n" "KeypadB,\n" "KeypadC,\n" "KeypadD,\n" "KeypadE,\n" "KeypadF,\n"
+      "KeypadAmp,\n" "KeypadAt,\n" "KeypadColon,\n" "KeypadComma,\n" "KeypadEqual,\n" "KeypadEqualAS400,\n" "KeypadExclamation,\n" "KeypadGreater,\n"
+      "KeypadHash,\n" "KeypadBraceL,\n" "KeypadBraceR,\n" "KeypadParenL,\n" "KeypadParenR,\n" "KeypadLesser,\n" "KeypadPeriod,\n" 
+      "KeypadSpace,\n" "KeypadTab,\n"
+      "KeypadPlus,\n" "KeypadMinus,\n" "KeypadMultiply,\n" "KeypadDivide,\n" "KeypadPercent,\n" "KeypadPlusMinus,\n" "KeypadPower,\n" "KeypadOr,\n" "KeypadXor,\n"
+      "KeypadDoubleAmp,\n" "KeypadDoubleOr,\n" 
+      "KeypadBackspace,\n" "KeypadEnter,\n"
+      "KeypadBinary,\n" "KeypadDecimal,\n" "KeypadHex,\n" "KeypadOctal,\n"
+      "KeypadMemAdd,\n" "KeypadMemSub,\n" "KeypadMemMul,\n" "KeypadMemDiv,\n" "KeypadMemClear,\n" "KeypadMemStore,\n" "KeypadMemRecall,\n"
+      "KeypadClear,\n"
+      "KeypadClearEntry,\n"
+
+      "Copy,\n"
+      "Cut,\n"
+      "Paste,\n"
+      "Delete,\n"
+
+      "ACBack,\n"
+      "ACForward,\n"
+      "ACBookmarks,\n"
+      "ACHome,\n"
+      "ACRefresh,\n"
+      "ACSearch,\n"
+      "ACStop,\n"
+
+      "Again,\n"
+      "AltErase,\n"
+
+      "Application,\n"
+
+      "AudioMute,\n"
+      "AudioNext,\n"
+      "AudioPlay,\n"
+      "AudioPrev,\n"
+      "AudioStop,\n"
+      "AudioRewind,\n"
+      "AudioFastForward,\n"
+
+      "BrightnessDown,\n"
+      "BrightnessUp,\n"
+
+      "Calculator,\n"
+
+      "Cancel,\n"
+
+      "Clear,\n"
+      "ClearAgain,\n"
+
+      "Computer,\n"
+      "CrSel,\n"
+
+      "CurrencySubUnit,\n"
+      "CurrencyUnit,\n"
+      
+      "DecimalSeparator,\n"
+      "DisplaySwitch,\n"
+
+      "Eject,\n"
+
+      "Execute,\n"
+      "ExSel,\n"
+      "Find,\n"
+      "Help,\n"
+      "Home,\n"
+
+      "KeyIlluminationDown,\n"
+      "KeyIlluminationToggle,\n"
+      "KeyIlluminationUp,\n"
+
+      "Mail,\n"
+      "MediaSelect,\n"
+      "Menu,\n"
+      "Mode,\n"
+      "Mute,\n"
+
+      "Oper,\n"
+      "Out,\n"
+      "Power,\n"
+
+      "Prior,\n"
+      "Select,\n"
+      "Separator,\n"
+      "Sleep,\n"
+      "Stop,\n"
+      "SysReq,\n"
+
+      "ThousandsSeparator,\n"
+
+      "Undo,\n"
+
+      "VolumeUp,\n"
+      "VolumeDown,\n"
+
+      "WWW\n"
+    );
 
     static constexpr char const* names [total_key_count] = {
       "Zero", "One", "Two", "Three", "Four", "Five", "Six", "Seven", "Eight", "Nine",
@@ -537,6 +682,12 @@ namespace mod {
       Invalid = (u8_t) -1
     };
 
+    static constexpr char const* valid_values = (
+      "Caps,\n"
+      "Num,\n"
+      "Scroll\n"
+    );
+
     static constexpr char const* names [total_lock_count] = {
       "Caps",
       "Num",
@@ -605,6 +756,12 @@ namespace mod {
 
       Invalid = (u8_t) -1
     };
+
+    static constexpr char const* valid_values = (
+      "Shift,\n"
+      "Ctrl,\n"
+      "Alt\n"
+    );
 
     static constexpr char const* names [total_modifier_count] = {
       "Shift",
@@ -675,6 +832,14 @@ namespace mod {
       
       Invalid = (u8_t) -1
     };
+
+    static constexpr char const* valid_values = (
+      "Left,\n" "Middle,\n" "Right,\n"
+      "Back,\n" "Forward,\n"
+
+      "WheelUp,\n" "WheelDown,\n"
+      "WheelLeft,\n" "WheelRight\n"
+    );
 
     static constexpr char const* names [total_button_count] = {
       "Left", "Middle", "Right",
@@ -833,6 +998,11 @@ namespace mod {
     KeyboardInput::KeyMask keys;
     MouseInput::ButtonMask buttons;
 
+    /* Create an InputCombination from a JSONItem */
+    ENGINE_API static InputCombination from_json_item (JSONItem const& item);
+
+    /* Create a JSONItem from an InputCombination */
+    ENGINE_API JSONItem to_json_item () const;
 
     /* Determine if an InputCombination is a subset of the active items of a RawInput */
     ENGINE_API bool test (RawInput const& raw_input) const;
@@ -902,6 +1072,10 @@ namespace mod {
     Array<Control> controls;
     u32_t control_id_counter = 1;
     
+
+    /* Convert a ControlBinding to a JSONItem */
+    ENGINE_API JSONItem to_json_item () const;
+
 
     /* Get the index of a Control in a ControlBinding by id */
     ENGINE_API s64_t get_index (u32_t id) const;
@@ -978,6 +1152,10 @@ namespace mod {
     InputCombination capture_combo;
     s64_t capture_id = 0;
     bool capturing_binding = false;
+
+
+    /* Get the ControlBinding of an Input as a JSONItem */
+    ENGINE_API JSONItem to_json_item () const;
 
 
     /* Get the index of a Control in the ControlBinding of an Input, by id */
