@@ -175,6 +175,17 @@ namespace mod {
     ENGINE_API void destroy ();
 
 
+    /* Get the number of displays available to the Application */
+    s32_t get_display_count () const {
+      return SDL_GetNumVideoDisplays();
+    }
+
+    /* Get the index of the display in use by the Application */
+    s32_t get_display_index () const {
+      return SDL_GetWindowDisplayIndex(window);
+    }
+
+
     /* Get the set of resolutions supported by the application's current display, as well as the selected resolution */
     ENGINE_API ResolutionSet get_resolution_set () const;
 
