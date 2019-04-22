@@ -269,6 +269,21 @@ namespace mod {
       ++ count;
     }
 
+    
+    /* Get the index of an Array element by doing pointer arithmetic.
+     * Returns -1 if the given value is not an element in the array */
+    s64_t get_index (T const* value) {
+      if (value >= elements && value < elements + count) return pointer_to_index<T>(elements, value);
+      else return -1;
+    }
+
+    /* Get the index of an Array element by doing pointer arithmetic.
+     * Returns -1 if the given value is not an element in the array */
+    s64_t get_index (T const& value) {
+      return get_index(&value);
+    }
+
+
     /* Append an element to the end of an Array, by reference */
     void append (T const& value) { return append(&value); }
 
