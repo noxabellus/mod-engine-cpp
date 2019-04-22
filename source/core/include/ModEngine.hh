@@ -20,6 +20,8 @@
 #include "AssetHandle.hh"
 #include "AssetManager.hh"
 
+#include "Input.hh"
+
 #include "Application.hh"
 
 #endif

@@ -6,6 +6,7 @@
 #include "Array.hh"
 #include "String.hh"
 #include "math/Vector2.hh"
+#include "Input.hh"
 
 
 
@@ -113,6 +114,7 @@ namespace mod {
     ENGINE_API static f32_t default_font_0_scale;
     ENGINE_API static f32_t default_font_1_scale;
     ENGINE_API static Vector2s min_resolution;
+    ENGINE_API static Array<Control> default_controls;
 
 
     SDL_Window* window;
@@ -121,6 +123,7 @@ namespace mod {
     ImGuiIO* ig_io;
     ImGuiStyle* ig_style;
     ImGuiStyle ig_base_style;
+
 
     u64_t performance_frequency;
 
@@ -136,6 +139,8 @@ namespace mod {
     bool show_info;
 
     u64_t frame_start;
+
+    Input input;
 
 
     /* Create the global ModEngine Application, load the config file,
@@ -155,7 +160,7 @@ namespace mod {
 
 
     /* Setup supporting library data and framerate tracking for a new frame */
-    ENGINE_API void begin_frame ();
+    ENGINE_API bool begin_frame ();
 
     /* Finalize supporting library data and framerate tracking for a frame,
      * rendering ui and performing vsync if enabled */

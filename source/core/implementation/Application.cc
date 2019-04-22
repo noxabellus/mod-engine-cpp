@@ -11,6 +11,16 @@ namespace mod {
   f32_t Application_t::default_font_0_scale = 26.0f;
   f32_t Application_t::default_font_1_scale = 13.0f;
   Vector2s Application_t::min_resolution = { 640, 480 };
+  Array<Control> Application_t::default_controls = Array<Control>::from_elements(
+    Control { "Forward", { { }, { Keycode::W }, { } } },
+    Control { "Left", { { }, { Keycode::A }, { } } },
+    Control { "Backward", { { }, { Keycode::S }, { } } },
+    Control { "Right", { { }, { Keycode::D }, { } } },
+    Control { "Up", { { }, { Keycode::Space }, { } } },
+    Control { "Down", { { }, { Keycode::C }, { } } },
+    Control { "Primary Action", { { }, { }, { MouseButton::Left } } },
+    Control { "Secondary Action", { { }, { }, { MouseButton::Right } } }
+  );
 
   Application_t Application = { };
 
@@ -98,6 +108,7 @@ namespace mod {
 
     m_assert(gl3wIsSupported(gl_major_version, gl_minor_version), "Unsupported OpenGL Version %u.%u", gl_major_version, gl_minor_version);
 
+
     m_assert(IMGUI_CHECKVERSION(), "ImGui version check failed");
 
     if (glDebugMessageCallback && gl_error_handler) {
@@ -114,7 +125,7 @@ namespace mod {
     Application.ig_io = &ImGui::GetIO();
     Application.ig_io->IniFilename = imgui_path;
     Application.ig_style = &ImGui::GetStyle();
-    Application.ig_io->ConfigFlags |= ImGuiConfigFlags_NavEnableKeyboard;
+    // Application.ig_io->ConfigFlags |= ImGuiConfigFlags_NavEnableKeyboard;
 
     // TODO this should be a config property
     ImGui::StyleColorsDark(Application.ig_style);
@@ -234,6 +245,15 @@ namespace mod {
     JSONItem* show_info_item = json.get_object_item("show_info");
 
     Application.show_info = show_info_item != NULL? show_info_item->get_boolean() : false;
+
+
+    JSONItem* controls = json.get_object_item("controls");
+
+    if (controls != NULL) {
+      m_error("JSON Controls not yet implemented");
+    } else {
+      for (auto [ i, control ] : default_controls) Application.input.bind(control);
+    }
 
 
     json.destroy();
@@ -375,8 +395,47 @@ namespace mod {
   }
 
 
+  bool Application_t::begin_frame () {
   void Application_t::begin_frame () {
     frame_start = SDL_GetPerformanceCounter();
+
+    input.begin_frame();
+
+
+    SDL_Event event;
+    
+    while (SDL_PollEvent(&event)) {
+      if (event.type == SDL_QUIT) return false;
+
+      if (input.capturing_binding) {
+        input.process_sdl_input(event);
+      } else {
+        ImGui_ImplSDL2_ProcessEvent(&event);
+
+        switch (event.type) {
+          case SDL_KEYDOWN:
+          case SDL_KEYUP: {
+            if (!ig_io->WantCaptureKeyboard) input.process_sdl_input(event);
+          } break;
+
+          case SDL_MOUSEMOTION: {
+            if (ig_io->WantCaptureMouse) {
+              event.motion.x = -1;
+              event.motion.y = -1;
+            }
+
+            input.process_sdl_input(event);
+          } break;
+
+          case SDL_MOUSEWHEEL:
+          case SDL_MOUSEBUTTONUP:
+          case SDL_MOUSEBUTTONDOWN: {
+            if (!ig_io->WantCaptureMouse) input.process_sdl_input(event);
+          } break;
+        }
+      }
+    }
+
 
     ImGui_ImplOpenGL3_NewFrame();
     ImGui_ImplSDL2_NewFrame(window);
@@ -387,6 +446,12 @@ namespace mod {
     glViewport(0, 0, (int)ig_io->DisplaySize.x, (int)ig_io->DisplaySize.y);
     glClearColor(0, 0, 0, 1);
     glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
+
+
+    input.process_raw_input();
+
+
+    return true;
   }
 
   void Application_t::end_frame () {

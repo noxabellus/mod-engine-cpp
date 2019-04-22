@@ -14,4 +14,6 @@
 
 #include "AssetManager.cc"
 
+#include "Input.cc"
+
 #include "Application.cc"
