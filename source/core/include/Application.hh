@@ -139,6 +139,7 @@ namespace mod {
     bool show_info;
 
     u64_t frame_start;
+    f64_t frame_delta;
 
     Input input;
 

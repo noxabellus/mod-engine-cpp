@@ -132,7 +132,9 @@ namespace mod {
 
     Application.ig_base_style = *Application.ig_style;
 
+
     Application.performance_frequency = SDL_GetPerformanceFrequency();
+    Application.frame_start = SDL_GetPerformanceCounter();
 
 
     JSON json;
@@ -396,9 +398,17 @@ namespace mod {
 
 
   bool Application_t::begin_frame () {
-  void Application_t::begin_frame () {
+    u64_t last_frame_start = frame_start;
+
     frame_start = SDL_GetPerformanceCounter();
 
+
+    u64_t frame_delta_count = frame_start - last_frame_start;
+
+    
+    frame_delta = (f64_t) (frame_delta_count * 1000) / (f64_t) performance_frequency;
+
+    
     input.begin_frame();
 
 
