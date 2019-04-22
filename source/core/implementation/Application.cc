@@ -392,7 +392,7 @@ namespace mod {
           
           if (set.active_index == ResolutionSet::null_index
           &&  active_mode.w == mode.w && active_mode.h == mode.h) {
-            set.active_index = i;
+            set.active_index = set.count;
           }
 
           ++ set.count;
