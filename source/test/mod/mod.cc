@@ -1,28 +1,31 @@
-#include "..\main.hh"
-#include "..\..\source\extern\imgui\implementation\main.cpp"
-#include "..\..\source\extern\ImGuiColorTextEdit\main.cpp"
-
-using namespace mod;
+#include "../main.hh"
+#include "../examples/gui/main_menu_ex.cc"
+#include "../examples/gui/vendor_ex.cc"
 
 
 
 MODULE_API void module_init () {
-  AssetManager.create();
+  using namespace mod;
+
+
+  Application.default_controls.append({ "Mod Control", { { }, { Keycode::X }, { } } });
   Application.create();
+
+
+  AssetManager.create();
+  AssetManager.load_database_from_file("./assets/asset_db.json");
+
+
   ECS& ecs = *new ECS;
 
-  AssetManager.load_database_from_file("./assets/asset_db.json");
   
-  MaterialHandle ma = AssetManager.get<Material>("Minimal3DA");
-
-  RenderMesh3DHandle c = AssetManager.get<RenderMesh3D>("Test Cube");
-  RenderMesh3DHandle q = AssetManager.get<RenderMesh3D>("Test Quad 3D");
-
   struct BasicInput {
     bool enabled;
 
     f32_t movement_rate;
   };
+  
+  MaterialHandle ma = AssetManager.get<Material>("Minimal3DA");
 
 
   ecs.create_component_type<Transform3D>();
@@ -34,12 +37,12 @@ MODULE_API void module_init () {
   EntityHandle cube; {
     cube = ecs.create_entity();
     cube.add_component(Transform3D {
-      { 0, 0, 0 },
+      0,
       Constants::Quaternion::identity,
-      { 100, 100, 100 }
+      100
     });
     cube.add_component(ma);
-    cube.add_component(c);
+    cube.add_component(AssetManager.get<RenderMesh3D>("Test Cube"));
     cube.add_component(BasicInput { true, 64 });
   }
 
@@ -48,17 +51,11 @@ MODULE_API void module_init () {
     plane.add_component(Transform3D {
       { 0, 0, -50 },
       Constants::Quaternion::identity,
-      { 200, 200, 1 }
+      200
     });
     plane.add_component(ma);
-    plane.add_component(q);
+    plane.add_component(AssetManager.get<RenderMesh3D>("Test Quad 3D"));
   }
-
-
-  f32_t camera_rot_base = (M_PI * 2) * .25;
-  f32_t camera_rot = (M_PI * 2) * .125;
-  f32_t camera_dist = 100;
-  f32_t camera_height = 100;
 
 
   ecs.create_system("MovementInput", true, { ecs.get_component_type_by_instance_type<BasicInput>().id, ecs.get_component_type_by_instance_type<Transform3D>().id }, [&] (ECS* ecs, uint32_t index) {
@@ -81,6 +78,11 @@ MODULE_API void module_init () {
     }
   });
 
+  
+  f32_t camera_rot_base = (M_PI * 2) * .25;
+  f32_t camera_rot = (M_PI * 2) * .125;
+  f32_t camera_dist = 100;
+  f32_t camera_height = 100;
 
   ecs.create_system("Render", [&] (ECS* ecs) {
     using namespace ImGui;
@@ -137,11 +139,13 @@ MODULE_API void module_init () {
     }
   });
   
-  text_editor_demo_init();
-  
+
   Array<WatchedFileReport> update_reports;
   
   while (true) {
+    if (!Application.begin_frame()) break;
+
+
     update_reports.clear();
 
     AssetManager.update_watched_files(&update_reports);
@@ -156,54 +160,25 @@ MODULE_API void module_init () {
         }
       }
     }
-    
 
-    if (!Application.begin_frame()) break;
 
     ecs.update();
     
-    {
-      using namespace ImGui;
 
-      Begin("Controls", NULL);
-      Application.input.show_binding_menu();
-      Application.input.show_binding_modal();
-      End();
+    main_menu_ex();
+    vendor_ex();
 
-      Begin("Inputs", NULL);
-      Text("Mouse Pos: %d x %d", Application.input.raw.mouse.position.x, Application.input.raw.mouse.position.y);
-      for (u8_t i = 0; i < MouseButton::total_button_count; i ++) {
-        if (Application.input.raw.mouse.active_buttons[i]) {
-          Text("%s", MouseButton::names[i]);
-        }
-      }
-      for (u8_t i = 0; i < ModifierKey::total_modifier_count; i ++) {
-        if (Application.input.raw.keyboard.active_modifiers[i]) {
-          Text("%s", ModifierKey::names[i]);
-        }
-      }
-      for (u8_t i = 0; i < LockKey::total_lock_count; i ++) {
-        if (Application.input.raw.keyboard.active_locks[i]) {
-          Text("%s", LockKey::names[i]);
-        }
-      }
-      for (u8_t i = 0; i < Keycode::total_key_count; i ++) {
-        if (Application.input.raw.keyboard.active_keys[i]) {
-          Text("%s", Keycode::names[i]);
-        }
-      }
-      End();
-    }
-
-    // ImGui::PushFont(Application.fonts[1]);
-    // ig_demo_loop_body();
-    // text_editor_demo_loop();
-    // ImGui::PopFont();
 
     Application.end_frame();
   }
   
+
+  update_reports.destroy();
+
+
   ecs.destroy();
-  Application.destroy();
+
+
   AssetManager.destroy();
+  Application.destroy();
 }
