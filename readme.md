@@ -58,7 +58,7 @@ This is still very early in production, and code is being ported from the C-only
   - Shared Library
   - ThreadPool
 + UI through SDL + ImGUI
-+ Input to generic Control binding abstraction
++ Input to generic Control binding abstractionwith config file i/o
 + Source file editor with ImGuiColorTextEdit
 + JSON parser + stringifier
 + ECS (Highly experimental)
