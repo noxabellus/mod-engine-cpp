@@ -190,6 +190,14 @@ namespace mod {
     , string(new_string)
     { }
 
+    /* Create a new String JSONItem by copying from a str, with an optional root and offset from its origin */
+    JSONItem (char const* new_string_str, JSON* new_root = NULL, size_t new_origin_offset = 0)
+    : root (new_root)
+    , origin_offset(new_origin_offset)
+    , type(JSONType::String)
+    , string(new_string_str)
+    { }
+
     /* Create a new Array JSONItem with an optional root and offset from its origin */
     JSONItem (JSONArray new_array, JSON* new_root = NULL, size_t new_origin_offset = 0)
     : root(new_root)
