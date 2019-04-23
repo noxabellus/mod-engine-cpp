@@ -83,31 +83,65 @@ MODULE_API void module_init () {
   f32_t camera_rot = (M_PI * 2) * .125;
   f32_t camera_dist = 100;
   f32_t camera_height = 100;
+  f32_t camera_zoom = 1;
+
+  f32_t camera_rot_rate = M_PI;
+  f32_t camera_roll_rate = 256;
+  f32_t camera_zoom_rate = 1;
+  f32_t camera_max_zoom = 3;
+  f32_t camera_min_zoom = .25;
+
+  Vector2f camera_drag_start;
+  f32_t camera_rot_start;
+  f32_t camera_height_start;
+  bool camera_drag = false;
 
   ecs.create_system("Render", [&] (ECS* ecs) {
-    using namespace ImGui;
+    Vector2f camera_drag_delta = { 0, 0 };
+    if (Application.input["Primary Action"]) {
+      if (!camera_drag) { // drag start
+        camera_drag_start = Application.input.mouse_position_unit;
+        camera_rot_start = camera_rot;
+        camera_height_start = camera_height;
+        camera_drag = true;
+      } else { // drag continue
+        camera_drag_delta = Application.input.mouse_position_unit - camera_drag_start;
+
+        camera_rot = camera_rot_start + camera_drag_delta.x * camera_rot_rate;
+        camera_height = camera_height_start + camera_drag_delta.y * camera_roll_rate;
+      }
+    } else if (camera_drag) { // drag end
+      camera_drag = false;
+    }
+
+    if (Application.input["Zoom In"]) camera_zoom = num::max(camera_min_zoom, camera_zoom - (camera_zoom_rate / Application.frame_delta));
+    else if (Application.input["Zoom Out"]) camera_zoom = num::min(camera_max_zoom, camera_zoom + (camera_zoom_rate / Application.frame_delta));
+
     Vector3f camera_position = { cosf(camera_rot + camera_rot_base) * camera_dist, sinf(camera_rot + camera_rot_base) * camera_dist, camera_height };
     
+    using namespace ImGui;
     SetNextWindowPos({ 10, 10 }, ImGuiCond_Always, { 0, 0 });
     Begin("Camera Info", NULL, ImGuiWindowFlags_NoResize | ImGuiWindowFlags_NoMove); {
       Text("Position: x %f, y %f, z %f", camera_position.x, camera_position.y, camera_position.z);
       Text("- Rotation: %f", camera_rot);
       Text("- Height: %f", camera_height);
-      Text("- Distance: %f", camera_dist);
+      Text("- Zoom: %f", camera_zoom);
       if (Button("Reset", { 0, 0 })) {
         camera_rot = 0;
-        camera_dist = 100;
         camera_height = 100;
+        camera_zoom = 1;
       }
     } End();
 
     Matrix4 camera_look_matrix = Matrix4::from_look(camera_position, { 0, 0, 0 }, Constants::Vector3f::down, true).inverse();
 
     Vector2f half_screen = Vector2f { Application.ig_io->DisplaySize } / 2.0f;
+
+    Vector2f half_screen_zoom = half_screen * camera_zoom;
     
     Matrix4 screen_matrix = Matrix4::from_orthographic(
-      -half_screen.x, half_screen.x,
-      -half_screen.y, half_screen.y,
+      -half_screen_zoom.x, half_screen_zoom.x,
+      -half_screen_zoom.y, half_screen_zoom.y,
       0.01f, 10000.0f
     );
 
@@ -164,6 +198,18 @@ MODULE_API void module_init () {
 
     ecs.update();
     
+
+    ImGui::Begin("Mouse", NULL, ImGuiWindowFlags_AlwaysAutoResize);
+    ImGui::Text("Usable: %s", Application.input.mouse_usable? "true":"false");
+    ImGui::Text("Pixel: %dx%d", Application.input.mouse_position_px.x, Application.input.mouse_position_px.y);
+    ImGui::Text("Unit:  %fx%f", Application.input.mouse_position_unit.x, Application.input.mouse_position_unit.y);
+    ImGui::End();
+
+    ImGui::Begin("Resolution", NULL, ImGuiWindowFlags_AlwaysAutoResize);
+    ImGui::Text("Internal: %dx%d", Application.resolution.x, Application.resolution.y);
+    ImGui::Text("ImGui: %fx%f", Application.ig_io->DisplaySize.x, Application.ig_io->DisplaySize.y);
+    ImGui::End();
+
 
     main_menu_ex();
     vendor_ex();
