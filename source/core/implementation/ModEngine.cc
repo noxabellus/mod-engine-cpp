@@ -17,3 +17,5 @@
 #include "Input.cc"
 
 #include "Application.cc"
+
+#include "draw_debug.cc"

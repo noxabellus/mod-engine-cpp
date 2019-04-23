@@ -24,4 +24,6 @@
 
 #include "Application.hh"
 
+#include "draw_debug.hh"
+
 #endif
