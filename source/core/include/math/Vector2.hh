@@ -428,6 +428,11 @@ namespace mod {
       return { -x, -y };
     }
 
+    /* Negate each component of a vector */
+    Vector2 operator - () const {
+      return negate();
+    }
+
     
     /* Get the sign of each component of a vector */
     Vector2 sign () const {

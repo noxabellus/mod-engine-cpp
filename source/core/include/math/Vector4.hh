@@ -590,6 +590,11 @@ namespace mod {
     Vector4 negate () const {
       return { -x, -y, -z, -w };
     }
+
+    /* Negate each component of a vector */
+    Vector4 operator - () const {
+      return negate();
+    }
     
     /* Get the sign of each component of a vector */
     Vector4 sign () const {

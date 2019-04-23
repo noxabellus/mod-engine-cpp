@@ -460,6 +460,11 @@ namespace mod {
     Vector3 negate () const {
       return { -x, -y, -z };
     }
+
+    /* Negate each component of a vector */
+    Vector3 operator - () const {
+      return negate();
+    }
     
     /* Get the sign of each component of a vector */
     Vector3 sign () const {
