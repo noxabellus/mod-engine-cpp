@@ -478,7 +478,7 @@ namespace mod {
     glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
 
 
-    input.process_raw_input(resolution);
+    input.process_raw_input(!ig_io->WantCaptureMouse, resolution);
 
 
     return true;

@@ -1229,7 +1229,7 @@ namespace mod {
 
     /* Use the internal RawInput to activate appropriate Controls in the ControlBinding of an Input.
      * The Vector2s app_resolution parameter allows the Input to calculate a unit-scale mouse position */
-    ENGINE_API void process_raw_input (Vector2s const& app_resolution);
+    ENGINE_API void process_raw_input (bool mouse_usable, Vector2s const& app_resolution);
 
 
     /* Get the status of a Control in the ControlBinding of an Input by id */

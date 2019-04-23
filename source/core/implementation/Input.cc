@@ -607,11 +607,11 @@ namespace mod {
     raw.begin_frame();
   }
 
-  void Input::process_raw_input (Vector2s const& app_resolution) {
+  void Input::process_raw_input (bool in_mouse_usable, Vector2s const& app_resolution) {
     if (process_binding_capture_step()) {
       mouse_position_px = raw.mouse.position;
       
-      mouse_usable = mouse_position_px.x > 0 && mouse_position_px.y > 0;
+      mouse_usable = in_mouse_usable;
 
       if (mouse_usable) {
         mouse_position_unit = ((Vector2f { 2.0f } / app_resolution) * (Vector2f) mouse_position_px) - 1.0f;
