@@ -16,6 +16,10 @@ MODULE_API void module_init () {
   AssetManager.load_database_from_file("./assets/asset_db.json");
 
 
+  draw_debug_2d.create();
+  draw_debug_3d.create();
+
+
   ECS& ecs = *new ECS;
 
   
@@ -96,6 +100,9 @@ MODULE_API void module_init () {
   f32_t camera_height_start;
   bool camera_drag = false;
 
+  Matrix4 camera_matrix;
+  
+
   ecs.create_system("Render", [&] (ECS* ecs) {
     Vector2f camera_drag_delta = { 0, 0 };
     if (Application.input["Primary Action"]) {
@@ -145,7 +152,7 @@ MODULE_API void module_init () {
       0.01f, 10000.0f
     );
 
-    Matrix4 camera_matrix = screen_matrix * camera_look_matrix;
+    camera_matrix = screen_matrix * camera_look_matrix;
 
     ComponentMask mask = ComponentMask {
       ecs->get_component_type_by_instance_type<Transform3D>().id,
@@ -153,8 +160,8 @@ MODULE_API void module_init () {
       ecs->get_component_type_by_instance_type<RenderMesh3DHandle>().id
     };
 
-    for (u32_t i = 0; i < ecs->entity_count; i ++ ) {
-      EntityHandle entity =  ecs->get_handle(i);
+    for (u32_t i = 0; i < ecs->entity_count; i ++) {
+      EntityHandle entity = ecs->get_handle(i);
 
       if (entity->enabled_components.match_subset(mask)) {
         Transform3D& transform = entity.get_component<Transform3D>();
@@ -169,6 +176,35 @@ MODULE_API void module_init () {
         ref.set_uniform("view", camera_matrix);
 
         mesh.draw_with_material(material);
+      }
+    }
+  });
+
+
+  ecs.create_system("Normal Debugger", [&] (ECS* ecs) {
+    ComponentMask mask = ComponentMask {
+      ecs->get_component_type_by_instance_type<Transform3D>().id,
+      ecs->get_component_type_by_instance_type<RenderMesh3DHandle>().id
+    };
+
+    for (u32_t i = 0; i < ecs->entity_count; i ++) {
+      EntityHandle entity = ecs->get_handle(i);
+
+      if (entity->enabled_components.match_subset(mask)) {
+        Transform3D& transform = entity.get_component<Transform3D>();
+
+        Matrix4 transform_matrix = Matrix4::compose(transform);
+
+        RenderMesh3D& mesh = *entity.get_component<RenderMesh3DHandle>();
+
+        for (auto [ i, face ] : mesh.faces) {
+          Triangle tri = { mesh.positions[face.x], mesh.positions[face.y], mesh.positions[face.z] };
+
+          Vector3f normal = tri.normal();
+          Vector3f center = tri.center();
+
+          draw_debug_3d.line(Line3 { center, center - normal }.apply_matrix(transform_matrix), { 1, 0, 1 });
+        }
       }
     }
   });
@@ -196,6 +232,10 @@ MODULE_API void module_init () {
     }
 
 
+    draw_debug_2d.begin_frame();
+    draw_debug_3d.begin_frame();
+
+
     ecs.update();
     
 
@@ -215,6 +255,10 @@ MODULE_API void module_init () {
     vendor_ex();
 
 
+    draw_debug_3d.end_frame(camera_matrix);
+    draw_debug_2d.end_frame(Application.resolution);
+
+
     Application.end_frame();
   }
   
@@ -223,8 +267,9 @@ MODULE_API void module_init () {
 
 
   ecs.destroy();
+  
 
-
+  draw_debug_2d.destroy();
   AssetManager.destroy();
   Application.destroy();
 }
