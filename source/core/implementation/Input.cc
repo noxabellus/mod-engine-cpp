@@ -569,7 +569,6 @@ namespace mod {
     capture_combo.clear();
     capture_id = id;
     capturing_binding = true;
-    mouse_position = { -1, -1 };
     ImGui::OpenPopup("ModEngine Input Binding Capture Modal");
   }
 
@@ -608,14 +607,20 @@ namespace mod {
     raw.begin_frame();
   }
 
-  void Input::process_raw_input () {
+  void Input::process_raw_input (Vector2s const& app_resolution) {
     if (process_binding_capture_step()) {
-      control_binding.clear();
+      mouse_position_px = raw.mouse.position;
+      
+      mouse_usable = mouse_position_px.x > 0 && mouse_position_px.y > 0;
 
-      mouse_position = raw.mouse.position;
+      if (mouse_usable) {
+        mouse_position_unit = ((Vector2f { 2.0f } / app_resolution) * (Vector2f) mouse_position_px) - 1.0f;
+      } else {
+        mouse_position_unit = { -2, -2 };
+      }
 
       for (auto [ i, control ] : control_binding) {
-        if (control.test(raw)) control.active = true;
+        control.active = control.test(raw);
       }
     }
   }
@@ -660,6 +665,10 @@ namespace mod {
   void Input::clear () {
     control_binding.clear();
     raw.clear();
+    
+    mouse_position_px = { -1, -1 };
+    mouse_position_unit = { -2, -2 };
+    mouse_usable = false;
   }
 
 

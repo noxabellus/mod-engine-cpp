@@ -19,7 +19,9 @@ namespace mod {
     Control { "Up", { { }, { Keycode::Space }, { } } },
     Control { "Down", { { }, { Keycode::C }, { } } },
     Control { "Primary Action", { { }, { }, { MouseButton::Left } } },
-    Control { "Secondary Action", { { }, { }, { MouseButton::Right } } }
+    Control { "Secondary Action", { { }, { }, { MouseButton::Right } } },
+    Control { "Zoom In", { {}, {}, { MouseButton::WheelUp } } },
+    Control { "Zoom Out", { {}, {}, { MouseButton::WheelDown } } }
   );
 
   Application_t Application = { };
@@ -447,7 +449,7 @@ namespace mod {
           } break;
 
           case SDL_MOUSEMOTION: {
-            if (ig_io->WantCaptureMouse || first_frame) {
+            if (ig_io->WantCaptureMouse) {
               event.motion.x = -1;
               event.motion.y = -1;
             }
@@ -471,12 +473,12 @@ namespace mod {
     
     SDL_GL_MakeCurrent(window, gl_context);
 
-    glViewport(0, 0, (int)ig_io->DisplaySize.x, (int)ig_io->DisplaySize.y);
+    glViewport(0, 0, resolution.x, resolution.y);
     glClearColor(0, 0, 0, 1);
     glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
 
 
-    input.process_raw_input();
+    input.process_raw_input(resolution);
 
 
     return true;

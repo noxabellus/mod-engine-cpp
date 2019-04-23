@@ -1147,7 +1147,9 @@ namespace mod {
     RawInput raw;
 
 
-    Vector2s mouse_position = { 0, 0 };
+    Vector2s mouse_position_px = { -1, -1 };
+    Vector2f mouse_position_unit = { -2, -2 };
+    bool mouse_usable = false;
 
     InputCombination capture_combo;
     s64_t capture_id = 0;
@@ -1225,8 +1227,9 @@ namespace mod {
     /* Clear an Input's mouse state for a new frame of input (Allows simulating wheel events as buttons) */
     ENGINE_API void begin_frame ();
 
-    /* Use the internal RawInput to activate appropriate Controls in the ControlBinding of an Input */
-    ENGINE_API void process_raw_input ();
+    /* Use the internal RawInput to activate appropriate Controls in the ControlBinding of an Input.
+     * The Vector2s app_resolution parameter allows the Input to calculate a unit-scale mouse position */
+    ENGINE_API void process_raw_input (Vector2s const& app_resolution);
 
 
     /* Get the status of a Control in the ControlBinding of an Input by id */
