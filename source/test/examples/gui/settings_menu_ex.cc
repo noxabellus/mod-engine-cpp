@@ -178,5 +178,10 @@ void settings_menu_ex (u8_t prev_mode, u8_t& new_mode) {
       Application.input.show_binding_menu();
       Application.input.show_binding_modal();
     }
+
+    f32_t w = GetContentRegionAvailWidth() / 2.0f;
+    NewLine();
+    SameLine(w, Application.ig_style->ItemSpacing.x);
+    if (Button("Back", { w, 0 })) new_mode = prev_mode;
   } End();
 }
