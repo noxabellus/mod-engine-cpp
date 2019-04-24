@@ -107,8 +107,8 @@ namespace mod {
     /* Create a Matrix3 from the upper left portion of a Matrix4 */
     ENGINE_API static Matrix3 from_4 (Matrix4 const& m);
 
-    /* Create a Matrix3 from a Matrix4 normal matrix */
-    static Matrix3 from_4_normal (Matrix4 const& m) {
+    /* Create a Matrix3 normal matrix from a Matrix4 */
+    static Matrix3 normal (Matrix4 const& m) {
       return from_4(m).inverse().transpose();
     }
 

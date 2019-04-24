@@ -17,7 +17,7 @@ namespace mod {
 
   Plane Plane::apply_matrix (Matrix4 const& m) const {
     return from_normal_with_coplanar_vector(
-      normal.apply_matrix(Matrix3::from_4_normal(m)).normalize(),
+      normal.apply_matrix(Matrix3::normal(m)).normalize(),
       coplanar_vector().apply_matrix(m)
     );
   }
