@@ -148,6 +148,8 @@ namespace mod {
   , dynamic(in_dynamic)
   {
     positions.append_multiple(in_positions, vertex_count);
+    
+    recalculate_bounds();
 
     faces.append_multiple(in_faces, face_count);    
     
@@ -186,6 +188,9 @@ namespace mod {
     mesh.dynamic = dynamic;
 
     mesh.positions = Array<Vector3f>::from_ex(positions, vertex_count);
+
+    mesh.recalculate_bounds();
+
     mesh.faces = Array<Vector3u>::from_ex(faces, face_count);
 
     if (normals != NULL) mesh.normals = Array<Vector3f>::from_ex(normals, vertex_count);
@@ -223,6 +228,7 @@ namespace mod {
     mesh.dynamic = dynamic;
 
     mesh.positions = positions;
+    mesh.recalculate_bounds();
     mesh.normals = normals;
     mesh.faces = faces;
 
@@ -256,6 +262,7 @@ namespace mod {
     mesh.dynamic = dynamic;
 
     mesh.positions = positions;
+    mesh.recalculate_bounds();
     mesh.normals = normals;
     mesh.faces = faces;
 
@@ -286,6 +293,7 @@ namespace mod {
     mesh.dynamic = dynamic;
 
     mesh.positions = positions;
+    mesh.recalculate_bounds();
     mesh.faces = faces;
     mesh.calculate_normals();
 
@@ -470,6 +478,15 @@ namespace mod {
   }
 
 
+  void RenderMesh3D::recalculate_bounds () {
+    bounds = AABB3::from_vector_list(positions.elements, positions.count);
+    needs_update.unset(bounds_flag);
+  }
+
+  AABB3 const& RenderMesh3D::get_aabb () {
+    if (needs_update.match_index(bounds_flag)) recalculate_bounds();
+    return bounds;
+  }
 
   
   void RenderMesh3D::clear () {
@@ -479,7 +496,7 @@ namespace mod {
     normals.clear();
     faces.clear();
 
-    needs_update.set_multiple(Position, Normal, Face);
+    needs_update.set_multiple(Position, bounds_flag, Normal, Face);
 
     if (uvs.elements != NULL) {
       uvs.clear();
@@ -558,6 +575,10 @@ namespace mod {
     // TODO switch to DSA style
 
     using namespace Mesh3DAttribute;
+
+    if (needs_update.match_index(bounds_flag)) {
+      recalculate_bounds();
+    }
 
     if (needs_update.match_any()) {
       s32_t draw_arg = dynamic? GL_DYNAMIC_DRAW : GL_STATIC_DRAW;
@@ -762,7 +783,7 @@ namespace mod {
     positions[index] = position;
     normals[index] = normal;
 
-    needs_update.set_multiple(Position, Normal);
+    needs_update.set_multiple(Position, bounds_flag, Normal);
   }
 
   void RenderMesh3D::set_vertex (size_t index, Vector3f const& position, Vector3f const& normal, Vector2f const& uv) {
@@ -775,7 +796,7 @@ namespace mod {
     normals[index] = normal;
     uvs[index] = uv;
 
-    needs_update.set_multiple(Position, Normal, UV);
+    needs_update.set_multiple(Position, bounds_flag, Normal, UV);
   }
 
   void RenderMesh3D::set_vertex (size_t index, Vector3f const& position, Vector3f const& normal, Vector3f const& color) {
@@ -788,7 +809,7 @@ namespace mod {
     normals[index] = normal;
     colors[index] = color;
 
-    needs_update.set_multiple(Position, Normal, Color);
+    needs_update.set_multiple(Position, bounds_flag, Normal, Color);
   }
 
   void RenderMesh3D::set_vertex (size_t index, Vector3f const& position, Vector3f const& normal, Vector2f const& uv, Vector3f const& color) {
@@ -802,7 +823,7 @@ namespace mod {
     uvs[index] = uv;
     colors[index] = color;
 
-    needs_update.set_multiple(Position, Normal, UV, Color);
+    needs_update.set_multiple(Position, bounds_flag, Normal, UV, Color);
   }
 
 
@@ -815,7 +836,7 @@ namespace mod {
     positions.append(position);
     normals.append(normal);
 
-    needs_update.set_multiple(Position, Normal);
+    needs_update.set_multiple(Position, bounds_flag, Normal);
   }
 
   void RenderMesh3D::append_vertex (Vector3f const& position, Vector3f const& normal, Vector2f const& uv) {
@@ -828,7 +849,7 @@ namespace mod {
     normals.append(normal);
     uvs.append(uv);
 
-    needs_update.set_multiple(Position, Normal, UV);
+    needs_update.set_multiple(Position, bounds_flag, Normal, UV);
   }
 
   void RenderMesh3D::append_vertex (Vector3f const& position, Vector3f const& normal, Vector3f const& color) {
@@ -841,7 +862,7 @@ namespace mod {
     normals.append(normal);
     colors.append(color);
 
-    needs_update.set_multiple(Position, Normal, Color);
+    needs_update.set_multiple(Position, bounds_flag, Normal, Color);
   }
 
   void RenderMesh3D::append_vertex (Vector3f const& position, Vector3f const& normal, Vector2f const& uv, Vector3f const& color) {
@@ -855,7 +876,7 @@ namespace mod {
     uvs.append(uv);
     colors.append(color);
 
-    needs_update.set_multiple(Position, Normal, UV, Color);
+    needs_update.set_multiple(Position, bounds_flag, Normal, UV, Color);
   }
 
 
@@ -868,7 +889,7 @@ namespace mod {
     positions.insert(index, position);
     normals.insert(index, normal);
 
-    needs_update.set_multiple(Position, Normal);
+    needs_update.set_multiple(Position, bounds_flag, Normal);
   }
 
   void RenderMesh3D::insert_vertex (size_t index, Vector3f const& position, Vector3f const& normal, Vector2f const& uv) {
@@ -881,7 +902,7 @@ namespace mod {
     normals.insert(index, normal);
     uvs.insert(index, uv);
 
-    needs_update.set_multiple(Position, Normal, UV);
+    needs_update.set_multiple(Position, bounds_flag, Normal, UV);
   }
 
   void RenderMesh3D::insert_vertex (size_t index, Vector3f const& position, Vector3f const& normal, Vector3f const& color) {
@@ -894,7 +915,7 @@ namespace mod {
     normals.insert(index, normal);
     colors.insert(index, color);
 
-    needs_update.set_multiple(Position, Normal, Color);
+    needs_update.set_multiple(Position, bounds_flag, Normal, Color);
   }
 
   void RenderMesh3D::insert_vertex (size_t index, Vector3f const& position, Vector3f const& normal, Vector2f const& uv, Vector3f const& color) {
@@ -908,7 +929,7 @@ namespace mod {
     uvs.insert(index, uv);
     colors.insert(index, color);
 
-    needs_update.set_multiple(Position, Normal, UV, Color);
+    needs_update.set_multiple(Position, bounds_flag, Normal, UV, Color);
   }
 
 
@@ -918,7 +939,7 @@ namespace mod {
     positions.remove(index);
     normals.remove(index);
 
-    needs_update.set_multiple(Position, Normal);
+    needs_update.set_multiple(Position, bounds_flag, Normal);
 
 
     if (uvs.elements != NULL) {
@@ -945,21 +966,25 @@ namespace mod {
 
   void RenderMesh3D::set_face (size_t index, Vector3u const& face) {
     faces[index] = face;
+
     needs_update.set(Mesh3DAttribute::Face);
   }
 
   void RenderMesh3D::append_face (Vector3u const& face) {
     faces.append(face);
+
     needs_update.set(Mesh3DAttribute::Face);
   }
 
   void RenderMesh3D::append_face (size_t index, Vector3u const& face) {
     faces.insert(index, face);
+
     needs_update.set(Mesh3DAttribute::Face);
   }
 
   void RenderMesh3D::remove_face (size_t index) {
     faces.remove(index);
+    
     needs_update.set(Mesh3DAttribute::Face);
   }
 

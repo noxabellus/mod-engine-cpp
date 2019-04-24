@@ -5,6 +5,8 @@
 
 namespace mod {
   inline void init_gl_data (RenderMesh2D* mesh) {
+    using namespace Mesh2DAttribute;
+
     s32_t draw_arg = mesh->dynamic? GL_DYNAMIC_DRAW : GL_STATIC_DRAW;
 
     // TODO switch to DSA style (See dsa_example below)
@@ -12,25 +14,25 @@ namespace mod {
     glGenVertexArrays(1, &mesh->gl_vao);
     glBindVertexArray(mesh->gl_vao);
 
-    glGenBuffers(4, mesh->gl_vbos);
+    glGenBuffers(total_attribute_count, mesh->gl_vbos);
 
 
     // Setup positions buffer & attrib, copy any data to gl, enable
-    glBindBuffer(GL_ARRAY_BUFFER, mesh->gl_vbos[0]);
-    glVertexAttribPointer(0, 2, GL_FLOAT, GL_FALSE, sizeof(Vector2f), (void*) 0);
+    glBindBuffer(GL_ARRAY_BUFFER, mesh->gl_vbos[Position]);
+    glVertexAttribPointer(Position, 2, GL_FLOAT, GL_FALSE, sizeof(Vector2f), (void*) 0);
     glBufferData(GL_ARRAY_BUFFER, mesh->positions.count * sizeof(Vector2f), mesh->positions.elements, draw_arg);
-    glEnableVertexAttribArray(0);
+    glEnableVertexAttribArray(Position);
 
     // Setup UVs attrib, do not copy data or enable (not sure binding is needed)
-    glBindBuffer(GL_ARRAY_BUFFER, mesh->gl_vbos[1]);
-    glVertexAttribPointer(1, 2, GL_FLOAT, GL_FALSE, sizeof(Vector2f), (void*) 0);
+    glBindBuffer(GL_ARRAY_BUFFER, mesh->gl_vbos[UV]);
+    glVertexAttribPointer(UV, 2, GL_FLOAT, GL_FALSE, sizeof(Vector2f), (void*) 0);
 
     // Setup colors attrib, do not copy data or enable
-    glBindBuffer(GL_ARRAY_BUFFER, mesh->gl_vbos[2]);
-    glVertexAttribPointer(2, 3, GL_FLOAT, GL_FALSE, sizeof(Vector3f), (void*) 0);
+    glBindBuffer(GL_ARRAY_BUFFER, mesh->gl_vbos[Color]);
+    glVertexAttribPointer(Color, 3, GL_FLOAT, GL_FALSE, sizeof(Vector3f), (void*) 0);
 
     // Setup faces and copy data
-    glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, mesh->gl_vbos[3]);
+    glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, mesh->gl_vbos[Face]);
     glBufferData(GL_ELEMENT_ARRAY_BUFFER, mesh->faces.count * sizeof(Vector3u), mesh->faces.elements, draw_arg);
 
     // Clear binds
@@ -42,9 +44,9 @@ namespace mod {
     // TODO switch to DSA style
 
     glBindVertexArray(mesh->gl_vao);
-    glBindBuffer(GL_ARRAY_BUFFER, mesh->gl_vbos[1]);
+    glBindBuffer(GL_ARRAY_BUFFER, mesh->gl_vbos[Mesh2DAttribute::UV]);
     glBufferData(GL_ARRAY_BUFFER, mesh->uvs.count * sizeof(Vector2f), mesh->uvs.elements, mesh->dynamic? GL_DYNAMIC_DRAW : GL_STATIC_DRAW);
-    glEnableVertexAttribArray(1);
+    glEnableVertexAttribArray(Mesh2DAttribute::UV);
 
     glBindBuffer(GL_ARRAY_BUFFER, 0);
     glBindVertexArray(0);
@@ -52,11 +54,13 @@ namespace mod {
 
   inline void init_gl_colors (RenderMesh2D* mesh) {
     // TODO switch to DSA style
+    using namespace Mesh2DAttribute;
+
     
     glBindVertexArray(mesh->gl_vao);
-    glBindBuffer(GL_ARRAY_BUFFER, mesh->gl_vbos[2]);
+    glBindBuffer(GL_ARRAY_BUFFER, mesh->gl_vbos[Mesh2DAttribute::Color]);
     glBufferData(GL_ARRAY_BUFFER, mesh->colors.count * sizeof(Vector3f), mesh->colors.elements, mesh->dynamic? GL_DYNAMIC_DRAW : GL_STATIC_DRAW);
-    glEnableVertexAttribArray(2);
+    glEnableVertexAttribArray(Mesh2DAttribute::Color);
 
     glBindBuffer(GL_ARRAY_BUFFER, 0);
     glBindVertexArray(0);
@@ -66,7 +70,7 @@ namespace mod {
     // TODO switch to DSA style
 
     glBindVertexArray(mesh->gl_vao);
-    glDisableVertexAttribArray(1);
+    glDisableVertexAttribArray(Mesh2DAttribute::UV);
     glBindVertexArray(0);
   }
 
@@ -74,7 +78,7 @@ namespace mod {
     // TODO switch to DSA style
 
     glBindVertexArray(mesh->gl_vao);
-    glDisableVertexAttribArray(2);
+    glDisableVertexAttribArray(Mesh2DAttribute::Color);
     glBindVertexArray(0);
   }
 
@@ -131,6 +135,7 @@ namespace mod {
   , dynamic(in_dynamic)
   {
     positions.append_multiple(in_positions, vertex_count);
+    recalculate_bounds();
     faces.append_multiple(in_faces, face_count);
 
     init_gl_data(this);
@@ -164,6 +169,7 @@ namespace mod {
     mesh.dynamic = dynamic;
 
     mesh.positions = Array<Vector2f>::from_ex(positions, vertex_count);
+    mesh.recalculate_bounds();
     mesh.faces = Array<Vector3u>::from_ex(faces, face_count);
 
     init_gl_data(&mesh);
@@ -197,6 +203,7 @@ namespace mod {
     mesh.dynamic = dynamic;
 
     mesh.positions = positions;
+    mesh.recalculate_bounds();
     mesh.faces = faces;
 
     init_gl_data(&mesh);
@@ -228,6 +235,7 @@ namespace mod {
     mesh.dynamic = dynamic;
 
     mesh.positions = positions;
+    mesh.recalculate_bounds();
     mesh.faces = faces;
 
     init_gl_data(&mesh);
@@ -396,22 +404,33 @@ namespace mod {
   }
 
 
+  void RenderMesh2D::recalculate_bounds () {
+    bounds = AABB2::from_vector_list(positions.elements, positions.count);
+    needs_update.unset(bounds_flag);
+  }
+
+  AABB2 const& RenderMesh2D::get_aabb () {
+    if (needs_update.match_index(bounds_flag)) recalculate_bounds();
+    return bounds;
+  }
 
   
   void RenderMesh2D::clear () {
+    using namespace Mesh2DAttribute;
+
     positions.clear();
     faces.clear();
 
-    needs_update.set_multiple(0, 3);
+    needs_update.set_multiple(Position, bounds_flag, Face);
 
     if (uvs.elements != NULL) {
       uvs.clear();
-      needs_update.set(1);
+      needs_update.set(UV);
     }
 
     if (colors.elements != NULL) {
       colors.clear();
-      needs_update.set(2);
+      needs_update.set(Color);
     }
 
     material_config.clear();
@@ -433,7 +452,7 @@ namespace mod {
 
     needs_update.clear();
 
-    glDeleteBuffers(4, gl_vbos);
+    glDeleteBuffers(Mesh2DAttribute::total_attribute_count, gl_vbos);
     glDeleteVertexArrays(1, &gl_vao);
   }
 
@@ -442,28 +461,34 @@ namespace mod {
   void RenderMesh2D::update () {
     // TODO switch to DSA style
 
+    using namespace Mesh2DAttribute;
+
+    if (needs_update.match_index(bounds_flag)) {
+      recalculate_bounds();
+    }
+
     if (needs_update.match_any()) {
       s32_t draw_arg = dynamic? GL_DYNAMIC_DRAW : GL_STATIC_DRAW;
 
       glBindVertexArray(gl_vao);
 
-      if (needs_update.match_index(0)) {
-        glBindBuffer(GL_ARRAY_BUFFER, gl_vbos[0]);
+      if (needs_update.match_index(Position)) {
+        glBindBuffer(GL_ARRAY_BUFFER, gl_vbos[Position]);
         glBufferData(GL_ARRAY_BUFFER, positions.count * sizeof(Vector2f), positions.elements, draw_arg);
       }
 
-      if (needs_update.match_index(1)) {
-        glBindBuffer(GL_ARRAY_BUFFER, gl_vbos[1]);
+      if (needs_update.match_index(UV)) {
+        glBindBuffer(GL_ARRAY_BUFFER, gl_vbos[UV]);
         glBufferData(GL_ARRAY_BUFFER, uvs.count * sizeof(Vector2f), uvs.elements, draw_arg);
       }
 
-      if (needs_update.match_index(2)) {
-        glBindBuffer(GL_ARRAY_BUFFER, gl_vbos[2]);
+      if (needs_update.match_index(Color)) {
+        glBindBuffer(GL_ARRAY_BUFFER, gl_vbos[Color]);
         glBufferData(GL_ARRAY_BUFFER, colors.count * sizeof(Vector3f), colors.elements, draw_arg);
       }
 
-      if (needs_update.match_index(3)) {
-        glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, gl_vbos[3]);
+      if (needs_update.match_index(Face)) {
+        glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, gl_vbos[Face]);
         glBufferData(GL_ELEMENT_ARRAY_BUFFER, faces.count * sizeof(Vector3u), faces.elements, draw_arg);
       }
 
@@ -571,7 +596,7 @@ namespace mod {
 
     disable_gl_uvs(this);
 
-    needs_update.unset(1);
+    needs_update.unset(Mesh2DAttribute::UV);
   }
 
 
@@ -618,7 +643,7 @@ namespace mod {
 
     disable_gl_colors(this);
 
-    needs_update.unset(2);
+    needs_update.unset(Mesh2DAttribute::Color);
   }
 
 
@@ -633,114 +658,162 @@ namespace mod {
   void RenderMesh2D::set_vertex (size_t index, Vector2f const& position) {
     m_assert(uvs.elements == NULL, "Expected a uv attribute");
     m_assert(colors.elements == NULL, "Expected a color attribute");
+    
     positions[index] = position;
-    needs_update.set(0);
+
+    needs_update.set_multiple(Mesh2DAttribute::Position, bounds_flag);
   }
 
   void RenderMesh2D::set_vertex (size_t index, Vector2f const& position, Vector2f const& uv) {
+    using namespace Mesh2DAttribute;
+
     m_assert(uvs.elements != NULL, "Unexpected uv attribute");
     m_assert(colors.elements == NULL, "Expected a color attribute");
+
     positions[index] = position;
     uvs[index] = uv;
-    needs_update.set_multiple(0, 1);
+
+    needs_update.set_multiple(Position, bounds_flag, UV);
   }
 
   void RenderMesh2D::set_vertex (size_t index, Vector2f const& position, Vector3f const& color) {
+    using namespace Mesh2DAttribute;
+
     m_assert(uvs.elements == NULL, "Expected a uv attribute");
     m_assert(colors.elements != NULL, "Unexpected color attribute");
+
     positions[index] = position;
     colors[index] = color;
-    needs_update.set_multiple(0, 2);
+
+    needs_update.set_multiple(Position, bounds_flag, Color);
   }
 
   void RenderMesh2D::set_vertex (size_t index, Vector2f const& position, Vector2f const& uv, Vector3f const& color) {
+    using namespace Mesh2DAttribute;
+
     m_assert(uvs.elements != NULL, "Unexpected uv attribute");
     m_assert(colors.elements != NULL, "Unexpected color attribute");
+
     positions[index] = position;
     uvs[index] = uv;
     colors[index] = color;
-    needs_update.set_multiple(0, 1, 2);
+
+    needs_update.set_multiple(Position, bounds_flag, UV, Color);
   }
 
 
   void RenderMesh2D::append_vertex (Vector2f const& position) {
+    using namespace Mesh2DAttribute;
+
     m_assert(uvs.elements == NULL, "Expected a uv attribute");
     m_assert(colors.elements == NULL, "Expected a color attribute");
+
     positions.append(position);
-    needs_update.set(0);
+
+    needs_update.set_multiple(Position, bounds_flag);
   }
 
   void RenderMesh2D::append_vertex (Vector2f const& position, Vector2f const& uv) {
+    using namespace Mesh2DAttribute;
+
     m_assert(uvs.elements != NULL, "Unexpected uv attribute");
     m_assert(colors.elements == NULL, "Expected a color attribute");
+
     positions.append(position);
     uvs.append(uv);
-    needs_update.set_multiple(0, 1);
+
+    needs_update.set_multiple(Position, bounds_flag, UV);
   }
 
   void RenderMesh2D::append_vertex (Vector2f const& position, Vector3f const& color) {
+    using namespace Mesh2DAttribute;
+
     m_assert(uvs.elements == NULL, "Expected a uv attribute");
     m_assert(colors.elements != NULL, "Unexpected color attribute");
+
     positions.append(position);
     colors.append(color);
-    needs_update.set_multiple(0, 2);
+
+    needs_update.set_multiple(Position, bounds_flag, Color);
   }
 
   void RenderMesh2D::append_vertex (Vector2f const& position, Vector2f const& uv, Vector3f const& color) {
+    using namespace Mesh2DAttribute;
+
     m_assert(uvs.elements != NULL, "Unexpected uv attribute");
     m_assert(colors.elements != NULL, "Unexpected color attribute");
+
     positions.append(position);
     uvs.append(uv);
     colors.append(color);
-    needs_update.set_multiple(0, 1, 2);
+
+    needs_update.set_multiple(Position, bounds_flag, UV, Color);
   }
 
 
   void RenderMesh2D::insert_vertex (size_t index, Vector2f const& position) {
+    using namespace Mesh2DAttribute;
+
     m_assert(uvs.elements == NULL, "Expected a uv attribute");
     m_assert(colors.elements == NULL, "Expected a color attribute");
+
     positions.insert(index, position);
-    needs_update.set(0);
+
+    needs_update.set_multiple(Position, bounds_flag);
   }
 
   void RenderMesh2D::insert_vertex (size_t index, Vector2f const& position, Vector2f const& uv) {
+    using namespace Mesh2DAttribute;
+
     m_assert(uvs.elements != NULL, "Unexpected uv attribute");
     m_assert(colors.elements == NULL, "Expected a color attribute");
+
     positions.insert(index, position);
     uvs.insert(index, uv);
-    needs_update.set_multiple(0, 1);
+
+    needs_update.set_multiple(Position, bounds_flag, UV);
   }
 
   void RenderMesh2D::insert_vertex (size_t index, Vector2f const& position, Vector3f const& color) {
+    using namespace Mesh2DAttribute;
+
     m_assert(uvs.elements == NULL, "Expected a uv attribute");
     m_assert(colors.elements != NULL, "Unexpected color attribute");
+
     positions.insert(index, position);
     colors.insert(index, color);
-    needs_update.set_multiple(0, 2);
+
+    needs_update.set_multiple(Position, bounds_flag, Color);
   }
 
   void RenderMesh2D::insert_vertex (size_t index, Vector2f const& position, Vector2f const& uv, Vector3f const& color) {
+    using namespace Mesh2DAttribute;
+
     m_assert(uvs.elements != NULL, "Unexpected uv attribute");
     m_assert(colors.elements != NULL, "Unexpected color attribute");
+
     positions.insert(index, position);
     uvs.insert(index, uv);
     colors.insert(index, color);
-    needs_update.set_multiple(0, 1, 2);
+
+    needs_update.set_multiple(Position, bounds_flag, UV, Color);
   }
 
 
   void RenderMesh2D::remove_vertex (size_t index) {
+    using namespace Mesh2DAttribute;
+
     positions.remove(index);
-    needs_update.set(0);
+    needs_update.set_multiple(Position, bounds_flag);
 
     if (uvs.elements != NULL) {
       uvs.remove(index);
-      needs_update.set(1);
+      needs_update.set(UV);
     }
 
     if (colors.elements != NULL) {
       colors.remove(index);
-      needs_update.set(2);
+      needs_update.set(Color);
     }
   }
 
@@ -754,22 +827,26 @@ namespace mod {
 
   void RenderMesh2D::set_face (size_t index, Vector3u const& face) {
     faces[index] = face;
-    needs_update.set(3);
+
+    needs_update.set(Mesh2DAttribute::Face);
   }
 
   void RenderMesh2D::append_face (Vector3u const& face) {
     faces.append(face);
-    needs_update.set(3);
+    
+    needs_update.set(Mesh2DAttribute::Face);
   }
 
   void RenderMesh2D::append_face (size_t index, Vector3u const& face) {
     faces.insert(index, face);
-    needs_update.set(3);
+    
+    needs_update.set(Mesh2DAttribute::Face);
   }
 
   void RenderMesh2D::remove_face (size_t index) {
     faces.remove(index);
-    needs_update.set(3);
+    
+    needs_update.set(Mesh2DAttribute::Face);
   }
 
 

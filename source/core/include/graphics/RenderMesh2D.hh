@@ -20,15 +20,57 @@
 
 
 namespace mod {
+  namespace Mesh2DAttribute {
+    enum: u8_t {
+      Position,
+      UV,
+      Color,
+
+      Face,
+
+      total_attribute_count,
+
+      Invalid = (u8_t) -1
+    };
+
+    static constexpr char const* names [total_attribute_count] = {
+      "Position",
+      "UV",
+      "Color",
+
+      "Face"
+    };
+
+    static constexpr char const* name (u8_t attribute) {
+      if (attribute < total_attribute_count) return names[attribute];
+      else return "Invalid";
+    }
+
+    static constexpr u8_t from_name (char const* name, size_t max_length = SIZE_MAX) {
+      for (u8_t attribute = 0; attribute < total_attribute_count; attribute ++) {
+        if (str_cmp_caseless(name, names[attribute], max_length) == 0) return attribute;
+      }
+
+      return Invalid;
+    }
+
+    static constexpr bool validate (u8_t attribute) {
+      return attribute < total_attribute_count;
+    }
+  };
+
   struct RenderMesh2D {
     using UpdateMask = Bitmask<8>;
   
+    static constexpr u8_t bounds_flag = Mesh2DAttribute::total_attribute_count;
+    static_assert(bounds_flag < UpdateMask::bit_count, "RenderMesh2D::UpdateMask is not large enough");
+
 
     char* origin;
     u32_t asset_id = 0;
 
     u32_t gl_vao;
-    u32_t gl_vbos [4];
+    u32_t gl_vbos [Mesh2DAttribute::total_attribute_count];
 
     Array<Vector2f> positions;
     Array<Vector2f> uvs;
@@ -41,6 +83,8 @@ namespace mod {
     bool dynamic;
 
     MaterialConfig material_config;
+
+    AABB2 bounds;
 
 
 
@@ -237,6 +281,12 @@ namespace mod {
     ENGINE_API static RenderMesh2D from_file (char const* origin);
 
 
+    /* Recalculate the axis-aligned bounding box of a RenderMesh2D and overwrite its existing one */
+    ENGINE_API void recalculate_bounds ();
+
+    /* Get an up-to-date axis-aligned bounding box for a RenderMesh2D */
+    ENGINE_API AABB2 const& get_aabb ();
+
 
     /* Reset all of a RenderMesh2D's arrays to 0-length but keep their capacity. Sets all flags of needs_update to true.
      * If material_config is in multi_material mode it will also be cleared but will stay in multi_material mode.
@@ -402,6 +452,30 @@ namespace mod {
     ENGINE_API void remove_vertex (size_t index);
 
 
+    /* Mark a RenderMesh2D to have its vertex attributes updated before use */
+    void dirty_vertices () {
+      using namespace Mesh2DAttribute;
+      needs_update.set_multiple(Position, bounds_flag);
+      if (uvs.elements != NULL) needs_update.set(UV);
+      if (colors.elements != NULL) needs_update.set(Color);
+    }
+
+    /* Mark a RenderMesh2D to have its vertex positions and bounds updated before use */
+    void dirty_positions () {
+      needs_update.set_multiple(Mesh2DAttribute::Position, bounds_flag);
+    }
+  
+    /* Mark a RenderMesh2D to have its uvs updated before use */
+    void dirty_uvs () {
+      if (uvs.elements != NULL) needs_update.set(Mesh2DAttribute::UV);
+    }
+
+    /* Mark a RenderMesh2D to have its colors updated before use */
+    void dirty_colors () {
+      if (colors.elements != NULL) needs_update.set(Mesh2DAttribute::Color);
+    }
+
+
     
     /* Get the face of a RenderMesh2D at the given index.
      * Panics if the index is out of range */
@@ -421,6 +495,11 @@ namespace mod {
 
     /* Remove a face at the given index in a RenderMesh2D */
     ENGINE_API void remove_face (size_t index);
+
+    /* Mark a RenderMesh2D to have its faces updated before use */
+    void dirty_faces () {
+      needs_update.set(Mesh2DAttribute::Face);
+    }
 
 
 

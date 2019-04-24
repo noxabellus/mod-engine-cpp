@@ -64,6 +64,8 @@ namespace mod {
   struct RenderMesh3D {
     using UpdateMask = Bitmask<8>;
   
+    static constexpr u8_t bounds_flag = Mesh3DAttribute::total_attribute_count;
+    static_assert(bounds_flag < UpdateMask::bit_count, "RenderMesh3D::UpdateMask is not large enough");
 
     char* origin;
     u32_t asset_id = 0;
@@ -83,6 +85,8 @@ namespace mod {
     bool dynamic;
 
     MaterialConfig material_config;
+
+    AABB3 bounds;
 
 
 
@@ -365,7 +369,7 @@ namespace mod {
 
       MaterialConfig const& material_config = { }
     );
-
+    
 
     /* Create a new RenderMesh3D from a JSONItem */
     ENGINE_API static RenderMesh3D from_json_item (char const* origin, JSONItem const& json);
@@ -381,6 +385,13 @@ namespace mod {
     /* Create a new RenderMesh3D from a source file */
     ENGINE_API static RenderMesh3D from_file (char const* origin);
 
+
+
+    /* Recalculate the axis-aligned bounding box of a RenderMesh3D and overwrite its existing one */
+    ENGINE_API void recalculate_bounds ();
+
+    /* Get an up-to-date axis-aligned bounding box for a RenderMesh3D */
+    ENGINE_API AABB3 const& get_aabb ();
 
 
     /* Reset all of a RenderMesh3D's arrays to 0-length but keep their capacity. Sets all flags of needs_update to true.
@@ -553,6 +564,36 @@ namespace mod {
     ENGINE_API void remove_vertex (size_t index);
 
 
+    /* Mark a RenderMesh3D to have its vertex attributes updated before use */
+    void dirty_vertices () {
+      using namespace Mesh3DAttribute;
+      needs_update.set_multiple(Position, bounds_flag, Normal);
+      if (uvs.elements != NULL) needs_update.set(UV);
+      if (colors.elements != NULL) needs_update.set(Color);
+    }
+
+    /* Mark a RenderMesh3D to have its vertex positions and bounds updated before use */
+    void dirty_positions () {
+      needs_update.set_multiple(Mesh3DAttribute::Position, bounds_flag);
+    }
+    
+    /* Mark a RenderMesh3D to have its normals updated before use */
+    void dirty_normals () {
+      needs_update.set(Mesh3DAttribute::Normal);
+    }
+
+    /* Mark a RenderMesh3D to have its uvs updated before use */
+    void dirty_uvs () {
+      if (uvs.elements != NULL) needs_update.set(Mesh3DAttribute::UV);
+    }
+
+    /* Mark a RenderMesh3D to have its colors updated before use */
+    void dirty_colors () {
+      if (colors.elements != NULL) needs_update.set(Mesh3DAttribute::Color);
+    }
+
+
+
     
     /* Get the face of a RenderMesh3D at the given index.
      * Panics if the index is out of range */
@@ -572,6 +613,11 @@ namespace mod {
 
     /* Remove a face at the given index in a RenderMesh3D */
     ENGINE_API void remove_face (size_t index);
+
+    /* Mark a RenderMesh3D to have its faces updated before use */
+    void dirty_faces () {
+      needs_update.set(Mesh3DAttribute::Face);
+    }
 
 
 
