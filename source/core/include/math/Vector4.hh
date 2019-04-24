@@ -697,6 +697,11 @@ namespace mod {
         m[3] * ((f32_t) x) + m[7] * ((f32_t) y) + m[11] * ((f32_t) z) + m[15] * ((f32_t) w)
       };
     }
+
+    /* Transform a vector using a matrix3 */
+    Vector3<f32_t> apply_matrix (Matrix3 const& m, Vector3f const& axis = Constants::Vector3f::up) const {
+      return apply_matrix(Matrix4::from_3(m, axis));
+    }
   };
 
 

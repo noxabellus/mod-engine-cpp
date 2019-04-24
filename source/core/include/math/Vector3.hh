@@ -613,9 +613,8 @@ namespace mod {
 
     /* Rotate a direction vector using a matrix3 */
     Vector3<f32_t> transform_direction (Matrix3 const& m) const {
-      Matrix3 no_move = m;
-      no_move.set_position({ 0.0f, 0.0f });
-      return apply_matrix(no_move).normalize();
+      Matrix3 rot_only = Matrix3::from_rotation_angle(m.get_rotation());
+      return apply_matrix(rot_only).normalize();
     }
 
     /* Rotate a direction vector using a matrix4 */
