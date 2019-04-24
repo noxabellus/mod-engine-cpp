@@ -4,15 +4,7 @@
 
 namespace mod {
   Vector3f Triangle::normal () const {
-    Vector3f cross = (c - b).cross(a - b);
-
-    f32_t len_sq = cross.length_sq();
-
-    if (len_sq > 0) {
-      return cross * (1.0f / sqrtf(len_sq));
-    } else {
-      return Constants::Vector3f::zero;
-    }
+    return (c - a).cross(b - a).normalize();
   }
 
   Vector3f Triangle::get_barycentric_coordinate (Vector3f const& v) const {
