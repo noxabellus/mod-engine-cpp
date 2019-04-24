@@ -40,6 +40,8 @@ namespace mod {
     ShaderHandle geometry_shader;
     ShaderHandle compute_shader;
 
+    Array<UniformInfo> uniform_info;
+
 
     /* Create a new uninitialized ShaderProgram */
     ShaderProgram () { }
@@ -76,10 +78,25 @@ namespace mod {
 
 
     /* Get an array of information about a ShaderProgram's uniforms */
-    ENGINE_API Array<UniformInfo> get_uniform_info () const;
+    ENGINE_API Array<UniformInfo> const& get_uniform_info ();
 
     /* Print information about a ShaderProgram's uniforms */
-    ENGINE_API void dump_uniform_info () const;
+    ENGINE_API void dump_uniform_info ();
+
+
+    /* Determine if a ShaderProgram has a uniform at the given location */
+    bool has_uniform (s32_t location) {
+      for (auto [ i, info ] : get_uniform_info()) {
+        if (info.location == location) return true;
+      }
+
+      return false;
+    }
+
+    /* Determine if a ShaderProgram has a uniform at the given name */
+    bool has_uniform (char const* name) {
+      return get_uniform_location(name) != -1;
+    }
 
 
     /* Bind a ShaderProgram's gl_id to the OpenGL context */

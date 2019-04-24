@@ -1061,6 +1061,26 @@ namespace mod {
     ENGINE_API void destroy ();
 
 
+    /* Determine whether a Material has a value for a Uniform, by location */
+    bool has_uniform (s32_t location) const {
+      return get_uniform_index(location) != -1;
+    }
+
+    /* Determine whether a Material has a value for a Uniform, by name */
+    bool has_uniform (char const* name) const {
+      return get_uniform_index(name) != -1;
+    }
+
+    /* Determine whether a Material's ShaderProgram can support a Uniform at the given location */
+    bool supports_uniform (s32_t location) const {
+      return shader_program->has_uniform(location);
+    }
+
+    /* Determine whether a Material's ShaderProgram can support a Uniform with the given name */
+    bool supports_uniform (char const* name) const {
+      return shader_program->has_uniform(name);
+    }
+
     /* Get the index of a Material's Uniform inside its Uniform array, by location.
      * Returns -1 if no Uniform is bound to the given location in the Material */
     ENGINE_API s64_t get_uniform_index (s32_t location) const;
@@ -1137,7 +1157,8 @@ namespace mod {
 
     /* Set a Material's value Uniform by location.
      * Creates a new Uniform in the Material if one does not exist.
-     * Panics if the type is mismatched to an existing Uniform */
+     * Panics if the type is mismatched to an existing Uniform,
+     * or if the Material's ShaderProgram doesn't have a Uniform with the given location */
     template <typename T> void set_uniform (s32_t location, T const& value) {
       static constexpr u8_t uniform_type = UniformType::from_type<T>();
 
@@ -1148,6 +1169,7 @@ namespace mod {
       if (existing_uniform != NULL) {
         existing_uniform->set(value);
       } else {
+        m_assert(supports_uniform(location), "The ShaderProgram (with origin '%s') does not have a uniform at the given location %" PRId32, shader_program->origin, location);
         uniforms.append({ location, value });
       }
     }
@@ -1174,7 +1196,8 @@ namespace mod {
     /* Copy new values into a Material's array Uniform by location.
      * Overwrites existing values in the array, if one exists.
      * Creates a new Uniform in the Material if one does not exist.
-     * Panics if the element type is mismatched to an existing Uniform */
+     * Panics if the element type is mismatched to an existing Uniform,
+     * or if the Material's ShaderProgram doesn't have a Uniform with the given location */
     template <typename T> void set_uniform_array (s32_t location, Array<T> const& arr) {
       static constexpr u8_t element_type = UniformType::from_type<T>();
 
@@ -1185,7 +1208,8 @@ namespace mod {
       if (existing_uniform != NULL) {
         existing_uniform->set_array(arr);
       } else {
-        uniforms.append({ uniform})
+        m_assert(supports_uniform(location), "The ShaderProgram (with origin '%s') does not have a uniform at the given location %" PRId32, shader_program->origin, location);
+        uniforms.append({ uniform })
       }
     }
     

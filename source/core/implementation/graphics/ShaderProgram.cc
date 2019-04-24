@@ -186,29 +186,33 @@ namespace mod {
       glDeleteProgram(gl_id);
       gl_id = 0;
     }
+
+    uniform_info.destroy();
   }
 
 
-  Array<UniformInfo> ShaderProgram::get_uniform_info () const {
-    Array<UniformInfo> out;
+  Array<UniformInfo> const& ShaderProgram::get_uniform_info () {
+    if (uniform_info.elements == NULL) {
+      uniform_info = { 16 };
 
-    s32_t count;
-    glGetProgramiv(gl_id, GL_ACTIVE_UNIFORMS, &count);
+      s32_t count;
+      glGetProgramiv(gl_id, GL_ACTIVE_UNIFORMS, &count);
 
-    for (s32_t i = 0; i < count; i ++) {
-      UniformInfo info;
+      for (s32_t i = 0; i < count; i ++) {
+        UniformInfo info;
 
-      glGetActiveUniform(gl_id, i, UniformInfo::max_name_length, NULL, &info.size, &info.type, info.name);
+        glGetActiveUniform(gl_id, i, UniformInfo::max_name_length, NULL, &info.size, &info.type, info.name);
 
-      info.location = get_uniform_location(info.name);
+        info.location = get_uniform_location(info.name);
 
-      out.append(info);
+        uniform_info.append(info);
+      }
     }
 
-    return out;
+    return uniform_info;
   }
 
-  void ShaderProgram::dump_uniform_info () const {
+  void ShaderProgram::dump_uniform_info () {
     Array<UniformInfo> info = get_uniform_info();
 
     printf(
