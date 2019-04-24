@@ -28,14 +28,21 @@ MODULE_API void module_init () {
 
     f32_t movement_rate;
   };
-  
-  MaterialHandle ma = AssetManager.get<Material>("Minimal3DA");
 
+  struct DirectionalLight {
+    Vector3f color;
+    f32_t brightness;
+  };
+  
+  MaterialHandle directional_light_mat = AssetManager.get<Material>("DirectionalLight");
+  MaterialHandle unlit_color_mat = AssetManager.get<Material>("UnlitColor");
+  RenderMesh3DHandle test_cube_mesh = AssetManager.get<RenderMesh3D>("Test Cube");
 
   ecs.create_component_type<Transform3D>();
   ecs.create_component_type<MaterialHandle>();
   ecs.create_component_type<RenderMesh3DHandle>();
   ecs.create_component_type<BasicInput>();
+  ecs.create_component_type<DirectionalLight>();
 
 
   EntityHandle cube; {
@@ -45,9 +52,8 @@ MODULE_API void module_init () {
       Constants::Quaternion::identity,
       100
     });
-    cube.add_component(ma);
-    cube.add_component(AssetManager.get<RenderMesh3D>("Test Cube"));
-    cube.add_component(BasicInput { true, 64 });
+    cube.add_component(directional_light_mat);
+    cube.add_component(test_cube_mesh);
   }
 
   EntityHandle plane; {
@@ -57,9 +63,22 @@ MODULE_API void module_init () {
       Constants::Quaternion::identity,
       200
     });
-    plane.add_component(ma);
+    plane.add_component(directional_light_mat);
     plane.add_component(AssetManager.get<RenderMesh3D>("Test Quad 3D"));
   }
+
+  EntityHandle light; {
+    light = ecs.create_entity();
+    light.add_component(Transform3D {
+      { 200, 200, 200 },
+      Constants::Quaternion::identity,
+      10
+    });
+    light.add_component(test_cube_mesh);
+    light.add_component(unlit_color_mat);
+    light.add_component(BasicInput { true, 64 });
+    light.add_component(DirectionalLight { { 1, 1, 1 }, 1 });
+  };
 
 
   ecs.create_system("MovementInput", true, { ecs.get_component_type_by_instance_type<BasicInput>().id, ecs.get_component_type_by_instance_type<Transform3D>().id }, [&] (ECS* ecs, uint32_t index) {
@@ -82,11 +101,19 @@ MODULE_API void module_init () {
     }
   });
 
+
+  bool light_orbit = true;
+  f32_t light_orbit_size = 200;
+  f32_t light_orbit_time = 0;
+  f32_t light_orbit_speed = M_PI * .125;
+
+  f32_t specular_strength = 0.5f;
+  f32_t specular_power = 2.0f;
   
   f32_t camera_rot_base = (M_PI * 2) * .25;
   f32_t camera_rot = (M_PI * 2) * .125;
-  f32_t camera_dist = 100;
-  f32_t camera_height = 100;
+  f32_t camera_dist = 400;
+  f32_t camera_height = camera_dist;
   f32_t camera_zoom = 1;
 
   f32_t camera_rot_rate = M_PI;
@@ -104,6 +131,15 @@ MODULE_API void module_init () {
   
 
   ecs.create_system("Render", [&] (ECS* ecs) {
+    if (light_orbit) {
+      light_orbit_time += light_orbit_speed / Application.frame_delta;
+      Transform3D& light_tran = light.get_component<Transform3D>();
+      light_tran.position = {
+        cosf(light_orbit_time) * light_orbit_size,
+        sinf(light_orbit_time) * light_orbit_size,
+        light_tran.position.z
+      };
+    }
     Vector2f camera_drag_delta = { 0, 0 };
     if (Application.input["Primary Action"]) {
       if (!camera_drag) { // drag start
@@ -128,8 +164,8 @@ MODULE_API void module_init () {
     
     using namespace ImGui;
     SetNextWindowPos({ 10, 10 }, ImGuiCond_Always, { 0, 0 });
-    Begin("Camera Info", NULL, ImGuiWindowFlags_NoResize | ImGuiWindowFlags_NoMove); {
-      Text("Position: x %f, y %f, z %f", camera_position.x, camera_position.y, camera_position.z);
+    Begin("Info", NULL, ImGuiWindowFlags_NoResize | ImGuiWindowFlags_NoMove); {
+      Text("Camera Position: x %f, y %f, z %f", camera_position.x, camera_position.y, camera_position.z);
       Text("- Rotation: %f", camera_rot);
       Text("- Height: %f", camera_height);
       Text("- Zoom: %f", camera_zoom);
@@ -138,21 +174,34 @@ MODULE_API void module_init () {
         camera_height = 100;
         camera_zoom = 1;
       }
+
+      ColorPicker3("Light Color", light.get_component<DirectionalLight>().color.elements);
+      SliderFloat("Light Brightness", &light.get_component<DirectionalLight>().brightness, 0.01f, 5.0f);
+      if (Button("Light Orbit")) light_orbit = !light_orbit;
+      SameLine(); Text("(%s)", light_orbit? "Enabled" : "Disabled");
+      SliderFloat("Light Height", &light.get_component<Transform3D>().position.z, 0.0f, 400.0f);
+      SliderFloat("Light Orbit Size", &light_orbit_size, 10.0f, 400.0f);
+      SliderFloat("Light Orbit Speed", &light_orbit_speed, 0.001f, M_PI * .25);
+
+      SliderFloat("Specular Strength", &specular_strength, 0.0f, 10.0f);
+      SliderFloat("Specular Power", &specular_power, 0.0f, 255.0f);
+      directional_light_mat->set_uniform("specular_strength", specular_strength);
+      directional_light_mat->set_uniform("specular_power", specular_power);
     } End();
 
-    Matrix4 camera_look_matrix = Matrix4::from_look(camera_position, { 0, 0, 0 }, Constants::Vector3f::down, true).inverse();
+    Matrix4 view_matrix = Matrix4::from_look(camera_position, { 0, 0, 0 }, Constants::Vector3f::down, true).inverse();
 
     Vector2f half_screen = Vector2f { Application.ig_io->DisplaySize } / 2.0f;
 
     Vector2f half_screen_zoom = half_screen * camera_zoom;
     
-    Matrix4 screen_matrix = Matrix4::from_orthographic(
+    Matrix4 projection_matrix = Matrix4::from_orthographic(
       -half_screen_zoom.x, half_screen_zoom.x,
       -half_screen_zoom.y, half_screen_zoom.y,
       0.01f, 10000.0f
     );
 
-    camera_matrix = screen_matrix * camera_look_matrix;
+    camera_matrix = projection_matrix * view_matrix;
 
     ComponentMask mask = ComponentMask {
       ecs->get_component_type_by_instance_type<Transform3D>().id,
@@ -166,14 +215,21 @@ MODULE_API void module_init () {
       if (entity->enabled_components.match_subset(mask)) {
         Transform3D& transform = entity.get_component<Transform3D>();
 
-        Matrix4 transform_matrix = Matrix4::compose(transform);
+        Matrix4 model_matrix = Matrix4::compose(transform);
 
         RenderMesh3D& mesh = *entity.get_component<RenderMesh3DHandle>();
         MaterialHandle& material = entity.get_component<MaterialHandle>();
         Material& ref = *material;
 
-        ref.set_uniform("transform", transform_matrix);
-        ref.set_uniform("view", camera_matrix);
+        ref.set_uniform("m_model", model_matrix);
+        ref.set_uniform("m_view", view_matrix);
+        ref.set_uniform("m_projection", projection_matrix);
+        ref.set_uniform("m_normal", Matrix3::normal(view_matrix * model_matrix));
+
+        if (ref.supports_uniform("light_pos")) {
+          ref.set_uniform("light_pos", light.get_component<Transform3D>().position);
+          ref.set_uniform("light_color", light.get_component<DirectionalLight>().color * light.get_component<DirectionalLight>().brightness);
+        }
 
         mesh.draw_with_material(material);
       }
@@ -181,7 +237,7 @@ MODULE_API void module_init () {
   });
 
 
-  ecs.create_system("Normal Debugger", [&] (ECS* ecs) {
+  ecs.create_system("Face Normal Debugger", [&] (ECS* ecs) {
     ComponentMask mask = ComponentMask {
       ecs->get_component_type_by_instance_type<Transform3D>().id,
       ecs->get_component_type_by_instance_type<RenderMesh3DHandle>().id
@@ -203,7 +259,33 @@ MODULE_API void module_init () {
           Vector3f normal = tri.normal();
           Vector3f center = tri.center();
 
-          draw_debug_3d.line(Line3 { center, center - normal }.apply_matrix(transform_matrix), { 1, 0, 1 });
+          draw_debug_3d.line(Line3 { center, center + normal * .1 }.apply_matrix(transform_matrix), { 1, 0, 1 });
+        }
+      }
+    }
+  });
+
+  ecs.create_system("Vertex Normal Debugger", [&] (ECS* ecs) {
+    ComponentMask mask = ComponentMask {
+      ecs->get_component_type_by_instance_type<Transform3D>().id,
+      ecs->get_component_type_by_instance_type<RenderMesh3DHandle>().id
+    };
+
+
+    for (u32_t i = 0; i < ecs->entity_count; i ++) {
+      EntityHandle entity = ecs->get_handle(i);
+
+      if (entity->enabled_components.match_subset(mask)) {
+        Transform3D& transform = entity.get_component<Transform3D>();
+
+        Matrix4 transform_matrix = Matrix4::compose(transform);
+
+        RenderMesh3D& mesh = *entity.get_component<RenderMesh3DHandle>();
+
+        for (auto [ i, normal ] : mesh.normals) {
+          Vector3f& pos = mesh.positions[i];
+          
+          draw_debug_3d.line(Line3 { pos, pos + normal * .1 }.apply_matrix(transform_matrix), { 0, 1, 1 });
         }
       }
     }
@@ -239,20 +321,20 @@ MODULE_API void module_init () {
     ecs.update();
     
 
-    ImGui::Begin("Mouse", NULL, ImGuiWindowFlags_AlwaysAutoResize);
-    ImGui::Text("Usable: %s", Application.input.mouse_usable? "true":"false");
-    ImGui::Text("Pixel: %dx%d", Application.input.mouse_position_px.x, Application.input.mouse_position_px.y);
-    ImGui::Text("Unit:  %fx%f", Application.input.mouse_position_unit.x, Application.input.mouse_position_unit.y);
-    ImGui::End();
+    // ImGui::Begin("Mouse", NULL, ImGuiWindowFlags_AlwaysAutoResize);
+    // ImGui::Text("Usable: %s", Application.input.mouse_usable? "true":"false");
+    // ImGui::Text("Pixel: %dx%d", Application.input.mouse_position_px.x, Application.input.mouse_position_px.y);
+    // ImGui::Text("Unit:  %fx%f", Application.input.mouse_position_unit.x, Application.input.mouse_position_unit.y);
+    // ImGui::End();
 
-    ImGui::Begin("Resolution", NULL, ImGuiWindowFlags_AlwaysAutoResize);
-    ImGui::Text("Internal: %dx%d", Application.resolution.x, Application.resolution.y);
-    ImGui::Text("ImGui: %fx%f", Application.ig_io->DisplaySize.x, Application.ig_io->DisplaySize.y);
-    ImGui::End();
+    // ImGui::Begin("Resolution", NULL, ImGuiWindowFlags_AlwaysAutoResize);
+    // ImGui::Text("Internal: %dx%d", Application.resolution.x, Application.resolution.y);
+    // ImGui::Text("ImGui: %fx%f", Application.ig_io->DisplaySize.x, Application.ig_io->DisplaySize.y);
+    // ImGui::End();
 
 
-    main_menu_ex();
-    vendor_ex();
+    // main_menu_ex();
+    // vendor_ex();
 
 
     draw_debug_3d.end_frame(camera_matrix);

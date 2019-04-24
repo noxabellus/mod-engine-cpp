@@ -9,7 +9,7 @@
 
 TextEditor editor;
 
-static const char* fileToEdit = "./assets/shaders/minimal.frag";
+static const char* fileToEdit = "./assets/shaders/minimal2d.frag";
 
 
 void text_editor_demo_init ()
