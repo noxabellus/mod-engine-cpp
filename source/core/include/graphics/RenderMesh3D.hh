@@ -20,6 +20,47 @@
 
 
 namespace mod {
+  namespace Mesh3DAttribute {
+    enum: u8_t {
+      Position,
+      Normal,
+      UV,
+      Color,
+
+      Face,
+
+      total_attribute_count,
+
+      Invalid = (u8_t) -1
+    };
+
+    static constexpr char const* names [total_attribute_count] = {
+      "Position",
+      "Normal",
+      "UV",
+      "Color",
+
+      "Face"
+    };
+
+    static constexpr char const* name (u8_t attribute) {
+      if (attribute < total_attribute_count) return names[attribute];
+      else return "Invalid";
+    }
+
+    static constexpr u8_t from_name (char const* name, size_t max_length = SIZE_MAX) {
+      for (u8_t attribute = 0; attribute < total_attribute_count; attribute ++) {
+        if (str_cmp_caseless(name, names[attribute], max_length) == 0) return attribute;
+      }
+
+      return Invalid;
+    }
+
+    static constexpr bool validate (u8_t attribute) {
+      return attribute < total_attribute_count;
+    }
+  };
+  
   struct RenderMesh3D {
     using UpdateMask = Bitmask<8>;
   
@@ -28,9 +69,10 @@ namespace mod {
     u32_t asset_id = 0;
 
     u32_t gl_vao;
-    u32_t gl_vbos [4];
+    u32_t gl_vbos [Mesh3DAttribute::total_attribute_count];
 
     Array<Vector3f> positions;
+    Array<Vector3f> normals;
     Array<Vector2f> uvs;
     Array<Vector3f> colors;
 
@@ -60,6 +102,7 @@ namespace mod {
       
       size_t vertex_count,
       Vector3f const* in_positions,
+      Vector3f const* in_normals,
       Vector2f const* in_uvs,
       Vector3f const* in_colors,
       
@@ -68,6 +111,35 @@ namespace mod {
 
       MaterialConfig const& in_material_config = { }
     );
+
+    /* Create a new RenderMesh3D and initialize its position and face data by copying from buffers */
+    RenderMesh3D (
+      char const* in_origin,
+
+      bool in_dynamic,
+      
+      size_t vertex_count,
+      Vector3f const* in_positions,
+      Vector3f const* in_normals,
+      
+      size_t face_count,
+      Vector3u const* in_faces,
+
+      MaterialConfig const& in_material_config = { }
+    )
+    : RenderMesh3D(
+      in_origin,
+      in_dynamic,
+      vertex_count,
+      in_positions,
+      in_normals,
+      NULL,
+      NULL,
+      face_count,
+      in_faces,
+      in_material_config
+    )
+    { }
 
     /* Create a new RenderMesh3D and initialize its position and face data by copying from buffers */
     RenderMesh3D (
@@ -90,6 +162,7 @@ namespace mod {
       in_positions,
       NULL,
       NULL,
+      NULL,
       face_count,
       in_faces,
       in_material_config
@@ -104,6 +177,7 @@ namespace mod {
       bool in_dynamic,
       
       Array<Vector3f> const& in_positions,
+      Array<Vector3f> const& in_normals,
       Array<Vector2f> const& in_uvs,
       Array<Vector3f> const& in_colors,
       
@@ -116,8 +190,34 @@ namespace mod {
       in_dynamic,
       in_positions.count,
       in_positions.elements,
+      in_normals.elements,
       in_uvs.elements,
       in_colors.elements,
+      in_faces.count,
+      in_faces.elements,
+      in_material_config
+    )
+    { }
+
+    /* Create a new RenderMesh3D and initialize its position and face data by copying from arrays */
+    RenderMesh3D (
+      char const* in_origin,
+
+      bool in_dynamic,
+      
+      Array<Vector3f> const& in_positions,
+      Array<Vector3f> const& in_normals,
+    
+      Array<Vector3u> const& in_faces,
+
+      MaterialConfig const& in_material_config = { }
+    )
+    : RenderMesh3D (
+      in_origin,
+      in_dynamic,
+      in_positions.count,
+      in_positions.elements,
+      in_normals.elements,
       in_faces.count,
       in_faces.elements,
       in_material_config
@@ -141,6 +241,7 @@ namespace mod {
       in_dynamic,
       in_positions.count,
       in_positions.elements,
+      NULL,
       in_faces.count,
       in_faces.elements,
       in_material_config
@@ -156,6 +257,7 @@ namespace mod {
       
       size_t vertex_count,
       Vector3f* positions,
+      Vector3f* normals,
       Vector2f* uvs,
       Vector3f* colors,
       
@@ -164,6 +266,34 @@ namespace mod {
 
       MaterialConfig const& material_config = { }
     );
+
+    /* Create a new RenderMesh3D and initialize its position and face data taking ownership of existing buffers */
+    static RenderMesh3D from_ex (
+      char const* origin,
+
+      bool dynamic,
+      
+      size_t vertex_count,
+      Vector3f* positions,
+      Vector3f* normals,
+      
+      size_t face_count,
+      Vector3u* faces,
+
+      MaterialConfig const& material_config = { }
+    )
+    { return from_ex (
+      origin,
+      dynamic,
+      vertex_count,
+      positions,
+      normals,
+      NULL,
+      NULL,
+      face_count,
+      faces,
+      material_config
+    ); }
 
     /* Create a new RenderMesh3D and initialize its position and face data taking ownership of existing buffers */
     static RenderMesh3D from_ex (
@@ -186,6 +316,7 @@ namespace mod {
       positions,
       NULL,
       NULL,
+      NULL,
       face_count,
       faces,
       material_config
@@ -199,9 +330,24 @@ namespace mod {
       bool dynamic,
       
       Array<Vector3f> const& positions,
+      Array<Vector3f> const& normals,
       Array<Vector2f> const& uvs,
       Array<Vector3f> const& colors,
       
+      Array<Vector3u> const& faces,
+
+      MaterialConfig const& material_config = { }
+    );
+
+    /* Create a new RenderMesh3D and initialize its position and face data taking ownership of existing arrays */
+    ENGINE_API static RenderMesh3D from_ex (
+      char const* origin,
+
+      bool dynamic,
+      
+      Array<Vector3f> const& positions,
+      Array<Vector3f> const& normals,
+
       Array<Vector3u> const& faces,
 
       MaterialConfig const& material_config = { }
@@ -219,7 +365,6 @@ namespace mod {
 
       MaterialConfig const& material_config = { }
     );
-
 
 
     /* Create a new RenderMesh3D from a JSONItem */
@@ -247,6 +392,12 @@ namespace mod {
     /* Clean up a RenderMesh3D's heap allocations and delete its OpenGL data */
     ENGINE_API void destroy ();
 
+
+    /* Calculate standard vertex normals for a mesh, overwriting existing normals */
+    ENGINE_API void calculate_normals ();
+
+    /* Calculate per-face vertex normals for a mesh, overwriting existing normals */
+    ENGINE_API void calculate_face_normals ();
 
 
     /* Copy all of a RenderMesh3D's out of date data (indicated by needs_update bitmask) to OpenGL */
@@ -328,73 +479,73 @@ namespace mod {
 
 
     /* Get pointers to the various attributes of a vertex in a RenderMesh3D.
-     * Returns a tri_t<Vector3f* (Position), Vector2f* (UV), Vector3f* (Color)>.
+     * Returns a quad_t<Vector3f* (Position), Vector3f* (Normal), Vector2f* (UV), Vector3f* (Color)>.
      * If a particular attribute is disabled, the pointer will be NULL.
      * Panics if the given index is out of range */
-    ENGINE_API tri_t<Vector3f*, Vector2f*, Vector3f*> get_vertex (size_t index) const;
+    ENGINE_API quad_t<Vector3f*, Vector3f*, Vector2f*, Vector3f*> get_vertex (size_t index) const;
 
 
     /* Set the various attributes of a vertex in a RenderMesh3D.
      * If a particular attribute is disabled, the overload of this function not including that attribute may be used.
      * Panics if the given index is out of range, or if unexpected attributes were supplied, or if attributes were expected but not supplied */
-    ENGINE_API void set_vertex (size_t index, Vector3f const& position);
+    ENGINE_API void set_vertex (size_t index, Vector3f const& position, Vector3f const& normal);
 
     /* Set the various attributes of a vertex in a RenderMesh3D.
      * If a particular attribute is disabled, the overload of this function not including that attribute may be used.
      * Panics if the given index is out of range, or if unexpected attributes were supplied, or if attributes were expected but not supplied */
-    ENGINE_API void set_vertex (size_t index, Vector3f const& position, Vector2f const& uv);
+    ENGINE_API void set_vertex (size_t index, Vector3f const& position, Vector3f const& normal, Vector2f const& uv);
 
     /* Set the various attributes of a vertex in a RenderMesh3D.
      * If a particular attribute is disabled, the overload of this function not including that attribute may be used.
      * Panics if the given index is out of range, or if unexpected attributes were supplied, or if attributes were expected but not supplied */
-    ENGINE_API void set_vertex (size_t index, Vector3f const& position, Vector3f const& color);
+    ENGINE_API void set_vertex (size_t index, Vector3f const& position, Vector3f const& normal, Vector3f const& color);
 
     /* Set the various attributes of a vertex in a RenderMesh3D.
      * If a particular attribute is disabled, the overload of this function not including that attribute may be used.
      * Panics if the given index is out of range, or if unexpected attributes were supplied, or if attributes were expected but not supplied */
-    ENGINE_API void set_vertex (size_t index, Vector3f const& position, Vector2f const& uv, Vector3f const& color);
+    ENGINE_API void set_vertex (size_t index, Vector3f const& position, Vector3f const& normal, Vector2f const& uv, Vector3f const& color);
 
 
     /* Append the various attributes of a vertex to the ends of a RenderMesh3D.
      * If a particular attribute is disabled, the overload of this function not including that attribute may be used.
      * Panics if unexpected attributes were supplied, or if attributes were expected but not supplied */
-    ENGINE_API void append_vertex (Vector3f const& position);
+    ENGINE_API void append_vertex (Vector3f const& position, Vector3f const& normal);
 
     /* Append the various attributes of a vertex to the ends of a RenderMesh3D.
      * If a particular attribute is disabled, the overload of this function not including that attribute may be used.
      * Panics if unexpected attributes were supplied, or if attributes were expected but not supplied */
-    ENGINE_API void append_vertex (Vector3f const& position, Vector2f const& uv);
+    ENGINE_API void append_vertex (Vector3f const& position, Vector3f const& normal, Vector2f const& uv);
 
     /* Append the various attributes of a vertex to the ends of a RenderMesh3D.
      * If a particular attribute is disabled, the overload of this function not including that attribute may be used.
      * Panics if unexpected attributes were supplied, or if attributes were expected but not supplied */
-    ENGINE_API void append_vertex (Vector3f const& position, Vector3f const& color);
+    ENGINE_API void append_vertex (Vector3f const& position, Vector3f const& normal, Vector3f const& color);
 
     /* Append the various attributes of a vertex to the ends of a RenderMesh3D.
      * If a particular attribute is disabled, the overload of this function not including that attribute may be used.
      * Panics if unexpected attributes were supplied, or if attributes were expected but not supplied */
-    ENGINE_API void append_vertex (Vector3f const& position, Vector2f const& uv, Vector3f const& color);
+    ENGINE_API void append_vertex (Vector3f const& position, Vector3f const& normal, Vector2f const& uv, Vector3f const& color);
 
 
     /* Insert the various attributes of a vertex in a RenderMesh3D at a given index.
      * If a particular attribute is disabled, the overload of this function not including that attribute may be used.
      * Panics if unexpected attributes were supplied, or if attributes were expected but not supplied */
-    ENGINE_API void insert_vertex (size_t index, Vector3f const& position);
+    ENGINE_API void insert_vertex (size_t index, Vector3f const& position, Vector3f const& normal);
 
     /* Insert the various attributes of a vertex in a RenderMesh3D at a given index.
      * If a particular attribute is disabled, the overload of this function not including that attribute may be used.
      * Panics if unexpected attributes were supplied, or if attributes were expected but not supplied */
-    ENGINE_API void insert_vertex (size_t index, Vector3f const& position, Vector2f const& uv);
+    ENGINE_API void insert_vertex (size_t index, Vector3f const& position, Vector3f const& normal, Vector2f const& uv);
 
     /* Insert the various attributes of a vertex in a RenderMesh3D at a given index.
      * If a particular attribute is disabled, the overload of this function not including that attribute may be used.
      * Panics if unexpected attributes were supplied, or if attributes were expected but not supplied */
-    ENGINE_API void insert_vertex (size_t index, Vector3f const& position, Vector3f const& color);
+    ENGINE_API void insert_vertex (size_t index, Vector3f const& position, Vector3f const& normal, Vector3f const& color);
 
     /* Insert the various attributes of a vertex in a RenderMesh3D at a given index.
      * If a particular attribute is disabled, the overload of this function not including that attribute may be used.
      * Panics if unexpected attributes were supplied, or if attributes were expected but not supplied */
-    ENGINE_API void insert_vertex (size_t index, Vector3f const& position, Vector2f const& uv, Vector3f const& color);
+    ENGINE_API void insert_vertex (size_t index, Vector3f const& position, Vector3f const& normal, Vector2f const& uv, Vector3f const& color);
 
 
     /* Remove the various attributes of a vertex from a given index in a RenderMesh3D.

@@ -9,28 +9,38 @@ namespace mod {
 
     // TODO switch to DSA style (See dsa_example below)
 
+    using namespace Mesh3DAttribute;
+
     glGenVertexArrays(1, &mesh->gl_vao);
     glBindVertexArray(mesh->gl_vao);
 
-    glGenBuffers(4, mesh->gl_vbos);
+    glGenBuffers(total_attribute_count, mesh->gl_vbos);
 
 
     // Setup positions buffer & attrib, copy any data to gl, enable
-    glBindBuffer(GL_ARRAY_BUFFER, mesh->gl_vbos[0]);
-    glVertexAttribPointer(0, 3, GL_FLOAT, GL_FALSE, sizeof(Vector3f), (void*) 0);
+    glBindBuffer(GL_ARRAY_BUFFER, mesh->gl_vbos[Position]);
+    glVertexAttribPointer(Position, 3, GL_FLOAT, GL_FALSE, sizeof(Vector3f), (void*) 0);
     glBufferData(GL_ARRAY_BUFFER, mesh->positions.count * sizeof(Vector3f), mesh->positions.elements, draw_arg);
-    glEnableVertexAttribArray(0);
+    glEnableVertexAttribArray(Position);
+
+    
+    // Setup normals buffer & attrib, copy any data to gl, enable
+    glBindBuffer(GL_ARRAY_BUFFER, mesh->gl_vbos[Normal]);
+    glVertexAttribPointer(Normal, 3, GL_FLOAT, GL_FALSE, sizeof(Vector3f), (void*) 0);
+    glBufferData(GL_ARRAY_BUFFER, mesh->normals.count * sizeof(Vector3f), mesh->normals.elements, draw_arg);
+    glEnableVertexAttribArray(Normal);
 
     // Setup UVs attrib, do not copy data or enable (not sure binding is needed)
-    glBindBuffer(GL_ARRAY_BUFFER, mesh->gl_vbos[1]);
-    glVertexAttribPointer(1, 2, GL_FLOAT, GL_FALSE, sizeof(Vector2f), (void*) 0);
+    glBindBuffer(GL_ARRAY_BUFFER, mesh->gl_vbos[UV]);
+    glVertexAttribPointer(UV, 2, GL_FLOAT, GL_FALSE, sizeof(Vector2f), (void*) 0);
 
     // Setup colors attrib, do not copy data or enable
-    glBindBuffer(GL_ARRAY_BUFFER, mesh->gl_vbos[2]);
-    glVertexAttribPointer(2, 3, GL_FLOAT, GL_FALSE, sizeof(Vector3f), (void*) 0);
+    glBindBuffer(GL_ARRAY_BUFFER, mesh->gl_vbos[Color]);
+    glVertexAttribPointer(Color, 3, GL_FLOAT, GL_FALSE, sizeof(Vector3f), (void*) 0);
+
 
     // Setup faces and copy data
-    glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, mesh->gl_vbos[3]);
+    glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, mesh->gl_vbos[Face]);
     glBufferData(GL_ELEMENT_ARRAY_BUFFER, mesh->faces.count * sizeof(Vector3u), mesh->faces.elements, draw_arg);
 
     // Clear binds
@@ -42,9 +52,10 @@ namespace mod {
     // TODO switch to DSA style
 
     glBindVertexArray(mesh->gl_vao);
-    glBindBuffer(GL_ARRAY_BUFFER, mesh->gl_vbos[1]);
+
+    glBindBuffer(GL_ARRAY_BUFFER, mesh->gl_vbos[Mesh3DAttribute::UV]);
     glBufferData(GL_ARRAY_BUFFER, mesh->uvs.count * sizeof(Vector2f), mesh->uvs.elements, mesh->dynamic? GL_DYNAMIC_DRAW : GL_STATIC_DRAW);
-    glEnableVertexAttribArray(1);
+    glEnableVertexAttribArray(Mesh3DAttribute::UV);
 
     glBindBuffer(GL_ARRAY_BUFFER, 0);
     glBindVertexArray(0);
@@ -54,9 +65,10 @@ namespace mod {
     // TODO switch to DSA style
     
     glBindVertexArray(mesh->gl_vao);
-    glBindBuffer(GL_ARRAY_BUFFER, mesh->gl_vbos[2]);
+    
+    glBindBuffer(GL_ARRAY_BUFFER, mesh->gl_vbos[Mesh3DAttribute::Color]);
     glBufferData(GL_ARRAY_BUFFER, mesh->colors.count * sizeof(Vector3f), mesh->colors.elements, mesh->dynamic? GL_DYNAMIC_DRAW : GL_STATIC_DRAW);
-    glEnableVertexAttribArray(2);
+    glEnableVertexAttribArray(Mesh3DAttribute::Color);
 
     glBindBuffer(GL_ARRAY_BUFFER, 0);
     glBindVertexArray(0);
@@ -66,7 +78,9 @@ namespace mod {
     // TODO switch to DSA style
 
     glBindVertexArray(mesh->gl_vao);
-    glDisableVertexAttribArray(1);
+
+    glDisableVertexAttribArray(Mesh3DAttribute::UV);
+
     glBindVertexArray(0);
   }
 
@@ -74,7 +88,9 @@ namespace mod {
     // TODO switch to DSA style
 
     glBindVertexArray(mesh->gl_vao);
-    glDisableVertexAttribArray(2);
+
+    glDisableVertexAttribArray(Mesh3DAttribute::Color);
+
     glBindVertexArray(0);
   }
 
@@ -119,6 +135,7 @@ namespace mod {
 
     size_t vertex_count,
     Vector3f const* in_positions,
+    Vector3f const* in_normals,
     Vector2f const* in_uvs,
     Vector3f const* in_colors,
 
@@ -131,7 +148,11 @@ namespace mod {
   , dynamic(in_dynamic)
   {
     positions.append_multiple(in_positions, vertex_count);
-    faces.append_multiple(in_faces, face_count);
+
+    faces.append_multiple(in_faces, face_count);    
+    
+    if (in_normals != NULL) normals.append_multiple(in_normals, vertex_count);
+    else calculate_normals();
 
     init_gl_data(this);
 
@@ -149,6 +170,7 @@ namespace mod {
     
     size_t vertex_count,
     Vector3f* positions,
+    Vector3f* normals,
     Vector2f* uvs,
     Vector3f* colors,
     
@@ -165,6 +187,9 @@ namespace mod {
 
     mesh.positions = Array<Vector3f>::from_ex(positions, vertex_count);
     mesh.faces = Array<Vector3u>::from_ex(faces, face_count);
+
+    if (normals != NULL) mesh.normals = Array<Vector3f>::from_ex(normals, vertex_count);
+    else mesh.calculate_normals();
 
     init_gl_data(&mesh);
 
@@ -183,6 +208,7 @@ namespace mod {
     bool dynamic,
     
     Array<Vector3f> const& positions,
+    Array<Vector3f> const& normals,
     Array<Vector2f> const& uvs,
     Array<Vector3f> const& colors,
     
@@ -197,6 +223,7 @@ namespace mod {
     mesh.dynamic = dynamic;
 
     mesh.positions = positions;
+    mesh.normals = normals;
     mesh.faces = faces;
 
     init_gl_data(&mesh);
@@ -216,6 +243,37 @@ namespace mod {
     bool dynamic,
     
     Array<Vector3f> const& positions,
+    Array<Vector3f> const& normals,
+    
+    Array<Vector3u> const& faces,
+
+    MaterialConfig const& material_config
+  ) {
+    RenderMesh3D mesh;
+    
+    mesh.origin = str_clone(origin);
+
+    mesh.dynamic = dynamic;
+
+    mesh.positions = positions;
+    mesh.normals = normals;
+    mesh.faces = faces;
+
+    init_gl_data(&mesh);
+
+    mesh.material_config = material_config;
+    
+    return mesh;
+  }
+
+
+
+  RenderMesh3D RenderMesh3D::from_ex (
+    char const* origin,
+
+    bool dynamic,
+    
+    Array<Vector3f> const& positions,
     
     Array<Vector3u> const& faces,
 
@@ -229,6 +287,7 @@ namespace mod {
 
     mesh.positions = positions;
     mesh.faces = faces;
+    mesh.calculate_normals();
 
     init_gl_data(&mesh);
 
@@ -238,9 +297,9 @@ namespace mod {
   }
 
 
-
   RenderMesh3D RenderMesh3D::from_json_item (const char* origin, JSONItem const& json) {
     Array<f32_t> positions;
+    Array<f32_t> normals;
     Array<f32_t> uvs;
     Array<f32_t> colors;
     Array<u32_t> faces;
@@ -248,6 +307,7 @@ namespace mod {
     bool dynamic;
 
     MaterialConfig material_config;
+
 
     try {
       /* Positions */ {
@@ -283,6 +343,18 @@ namespace mod {
           );
 
           faces.append(index);
+        }
+      }
+
+      /* Normals */ {
+        JSONItem* norm_item = json.get_object_item("normals");
+
+        if (norm_item != NULL) {
+          JSONArray& norm_arr = norm_item->get_array();
+
+          norm_item->asset_assert(norm_arr.count == positions.count, "Number of normals elements must be equal to number of positions elements");
+
+          for (auto [ i, value ] : norm_arr) normals.append(value.get_number());
         }
       }
 
@@ -330,6 +402,7 @@ namespace mod {
       }
     } catch (Exception& exception) {
       positions.destroy();
+      normals.destroy();
       faces.destroy();
       uvs.destroy();
       colors.destroy();
@@ -344,6 +417,7 @@ namespace mod {
 
       positions.count / 3,
       (Vector3f*) positions.elements,
+      (Vector3f*) normals.elements,
       (Vector2f*) uvs.elements,
       (Vector3f*) colors.elements,
 
@@ -399,19 +473,22 @@ namespace mod {
 
   
   void RenderMesh3D::clear () {
+    using namespace Mesh3DAttribute;
+
     positions.clear();
+    normals.clear();
     faces.clear();
 
-    needs_update.set_multiple(0, 3);
+    needs_update.set_multiple(Position, Normal, Face);
 
     if (uvs.elements != NULL) {
       uvs.clear();
-      needs_update.set(1);
+      needs_update.set(UV);
     }
 
     if (colors.elements != NULL) {
       colors.clear();
-      needs_update.set(2);
+      needs_update.set(Color);
     }
 
     material_config.clear();
@@ -425,6 +502,7 @@ namespace mod {
     }
 
     positions.destroy();
+    normals.destroy();
     faces.destroy();
     disable_uvs();
     disable_colors();
@@ -433,37 +511,81 @@ namespace mod {
 
     needs_update.clear();
 
-    glDeleteBuffers(4, gl_vbos);
+    glDeleteBuffers(Mesh3DAttribute::total_attribute_count, gl_vbos);
     glDeleteVertexArrays(1, &gl_vao);
   }
 
 
+  void RenderMesh3D::calculate_normals () {
+    normals.reallocate(positions.count);
+
+    normals.count = 0;
+
+    for (size_t i = 0; i < positions.count; i ++) normals.append({ 0.0f });
+
+    for (auto [ i, face ] : faces) {
+      Vector3f norm = 
+            (positions[face[2]] - positions[face[0]])
+      .cross(positions[face[1]] - positions[face[0]]);
+
+      normals[face[0]] += norm;
+      normals[face[1]] += norm;
+      normals[face[2]] += norm;
+    }
+
+    for (auto [ i, normal ] : normals) normal = normal.normalize();
+  }
+
+  void RenderMesh3D::calculate_face_normals () {
+    normals.reallocate(positions.count);
+
+    normals.count = positions.count;
+
+    for (auto [ i, face ] : faces) {
+      Vector3f norm =
+            (positions[face[2]] - positions[face[0]])
+      .cross(positions[face[1]] - positions[face[0]])
+      .normalize();
+
+      normals[face[0]] = norm;
+      normals[face[1]] = norm;
+      normals[face[2]] = norm;
+    }
+  }
+
 
   void RenderMesh3D::update () {
     // TODO switch to DSA style
+
+    using namespace Mesh3DAttribute;
 
     if (needs_update.match_any()) {
       s32_t draw_arg = dynamic? GL_DYNAMIC_DRAW : GL_STATIC_DRAW;
 
       glBindVertexArray(gl_vao);
 
-      if (needs_update.match_index(0)) {
-        glBindBuffer(GL_ARRAY_BUFFER, gl_vbos[0]);
+      if (needs_update.match_index(Position)) {
+        glBindBuffer(GL_ARRAY_BUFFER, gl_vbos[Position]);
         glBufferData(GL_ARRAY_BUFFER, positions.count * sizeof(Vector3f), positions.elements, draw_arg);
       }
 
-      if (needs_update.match_index(1)) {
-        glBindBuffer(GL_ARRAY_BUFFER, gl_vbos[1]);
+      if (needs_update.match_index(Normal)) {
+        glBindBuffer(GL_ARRAY_BUFFER, gl_vbos[Normal]);
+        glBufferData(GL_ARRAY_BUFFER, normals.count * sizeof(Vector3f), normals.elements, draw_arg);
+      }
+
+      if (needs_update.match_index(UV)) {
+        glBindBuffer(GL_ARRAY_BUFFER, gl_vbos[UV]);
         glBufferData(GL_ARRAY_BUFFER, uvs.count * sizeof(Vector2f), uvs.elements, draw_arg);
       }
 
-      if (needs_update.match_index(2)) {
-        glBindBuffer(GL_ARRAY_BUFFER, gl_vbos[2]);
+      if (needs_update.match_index(Color)) {
+        glBindBuffer(GL_ARRAY_BUFFER, gl_vbos[Color]);
         glBufferData(GL_ARRAY_BUFFER, colors.count * sizeof(Vector3f), colors.elements, draw_arg);
       }
 
-      if (needs_update.match_index(3)) {
-        glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, gl_vbos[3]);
+      if (needs_update.match_index(Face)) {
+        glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, gl_vbos[Face]);
         glBufferData(GL_ELEMENT_ARRAY_BUFFER, faces.count * sizeof(Vector3u), faces.elements, draw_arg);
       }
 
@@ -571,7 +693,7 @@ namespace mod {
 
     disable_gl_uvs(this);
 
-    needs_update.unset(1);
+    needs_update.unset(Mesh3DAttribute::UV);
   }
 
 
@@ -618,129 +740,198 @@ namespace mod {
 
     disable_gl_colors(this);
 
-    needs_update.unset(2);
+    needs_update.unset(Mesh3DAttribute::Color);
   }
 
 
-  tri_t<Vector3f*, Vector2f*, Vector3f*> RenderMesh3D::get_vertex (size_t index) const {
+  quad_t<Vector3f*, Vector3f*, Vector2f*, Vector3f*> RenderMesh3D::get_vertex (size_t index) const {
     return {
       &positions[index],
+      &normals[index],
       uvs.elements != NULL? &uvs[index] : NULL,
       colors.elements != NULL? &colors[index] : NULL
     };
   }
 
-  void RenderMesh3D::set_vertex (size_t index, Vector3f const& position) {
+  void RenderMesh3D::set_vertex (size_t index, Vector3f const& position, Vector3f const& normal) {
+    using namespace Mesh3DAttribute;
+
     m_assert(uvs.elements == NULL, "Expected a uv attribute");
     m_assert(colors.elements == NULL, "Expected a color attribute");
+
     positions[index] = position;
-    needs_update.set(0);
+    normals[index] = normal;
+
+    needs_update.set_multiple(Position, Normal);
   }
 
-  void RenderMesh3D::set_vertex (size_t index, Vector3f const& position, Vector2f const& uv) {
+  void RenderMesh3D::set_vertex (size_t index, Vector3f const& position, Vector3f const& normal, Vector2f const& uv) {
+    using namespace Mesh3DAttribute;
+
     m_assert(uvs.elements != NULL, "Unexpected uv attribute");
     m_assert(colors.elements == NULL, "Expected a color attribute");
+
     positions[index] = position;
+    normals[index] = normal;
     uvs[index] = uv;
-    needs_update.set_multiple(0, 1);
+
+    needs_update.set_multiple(Position, Normal, UV);
   }
 
-  void RenderMesh3D::set_vertex (size_t index, Vector3f const& position, Vector3f const& color) {
+  void RenderMesh3D::set_vertex (size_t index, Vector3f const& position, Vector3f const& normal, Vector3f const& color) {
+    using namespace Mesh3DAttribute;
+
     m_assert(uvs.elements == NULL, "Expected a uv attribute");
     m_assert(colors.elements != NULL, "Unexpected color attribute");
+
     positions[index] = position;
+    normals[index] = normal;
     colors[index] = color;
-    needs_update.set_multiple(0, 2);
+
+    needs_update.set_multiple(Position, Normal, Color);
   }
 
-  void RenderMesh3D::set_vertex (size_t index, Vector3f const& position, Vector2f const& uv, Vector3f const& color) {
+  void RenderMesh3D::set_vertex (size_t index, Vector3f const& position, Vector3f const& normal, Vector2f const& uv, Vector3f const& color) {
+    using namespace Mesh3DAttribute;
+
     m_assert(uvs.elements != NULL, "Unexpected uv attribute");
     m_assert(colors.elements != NULL, "Unexpected color attribute");
+
     positions[index] = position;
+    normals[index] = normal;
     uvs[index] = uv;
     colors[index] = color;
-    needs_update.set_multiple(0, 1, 2);
+
+    needs_update.set_multiple(Position, Normal, UV, Color);
   }
 
 
-  void RenderMesh3D::append_vertex (Vector3f const& position) {
+  void RenderMesh3D::append_vertex (Vector3f const& position, Vector3f const& normal) {
+    using namespace Mesh3DAttribute;
+
     m_assert(uvs.elements == NULL, "Expected a uv attribute");
     m_assert(colors.elements == NULL, "Expected a color attribute");
+
     positions.append(position);
-    needs_update.set(0);
+    normals.append(normal);
+
+    needs_update.set_multiple(Position, Normal);
   }
 
-  void RenderMesh3D::append_vertex (Vector3f const& position, Vector2f const& uv) {
+  void RenderMesh3D::append_vertex (Vector3f const& position, Vector3f const& normal, Vector2f const& uv) {
+    using namespace Mesh3DAttribute;
+
     m_assert(uvs.elements != NULL, "Unexpected uv attribute");
     m_assert(colors.elements == NULL, "Expected a color attribute");
+
     positions.append(position);
+    normals.append(normal);
     uvs.append(uv);
-    needs_update.set_multiple(0, 1);
+
+    needs_update.set_multiple(Position, Normal, UV);
   }
 
-  void RenderMesh3D::append_vertex (Vector3f const& position, Vector3f const& color) {
+  void RenderMesh3D::append_vertex (Vector3f const& position, Vector3f const& normal, Vector3f const& color) {
+    using namespace Mesh3DAttribute;
+
     m_assert(uvs.elements == NULL, "Expected a uv attribute");
     m_assert(colors.elements != NULL, "Unexpected color attribute");
+
     positions.append(position);
+    normals.append(normal);
     colors.append(color);
-    needs_update.set_multiple(0, 2);
+
+    needs_update.set_multiple(Position, Normal, Color);
   }
 
-  void RenderMesh3D::append_vertex (Vector3f const& position, Vector2f const& uv, Vector3f const& color) {
+  void RenderMesh3D::append_vertex (Vector3f const& position, Vector3f const& normal, Vector2f const& uv, Vector3f const& color) {
+    using namespace Mesh3DAttribute;
+
     m_assert(uvs.elements != NULL, "Unexpected uv attribute");
     m_assert(colors.elements != NULL, "Unexpected color attribute");
+
     positions.append(position);
+    normals.append(normal);
     uvs.append(uv);
     colors.append(color);
-    needs_update.set_multiple(0, 1, 2);
+
+    needs_update.set_multiple(Position, Normal, UV, Color);
   }
 
 
-  void RenderMesh3D::insert_vertex (size_t index, Vector3f const& position) {
+  void RenderMesh3D::insert_vertex (size_t index, Vector3f const& position, Vector3f const& normal) {
+    using namespace Mesh3DAttribute;
+
     m_assert(uvs.elements == NULL, "Expected a uv attribute");
     m_assert(colors.elements == NULL, "Expected a color attribute");
+
     positions.insert(index, position);
-    needs_update.set(0);
+    normals.insert(index, normal);
+
+    needs_update.set_multiple(Position, Normal);
   }
 
-  void RenderMesh3D::insert_vertex (size_t index, Vector3f const& position, Vector2f const& uv) {
+  void RenderMesh3D::insert_vertex (size_t index, Vector3f const& position, Vector3f const& normal, Vector2f const& uv) {
+    using namespace Mesh3DAttribute;
+
     m_assert(uvs.elements != NULL, "Unexpected uv attribute");
     m_assert(colors.elements == NULL, "Expected a color attribute");
+
     positions.insert(index, position);
+    normals.insert(index, normal);
     uvs.insert(index, uv);
-    needs_update.set_multiple(0, 1);
+
+    needs_update.set_multiple(Position, Normal, UV);
   }
 
-  void RenderMesh3D::insert_vertex (size_t index, Vector3f const& position, Vector3f const& color) {
+  void RenderMesh3D::insert_vertex (size_t index, Vector3f const& position, Vector3f const& normal, Vector3f const& color) {
+    using namespace Mesh3DAttribute;
+
     m_assert(uvs.elements == NULL, "Expected a uv attribute");
     m_assert(colors.elements != NULL, "Unexpected color attribute");
+
     positions.insert(index, position);
+    normals.insert(index, normal);
     colors.insert(index, color);
-    needs_update.set_multiple(0, 2);
+
+    needs_update.set_multiple(Position, Normal, Color);
   }
 
-  void RenderMesh3D::insert_vertex (size_t index, Vector3f const& position, Vector2f const& uv, Vector3f const& color) {
+  void RenderMesh3D::insert_vertex (size_t index, Vector3f const& position, Vector3f const& normal, Vector2f const& uv, Vector3f const& color) {
+    using namespace Mesh3DAttribute;
+
     m_assert(uvs.elements != NULL, "Unexpected uv attribute");
     m_assert(colors.elements != NULL, "Unexpected color attribute");
+
     positions.insert(index, position);
+    normals.insert(index, normal);
     uvs.insert(index, uv);
     colors.insert(index, color);
-    needs_update.set_multiple(0, 1, 2);
+
+    needs_update.set_multiple(Position, Normal, UV, Color);
   }
 
 
   void RenderMesh3D::remove_vertex (size_t index) {
+    using namespace Mesh3DAttribute;
+
     positions.remove(index);
-    needs_update.set(0);
+    normals.remove(index);
+
+    needs_update.set_multiple(Position, Normal);
+
 
     if (uvs.elements != NULL) {
       uvs.remove(index);
-      needs_update.set(1);
+
+      needs_update.set(UV);
     }
+
 
     if (colors.elements != NULL) {
       colors.remove(index);
-      needs_update.set(2);
+
+      needs_update.set(Color);
     }
   }
 
@@ -754,22 +945,22 @@ namespace mod {
 
   void RenderMesh3D::set_face (size_t index, Vector3u const& face) {
     faces[index] = face;
-    needs_update.set(3);
+    needs_update.set(Mesh3DAttribute::Face);
   }
 
   void RenderMesh3D::append_face (Vector3u const& face) {
     faces.append(face);
-    needs_update.set(3);
+    needs_update.set(Mesh3DAttribute::Face);
   }
 
   void RenderMesh3D::append_face (size_t index, Vector3u const& face) {
     faces.insert(index, face);
-    needs_update.set(3);
+    needs_update.set(Mesh3DAttribute::Face);
   }
 
   void RenderMesh3D::remove_face (size_t index) {
     faces.remove(index);
-    needs_update.set(3);
+    needs_update.set(Mesh3DAttribute::Face);
   }
 
 
