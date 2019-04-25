@@ -302,7 +302,7 @@ MODULE_API void module_init () {
 
   
   struct Hit {
-    Vector3f intersect;
+    f32_t distance;
     EntityHandle entity;
   };
 
@@ -347,10 +347,12 @@ MODULE_API void module_init () {
     ImGui::Text("Origin: %.3fx%.3fx%.3f", ray.origin.x, ray.origin.y, ray.origin.z);
     if (hits.count > 0) {
       hits.sort_in_place([&] (Hit const& a, Hit const& b) -> bool {
-        return ray.origin.distance_sq(a.intersect) < ray.origin.distance_sq(b.intersect);
+        return a.distance < b.distance;
       });
 
-      auto [ intersect, entity ] = hits[0];
+      auto [ distance, entity ] = hits[0];
+
+      Vector3f intersect = ray.vector_at_offset(distance);
 
       Transform3D& t = entity.get_component<Transform3D>();
       RenderMesh3D& m = *entity.get_component<RenderMesh3DHandle>();

@@ -489,11 +489,11 @@ namespace mod::Intersects {
   }
 
 
-  static constexpr pair_t<bool, Vector3f> v3_intersect_none = { false, Constants::Vector3f::zero };
+  static constexpr pair_t<bool, f32_t> v3_intersect_none = { false, -1.0f };
 
 
 
-  pair_t<bool, Vector3f> ray3_aabb3 (Ray3 const& ray, AABB3 const& aabb) {
+  pair_t<bool, f32_t> ray3_aabb3 (Ray3 const& ray, AABB3 const& aabb) {
     f32_t tmin, tmax, tymin, tymax, tzmin, tzmax;
 
     f32_t idx = 1.0f / ray.direction.x;
@@ -541,10 +541,10 @@ namespace mod::Intersects {
     if (tmax < 0.0f) return v3_intersect_none;
 
 
-    return { true, ray.vector_at_offset(tmin >= 0.0f? tmin : tmax) };
+    return { true, tmin >= 0.0f? tmin : tmax };
   }
 
-  pair_t<bool, Vector3f> ray3_sphere (Ray3 const& ray, Sphere const& sphere) {
+  pair_t<bool, f32_t> ray3_sphere (Ray3 const& ray, Sphere const& sphere) {
     Vector3f delta = sphere.position - ray.origin;
 
     f32_t tca = delta.dot(ray.direction);
@@ -565,20 +565,20 @@ namespace mod::Intersects {
     if (t0_behind && t1 < 0.0f) return v3_intersect_none;
 
 
-    return { true, ray.vector_at_offset(t0_behind? t1 : t0) };
+    return { true, t0_behind? t1 : t0 };
 
     
     return v3_intersect_none;
   }
 
-  pair_t<bool, Vector3f> ray3_plane (Ray3 const& ray, Plane const& plane) {
+  pair_t<bool, f32_t> ray3_plane (Ray3 const& ray, Plane const& plane) {
     f32_t t = ray.distance(plane);
 
     if (t == INFINITY) return v3_intersect_none;
-    else return { true, ray.vector_at_offset(t) };
+    else return { true, t };
   }
 
-  pair_t<bool, Vector3f> ray3_triangle (Ray3 const& ray, Triangle const& triangle, bool allow_backface) {
+  pair_t<bool, f32_t> ray3_triangle (Ray3 const& ray, Triangle const& triangle, bool allow_backface) {
     Vector3f edge1 = triangle.b - triangle.a;
     Vector3f edge2 = triangle.c - triangle.a;
 
@@ -617,7 +617,7 @@ namespace mod::Intersects {
     if (QdN < 0.0f) return v3_intersect_none;
 
 
-    return { true, ray.vector_at_offset(QdN / DdN) };
+    return { true, QdN / DdN };
 
 
     return v3_intersect_none;

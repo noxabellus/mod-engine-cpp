@@ -137,22 +137,22 @@ namespace mod {
     // ENGINE_API pair_t<bool, Vector3f> ray3 (Ray3 const& l, Ray3 const& r);  // not likely to be useful, odds of ray/ray intersection in 3d are extremely small
 
     /* Determine whether or not a ray intersects an axis-aligned bounding box.
-     * Returns a pair with a boolean which is true if there was an intersection, and a location which is defined if there was an intersection */
-    ENGINE_API pair_t<bool, Vector3f> ray3_aabb3 (Ray3 const& ray, AABB3 const& aabb);
+     * Returns a pair with a boolean which is true if there was an intersection, and a distance along the ray, which is defined if there was an intersection */
+    ENGINE_API pair_t<bool, f32_t> ray3_aabb3 (Ray3 const& ray, AABB3 const& aabb);
 
     /* Determine whether or not a ray intersects a sphere.
-     * Returns a pair with a boolean which is true if there was an intersection, and a location which is defined if there was an intersection */
-    ENGINE_API pair_t<bool, Vector3f> ray3_sphere (Ray3 const& ray, Sphere const& sphere);
+     * Returns a pair with a boolean which is true if there was an intersection, and a distance along the ray, which is defined if there was an intersection */
+    ENGINE_API pair_t<bool, f32_t> ray3_sphere (Ray3 const& ray, Sphere const& sphere);
 
     /* Determine whether or not a ray intersects a plane.
-     * Returns a pair with a boolean which is true if there was an intersection, and a location which is defined if there was an intersection */
-    ENGINE_API pair_t<bool, Vector3f> ray3_plane (Ray3 const& ray, Plane const& plane);
+     * Returns a pair with a boolean which is true if there was an intersection, and a distance along the ray, which is defined if there was an intersection */
+    ENGINE_API pair_t<bool, f32_t> ray3_plane (Ray3 const& ray, Plane const& plane);
 
     /* Determine whether or not a ray intersects a triangle.
-     * Returns a pair with a boolean which is true if there was an intersection, and a location which is defined if there was an intersection */
-    ENGINE_API pair_t<bool, Vector3f> ray3_triangle (Ray3 const& ray, Triangle const& triangle, bool allow_backface);
+     * Returns a pair with a boolean which is true if there was an intersection, and a distance along the ray, which is defined if there was an intersection */
+    ENGINE_API pair_t<bool, f32_t> ray3_triangle (Ray3 const& ray, Triangle const& triangle, bool allow_backface);
 
-    // ENGINE_API pair_t<bool, Vector3f> ray3_frustum (Ray3 const& ray, Frustum const& frustum);
+    // ENGINE_API pair_t<bool, f32_t> ray3_frustum (Ray3 const& ray, Frustum const& frustum);
 
     /* Determine whether or not two axis-aligned bounding boxes intersect */
     ENGINE_API bool aabb3 (AABB3 const& l, AABB3 const& r);
