@@ -1,10 +1,10 @@
 ![ModEngine Logo](meta/images/modengine.png)
 
-ModEngine is a data oriented C++ game engine project, designed around supporting 3D games with an extremely high number of active entities. As the name implies, the engine is also designed to be highly modifiable by the end-user, but in a way that supports the high performance requirements. The initial/standard engine components and systems will center around top-down games that do not employ real time physics, first person cameras, etc, and instead utilize extremely in-depth world mechanics/simulations. This engine is designed to suit a specific type of game design and most of the decisions are driven by this underlying goal. It is not a universal solution, but if your goals fit within its niche, it aims to be a competitive solution with intelligent tradeoffs.
+ModEngine is a C++ game engine project, designed to be highly modifiable by the end-user, but in a way that supports medium to high performance requirements. The initial/standard engine components and systems will center around top-down games that do not employ real time physics, first person cameras, etc, and instead utilize in-depth world mechanics/simulations. This engine is designed to suit a specific type of game design and most of the decisions are driven by this underlying goal. It is not a universal solution, but if your goals fit within its niche, it aims to be a competitive solution with intelligent tradeoffs.
 
 
 ## Planned Features
-+ High performance ECS
++ Entity Component System abstraction
 + Native extension modules
 + 3D graphics w/ skeletal animation, lighting, etc
 + 2D audio
@@ -35,7 +35,7 @@ All dependencies are embedded in the source tracking so no extra downloads or bu
 + tinycthread
   > https://github.com/tinycthread/tinycthread
 
-## Included Assets
+## Third Party Assets
 All assets used by the engine or test game utilize open source or public domain licenses, see their respective directories for details
 
 - Fonts
@@ -47,6 +47,7 @@ All assets used by the engine or test game utilize open source or public domain 
 
   + Teko
     > https://fonts.google.com/specimen/Teko
+
 
 
 ## Project Status
@@ -77,7 +78,7 @@ This is still very early in production, and code is being ported from the C-only
   - Textures
   - Materials
   - Material sets
-  - Renderable meshes
+  - 2d & 3d Meshes
   <!-- - Batched rendering (Speculative) -->
 + Asset manager:
   - JSON database files
@@ -153,20 +154,29 @@ E.g. A full rebuild and run can be done by running
 Additionally, VS Code tasks are preconfigured for most actions in `.vscode/tasks.json`, and a debugger configuration is also available for stepping through the test game, in `.vscode/launch.json`
 
 ### Utilize
-In order to use the engine in your own game there are a few steps to follow
+In order to use the engine in your own game there are a few steps to follow:
 + Copy the built include directory into your project
-+ Copy the dependency dlls `ModEngine.dll`, `SDL2.dll`, `FreeImage.dll`, and `imgui.dll` from the appropriate target (Debug or Release), and place them where your game's exe will be built
++ Copy the dependency dlls `ModEngine.dll`, `SDL2.dll`, `FreeImage.dll`, `text_editor.dll` and `imgui.dll` from the appropriate target (Debug or Release), and place them where your game's exe will be built
 + (Optional) If using the Debug target, copy the `.pdb` files from the engine directory
 + Include the `include/ModEngine.hh` header into your source
 + Define `M_GAME` so the headers have the appropriate Windows `__declspec`s
 + Link against the `ModEngine.lib` from the appropriate target when building
-+ (Optional) Create an assets directory in the working directory for your project with at least one TrueType font and an `application_config.json` (Or just copy the assets directory included with the engine source)
++ Create an assets directory in the working directory for your project containing:   
+  - Debug primitive shaders 
+    * `./assets/shaders/primitive.frag`
+    * `./assets/shaders/primitive2.vert`
+    * `./assets/shaders/primitive3.vert`
+  - (Optional) One or more TrueType fonts, and an `./assets/application_config.json` (Path is configurable) with their paths and sizes
 
-To build modifications for your game there is a similar process
+  (Or just copy the assets directory included with the engine)
+
+To build modifications for your game there is a similar process. The module and asset loader system is not yet fully implemented, but for now the test framework is setup to support use of a DLL to simulate the capability. In order to build a module DLL:
 + (Optional) Combine your game's lib file with the engine's lib file for easy linking
 + Include the engine headers along with your game's headers into your source
 + Define `M_MODULE` so the headers have the appropriate Windows `__declspec`s
 + Link against the combined lib or both the engine lib and your game's lib
+
+
 
 Communication between different binaries is facilitated by the use of `ENGINE_API`, `GAME_API`, and `MODULE_API`. Windows' use of `__declspec` requires that any symbols you wish to export be marked `__declspec(dllexport)` and any symbols you wish to import be marked with `__declspec(dllimport)`, so these macros are changed for a given compilation context by use of the `M_ENGINE`, `M_GAME`, and `M_MODULE` defines
 
