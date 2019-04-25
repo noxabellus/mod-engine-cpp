@@ -538,8 +538,8 @@ namespace mod {
     /* Transform a vector using a matrix3 */
     Vector2<f32_t> apply_matrix (Matrix3 const& m) const {
       return {
-        m[0] * ((f32_t) x) + m[3] * ((f32_t) y) + m[6],
-        m[1] * ((f32_t) x) + m[4] * ((f32_t) y) + m[7]
+        m[0] * ((f32_t) x) + m[1] * ((f32_t) y) + m[2],
+        m[3] * ((f32_t) x) + m[4] * ((f32_t) y) + m[5]
       };
     }
     
