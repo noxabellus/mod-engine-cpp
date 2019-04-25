@@ -557,7 +557,8 @@ namespace mod {
   void RenderMesh2D::enable_uvs (Vector2f const* data) {
     m_assert(uvs.elements == NULL, "Cannot enable uvs, data already exists");
 
-    uvs.append_multiple(data, positions.count);
+    if (data != NULL) uvs.append_multiple(data, positions.count);
+    else uvs.grow_allocation();
 
     init_gl_uvs(this);
   }
@@ -604,7 +605,8 @@ namespace mod {
   void RenderMesh2D::enable_colors (Vector3f const* data) {
     m_assert(colors.elements == NULL, "Cannot enable colors, data already exists");
 
-    colors.append_multiple(data, positions.count);
+    if (data != NULL) colors.append_multiple(data, positions.count);
+    else colors.grow_allocation();
 
     init_gl_colors(this);
   }
