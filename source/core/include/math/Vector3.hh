@@ -566,6 +566,20 @@ namespace mod {
       return ((Vector3<U>) *this) - (((Vector3<U>) r) * U(2) * ((U) dot(r)));
     }
 
+    /* Project a vector using camera matrices 
+     * Here camera view should be the inverted camera transform that is passed to shaders,
+     * and the camera projection should be the uninverted perspective or orthographic transform passed to shaders */
+    Vector3<f32_t> project (Matrix4 const& inverse_camera_view, Matrix4 const& camera_projection) const {
+      return apply_matrix(inverse_camera_view).apply_matrix(camera_projection);
+    }
+
+    /* Unproject a vector using camera matrices.
+     * Here camera view should be the camera's transform *before* being inverted to pass to shaders,
+     * while camera projection should be inverted from the perspective or orthographic transform passed to shaders */
+    Vector3<f32_t> unproject (Matrix4 const& camera_view, Matrix4 const& inverse_camera_projection) const {
+      return apply_matrix(inverse_camera_projection).apply_matrix(camera_view);
+    }
+
 
     /* Apply an euler rotation to a vector */
     Vector3<f32_t> apply_euler (Euler const& e) const {
