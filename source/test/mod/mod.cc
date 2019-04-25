@@ -6,6 +6,7 @@
 
 MODULE_API void module_init () {
   using namespace mod;
+  using namespace ImGui;
 
 
   Application.init();
@@ -108,12 +109,12 @@ MODULE_API void module_init () {
   
   f32_t camera_rot_base = (M_PI * 2) * .25;
   f32_t camera_rot = (M_PI * 2) * .125;
-  f32_t camera_dist = 100;
-  f32_t camera_height = 0;
+  f32_t camera_dist = 500;
+  f32_t camera_height = camera_dist;
   f32_t camera_zoom = 1;
 
   f32_t camera_rot_rate = M_PI;
-  f32_t camera_roll_rate = 256;
+  f32_t camera_roll_rate = 512;
   f32_t camera_zoom_rate = 1;
   f32_t camera_max_zoom = 3;
   f32_t camera_min_zoom = .25;
@@ -164,7 +165,6 @@ MODULE_API void module_init () {
 
     Vector3f camera_position = { cosf(camera_rot + camera_rot_base) * camera_dist, sinf(camera_rot + camera_rot_base) * camera_dist, camera_height };
     
-    using namespace ImGui;
     SetNextWindowPos({ 10, 10 }, ImGuiCond_Appearing, { 0, 0 });
     SetNextWindowCollapsed(true, ImGuiCond_Appearing);
     Begin("Info", NULL); {
@@ -352,8 +352,8 @@ MODULE_API void module_init () {
 
     draw_debug.cube(AABB3::from_center_and_size(ray.origin, { 10 }), { 1, 1, 0 });
 
-    ImGui::Begin("Ray", NULL);
-    ImGui::Text("Origin: %.3fx%.3fx%.3f", ray.origin.x, ray.origin.y, ray.origin.z);
+    Begin("Ray", NULL);
+    Text("Origin: %.3fx%.3fx%.3f", ray.origin.x, ray.origin.y, ray.origin.z);
     if (hits.count > 0) {
       hits.sort_in_place([&] (Hit const& a, Hit const& b) -> bool {
         return a.distance < b.distance;
@@ -369,11 +369,11 @@ MODULE_API void module_init () {
 
       draw_debug.cube(AABB3::from_center_and_size(intersect, { 15 }), { 0, 1, 1 });
 
-      ImGui::Text("Intersect: %.3fx%.3fx%.3f", intersect.x, intersect.y, intersect.z);
-      ImGui::Text("Entity:");
-      ImGui::Text("- ID: %u", entity->id);
-      ImGui::Text("- Position: %.3fx%.3fx%.3f", t.position.x, t.position.y, t.position.z);
-      ImGui::Text("- Mesh Origin: %s", m.origin);
+      Text("Intersect: %.3fx%.3fx%.3f", intersect.x, intersect.y, intersect.z);
+      Text("Entity:");
+      Text("- ID: %u", entity->id);
+      Text("- Position: %.3fx%.3fx%.3f", t.position.x, t.position.y, t.position.z);
+      Text("- Mesh Origin: %s", m.origin);
 
       draw_debug.cube(AABB3::from_center_and_size(b.min, { 10 }), { 1, 0, 1 });
       draw_debug.cube(AABB3::from_center_and_size(b.max, { 10 }), { 1, 0, 1 });
@@ -384,7 +384,7 @@ MODULE_API void module_init () {
       draw_debug.cube(AABB3::from_center_and_size({ b.max.x, b.min.y, b.max.z }, { 10 }), { 1, 0, 1 });
       draw_debug.cube(AABB3::from_center_and_size({ b.max.x, b.max.y, b.min.z }, { 10 }), { 1, 0, 1 });
     }
-    ImGui::End();
+    End();
   });
   
 
@@ -416,19 +416,7 @@ MODULE_API void module_init () {
     ecs.update();
     
 
-    // ImGui::Begin("Mouse", NULL, ImGuiWindowFlags_AlwaysAutoResize);
-    // ImGui::Text("Usable: %s", Input.mouse_usable? "true":"false");
-    // ImGui::Text("Pixel: %dx%d", Input.mouse_position_px.x, Input.mouse_position_px.y);
-    // ImGui::Text("Unit:  %fx%f", Input.mouse_position_unit.x, Input.mouse_position_unit.y);
-    // ImGui::End();
-
-    // ImGui::Begin("Resolution", NULL, ImGuiWindowFlags_AlwaysAutoResize);
-    // ImGui::Text("Internal: %dx%d", Application.resolution.x, Application.resolution.y);
-    // ImGui::Text("ImGui: %fx%f", Application.ig_io->DisplaySize.x, Application.ig_io->DisplaySize.y);
-    // ImGui::End();
-
-
-    // main_menu_ex();
+    main_menu_ex();
     // vendor_ex();
 
 
@@ -440,11 +428,7 @@ MODULE_API void module_init () {
   
 
   update_reports.destroy();
-
-
   ecs.destroy();
-  
-
   draw_debug.destroy();
   Application.destroy();
 }
