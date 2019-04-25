@@ -175,8 +175,8 @@ void settings_menu_ex (u8_t prev_mode, u8_t& new_mode) {
     }
 
     if (CollapsingHeader("Controls")) {
-      Application.input.show_binding_menu();
-      Application.input.show_binding_modal();
+      Input.show_binding_menu();
+      Input.show_binding_modal();
     }
 
     f32_t w = GetContentRegionAvailWidth() / 2.0f;

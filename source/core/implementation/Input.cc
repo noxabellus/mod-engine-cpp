@@ -297,14 +297,14 @@ namespace mod {
 
 
   
-  JSONItem ControlBinding::to_json_item () const {
+  JSONObject ControlBinding::to_json_object () const {
     JSONObject object;
     
     for (auto [ i, control ] : controls) {
       object.set({ control.input_combination.to_json_item() }, control.name);
     }
 
-    return { object };
+    return object;
   }
 
 
@@ -467,62 +467,131 @@ namespace mod {
 
 
 
-  
-  JSONItem Input::to_json_item () const {
-    return control_binding.to_json_item();
+
+
+
+  Input_t Input = { };
+
+  char const* Input_t::config_path = "./assets/controls.json";
+
+  Array<Control> Input_t::default_controls = Array<Control>::from_elements(
+    Control { "Forward", { { }, { Keycode::W }, { } } },
+    Control { "Left", { { }, { Keycode::A }, { } } },
+    Control { "Backward", { { }, { Keycode::S }, { } } },
+    Control { "Right", { { }, { Keycode::D }, { } } },
+    Control { "Up", { { }, { Keycode::Space }, { } } },
+    Control { "Down", { { }, { Keycode::C }, { } } },
+    Control { "Primary Action", { { }, { }, { MouseButton::Left } } },
+    Control { "Secondary Action", { { }, { }, { MouseButton::Right } } },
+    Control { "Zoom In", { {}, {}, { MouseButton::WheelUp } } },
+    Control { "Zoom Out", { {}, {}, { MouseButton::WheelDown } } }
+  );
+
+
+  Input_t& Input_t::init () {
+    JSON json;
+
+    try {
+      json = JSON::from_file(config_path);
+    } catch (Exception& exception) {
+      exception.handle();
+      json = { JSONType::Object, "Empty default config" };
+    }
+
+    if (json.get_object().items.count > 0) {
+      for (auto [ i, control ] : default_controls) {
+        JSONItem* control_item = json.get_object_item(control.name);
+
+        if (control_item != NULL) {
+          try {
+            bind(control.name, InputCombination::from_json_item(*control_item));
+          } catch (Exception& exception) {
+            printf("Input config warning: ");
+            exception.print();
+            exception.handle();
+            bind(control);
+          }
+        } else {
+          bind(control);
+        }
+      }
+    } else {
+      for (auto [ i, control ] : default_controls) bind(control);
+    }
+
+    return *this;
   }
 
-  s64_t Input::get_control_index (u32_t id) const {
+
+  void Input_t::destroy () {
+    JSON json = { to_json_object(), "New outbound Input config" };
+
+    if (!json.to_file(config_path)) {
+      printf("Warning: Failed to save Input config file at path '%s', make sure the containing folder exists\n", config_path);
+    }
+
+    json.destroy();
+
+    control_binding.destroy();
+  }
+
+
+  
+  JSONObject Input_t::to_json_object () const {
+    return control_binding.to_json_object();
+  }
+
+  s64_t Input_t::get_control_index (u32_t id) const {
     return control_binding.get_index(id);
   }
 
-  s64_t Input::get_control_index (char const* name) const {
+  s64_t Input_t::get_control_index (char const* name) const {
     return control_binding.get_index(name);
   }
 
-  Control* Input::get_control_pointer (u32_t id) const {
+  Control* Input_t::get_control_pointer (u32_t id) const {
     return control_binding.get_pointer(id);
   }
   
-  Control* Input::get_control_pointer (char const* name) const {
+  Control* Input_t::get_control_pointer (char const* name) const {
     return control_binding.get_pointer(name);
   }
   
 
-  Control& Input::get_control (u32_t id) const {
+  Control& Input_t::get_control (u32_t id) const {
     return control_binding.get(id);
   }
   
-  Control& Input::get_control (char const* name) const {
+  Control& Input_t::get_control (char const* name) const {
     return control_binding.get(name);
   }
   
 
 
-  void Input::bind (u32_t id, InputCombination const& input_combination) {
+  void Input_t::bind (u32_t id, InputCombination const& input_combination) {
     return control_binding.set(id, input_combination);
   }
   
-  u32_t Input::bind (char const* name, InputCombination const& input_combination) {
+  u32_t Input_t::bind (char const* name, InputCombination const& input_combination) {
     return control_binding.set(name, input_combination);
   }
   
-  u32_t Input::bind (Control const& control) {
+  u32_t Input_t::bind (Control const& control) {
     return control_binding.set(control);
   }
   
 
-  void Input::unbind (u32_t id) {
+  void Input_t::unbind (u32_t id) {
     return control_binding.unset(id);
   }
   
-  void Input::unbind (char const* name) {
+  void Input_t::unbind (char const* name) {
     return control_binding.unset(name);
   }
   
 
 
-  void Input::show_binding_menu () {
+  void Input_t::show_binding_menu () {
     static String control_string;
 
     using namespace ImGui;
@@ -542,7 +611,7 @@ namespace mod {
     Columns(1);
   }
 
-  void Input::show_binding_modal () const {
+  void Input_t::show_binding_modal () const {
     static String control_string;
     
     using namespace ImGui;
@@ -563,7 +632,7 @@ namespace mod {
   }
 
 
-  void Input::begin_capture_binding (u32_t id) {
+  void Input_t::begin_capture_binding (u32_t id) {
     m_assert(get_control_index(id) != -1, "Cannot capture binding for undefined Control %" PRIu32, id);
     clear();
     capture_combo.clear();
@@ -573,11 +642,11 @@ namespace mod {
   }
 
 
-  void Input::process_sdl_input (SDL_Event const& event) {
+  void Input_t::process_sdl_input (SDL_Event const& event) {
     raw.process_sdl_input(event);
   }
 
-  bool Input::process_binding_capture_step () {
+  bool Input_t::process_binding_capture_step () {
     static KeyboardInput::KeyMask modifier_mask = ~(KeyboardInput::KeyMask { Keycode::ShiftL, Keycode::ShiftR, Keycode::CtrlL, Keycode::CtrlR, Keycode::AltL, Keycode::AltR });
 
     if (capturing_binding) {
@@ -603,11 +672,11 @@ namespace mod {
     }
   }
 
-  void Input::begin_frame () {
+  void Input_t::begin_frame () {
     raw.begin_frame();
   }
 
-  void Input::process_raw_input (bool in_mouse_usable, Vector2s const& app_resolution) {
+  void Input_t::process_raw_input (bool in_mouse_usable, Vector2s const& app_resolution) {
     if (process_binding_capture_step()) {
       mouse_position_px = raw.mouse.position;
       
@@ -629,53 +698,48 @@ namespace mod {
   }
 
 
-  bool Input::get (u32_t id) const {
+  bool Input_t::get (u32_t id) const {
     return get_control(id).active;
   }
 
-  bool Input::get (char const* name) const {
+  bool Input_t::get (char const* name) const {
     return get_control(name).active;
   }
 
 
-  bool& Input::operator [] (u32_t id) const {
+  bool& Input_t::operator [] (u32_t id) const {
     return get_control(id).active;
   }
 
-  bool& Input::operator [] (char const* name) const {
+  bool& Input_t::operator [] (char const* name) const {
     return get_control(name).active;
   }
 
 
-  void Input::set (u32_t id) const {
+  void Input_t::set (u32_t id) const {
     get_control(id).active = true;
   }
 
-  void Input::set (char const* name) const {
+  void Input_t::set (char const* name) const {
     get_control(name).active = true;
   }
 
 
-  void Input::unset (u32_t id) const {
+  void Input_t::unset (u32_t id) const {
     get_control(id).active = false;
   }
 
-  void Input::unset (char const* name) const {
+  void Input_t::unset (char const* name) const {
     get_control(name).active = false;
   }
 
 
-  void Input::clear () {
+  void Input_t::clear () {
     control_binding.clear();
     raw.clear();
     
     mouse_position_px = { -1, -1 };
     mouse_position_unit = { -2, -2 };
     mouse_usable = false;
-  }
-
-
-  void Input::destroy () {
-    control_binding.destroy();
   }
 }

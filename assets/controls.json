@@ -1,0 +1,52 @@
+{
+  "Forward": {
+    "keys": [
+      "W"
+    ]
+  },
+  "Left": {
+    "keys": [
+      "A"
+    ]
+  },
+  "Backward": {
+    "keys": [
+      "S"
+    ]
+  },
+  "Right": {
+    "keys": [
+      "D"
+    ]
+  },
+  "Up": {
+    "keys": [
+      "Space"
+    ]
+  },
+  "Down": {
+    "keys": [
+      "C"
+    ]
+  },
+  "Primary Action": {
+    "buttons": [
+      "Left"
+    ]
+  },
+  "Secondary Action": {
+    "buttons": [
+      "Right"
+    ]
+  },
+  "Zoom In": {
+    "buttons": [
+      "WheelUp"
+    ]
+  },
+  "Zoom Out": {
+    "buttons": [
+      "WheelDown"
+    ]
+  }
+}

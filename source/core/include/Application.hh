@@ -7,6 +7,7 @@
 #include "String.hh"
 #include "math/Vector2.hh"
 #include "Input.hh"
+#include "AssetManager.hh"
 
 
 
@@ -134,7 +135,6 @@ namespace mod {
     ENGINE_API static f32_t default_font_0_scale;
     ENGINE_API static f32_t default_font_1_scale;
     ENGINE_API static Vector2s min_resolution;
-    ENGINE_API static Array<Control> default_controls;
 
 
     SDL_Window* window;
@@ -162,8 +162,6 @@ namespace mod {
     f64_t frame_delta;
     
     bool first_frame;
-
-    Input input;
 
 
     /* Create the global ModEngine Application, load the config file,

@@ -8,11 +8,8 @@ MODULE_API void module_init () {
   using namespace mod;
 
 
-  Application.default_controls.append({ "Mod Control", { { }, { Keycode::X }, { } } });
   Application.init();
 
-
-  AssetManager.init();
   AssetManager.load_database_from_file("./assets/asset_db.json");
 
 
@@ -85,14 +82,14 @@ MODULE_API void module_init () {
     if (input.enabled) {
       Vector3f movement = { 0, 0, 0 };
 
-      if (Application.input["Forward"]) movement.y -= 1;
-      if (Application.input["Backward"]) movement.y += 1;
+      if (Input["Forward"]) movement.y -= 1;
+      if (Input["Backward"]) movement.y += 1;
 
-      if (Application.input["Left"]) movement.x -= 1;
-      if (Application.input["Right"]) movement.x += 1;
+      if (Input["Left"]) movement.x -= 1;
+      if (Input["Right"]) movement.x += 1;
 
-      if (Application.input["Down"]) movement.z -= 1;
-      if (Application.input["Up"]) movement.z += 1;
+      if (Input["Down"]) movement.z -= 1;
+      if (Input["Up"]) movement.z += 1;
 
       movement = movement.normalize() * (input.movement_rate / Application.frame_delta);
 
@@ -146,14 +143,14 @@ MODULE_API void module_init () {
       };
     }
     Vector2f camera_drag_delta = { 0, 0 };
-    if (Application.input["Primary Action"]) {
+    if (Input["Primary Action"]) {
       if (!camera_drag) { // drag start
-        camera_drag_start = Application.input.mouse_position_unit;
+        camera_drag_start = Input.mouse_position_unit;
         camera_rot_start = camera_rot;
         camera_height_start = camera_height;
         camera_drag = true;
       } else { // drag continue
-        camera_drag_delta = Application.input.mouse_position_unit - camera_drag_start;
+        camera_drag_delta = Input.mouse_position_unit - camera_drag_start;
 
         camera_rot = camera_rot_start + camera_drag_delta.x * camera_rot_rate;
         camera_height = camera_height_start + -camera_drag_delta.y * camera_roll_rate;
@@ -162,8 +159,8 @@ MODULE_API void module_init () {
       camera_drag = false;
     }
 
-    if (Application.input["Zoom In"]) camera_zoom = num::max(camera_min_zoom, camera_zoom - (camera_zoom_rate / Application.frame_delta));
-    else if (Application.input["Zoom Out"]) camera_zoom = num::min(camera_max_zoom, camera_zoom + (camera_zoom_rate / Application.frame_delta));
+    if (Input["Zoom In"]) camera_zoom = num::max(camera_min_zoom, camera_zoom - (camera_zoom_rate / Application.frame_delta));
+    else if (Input["Zoom Out"]) camera_zoom = num::min(camera_max_zoom, camera_zoom + (camera_zoom_rate / Application.frame_delta));
 
     Vector3f camera_position = { cosf(camera_rot + camera_rot_base) * camera_dist, sinf(camera_rot + camera_rot_base) * camera_dist, camera_height };
     
@@ -171,8 +168,8 @@ MODULE_API void module_init () {
     SetNextWindowPos({ 10, 10 }, ImGuiCond_Appearing, { 0, 0 });
     SetNextWindowCollapsed(true, ImGuiCond_Appearing);
     Begin("Info", NULL); {
-      Text("Mouse PX: %dx%d", Application.input.mouse_position_px.x, Application.input.mouse_position_px.y);
-      Text("Mouse NDC: %.3fx%.3f", Application.input.mouse_position_unit.x, Application.input.mouse_position_unit.y);
+      Text("Mouse PX: %dx%d", Input.mouse_position_px.x, Input.mouse_position_px.y);
+      Text("Mouse NDC: %.3fx%.3f", Input.mouse_position_unit.x, Input.mouse_position_unit.y);
       Text("Camera Position: x %f, y %f, z %f", camera_position.x, camera_position.y, camera_position.z);
       Text("- Rotation: %f", camera_rot);
       Text("- Height: %f", camera_height);
@@ -313,8 +310,8 @@ MODULE_API void module_init () {
       ecs->get_component_type_by_instance_type<RenderMesh3DHandle>().id
     };
 
-    Vector3f origin_n = { Application.input.mouse_position_unit.x, Application.input.mouse_position_unit.y, -.99 };
-    Vector3f end_n = { Application.input.mouse_position_unit.x, Application.input.mouse_position_unit.y, .9 };
+    Vector3f origin_n = { Input.mouse_position_unit.x, Input.mouse_position_unit.y, -.99 };
+    Vector3f end_n = { Input.mouse_position_unit.x, Input.mouse_position_unit.y, .9 };
 
     Matrix4 inverse_projection_matrix = projection_matrix.inverse();
     Matrix4 inverse_view_matrix = view_matrix.inverse();
@@ -420,9 +417,9 @@ MODULE_API void module_init () {
     
 
     // ImGui::Begin("Mouse", NULL, ImGuiWindowFlags_AlwaysAutoResize);
-    // ImGui::Text("Usable: %s", Application.input.mouse_usable? "true":"false");
-    // ImGui::Text("Pixel: %dx%d", Application.input.mouse_position_px.x, Application.input.mouse_position_px.y);
-    // ImGui::Text("Unit:  %fx%f", Application.input.mouse_position_unit.x, Application.input.mouse_position_unit.y);
+    // ImGui::Text("Usable: %s", Input.mouse_usable? "true":"false");
+    // ImGui::Text("Pixel: %dx%d", Input.mouse_position_px.x, Input.mouse_position_px.y);
+    // ImGui::Text("Unit:  %fx%f", Input.mouse_position_unit.x, Input.mouse_position_unit.y);
     // ImGui::End();
 
     // ImGui::Begin("Resolution", NULL, ImGuiWindowFlags_AlwaysAutoResize);
@@ -449,6 +446,5 @@ MODULE_API void module_init () {
   
 
   draw_debug.destroy();
-  AssetManager.destroy();
   Application.destroy();
 }

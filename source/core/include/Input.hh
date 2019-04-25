@@ -1073,8 +1073,8 @@ namespace mod {
     u32_t control_id_counter = 1;
     
 
-    /* Convert a ControlBinding to a JSONItem */
-    ENGINE_API JSONItem to_json_item () const;
+    /* Convert a ControlBinding to a JSONObject */
+    ENGINE_API JSONObject to_json_object () const;
 
 
     /* Get the index of a Control in a ControlBinding by id */
@@ -1142,7 +1142,11 @@ namespace mod {
   };
 
 
-  struct Input {
+  struct Input_t {
+    ENGINE_API static char const* config_path;
+    ENGINE_API static Array<Control> default_controls;
+
+
     ControlBinding control_binding;
     RawInput raw;
 
@@ -1156,8 +1160,15 @@ namespace mod {
     bool capturing_binding = false;
 
 
-    /* Get the ControlBinding of an Input as a JSONItem */
-    ENGINE_API JSONItem to_json_item () const;
+    /* Initialize the Input by loading configuration file */
+    ENGINE_API Input_t& init ();
+
+    /* Clean up the heap allocations of an Input and save configuration file */
+    ENGINE_API void destroy ();
+
+
+    /* Get the ControlBinding of an Input as a JSONObject */
+    ENGINE_API JSONObject to_json_object () const;
 
 
     /* Get the index of a Control in the ControlBinding of an Input, by id */
@@ -1262,11 +1273,10 @@ namespace mod {
 
     /* Clear all state data of an Input */
     ENGINE_API void clear ();
-
-
-    /* Clean up the heap allocations of an Input */
-    ENGINE_API void destroy ();
   };
+
+
+  ENGINE_API extern Input_t Input;
 }
 
 #endif

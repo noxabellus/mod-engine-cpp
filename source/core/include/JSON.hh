@@ -731,6 +731,17 @@ namespace mod {
       data = { type, this, 0 };
     }
 
+    /* Create a new JSON root from a JSONObject and optional origin */
+    JSON (JSONObject obj, char const* new_origin = NULL)
+    : origin(str_clone(new_origin))
+    , data(obj)
+    { }
+
+    /* Create a new JSON root from a JSONArray and optional origin */
+    JSON (JSONArray arr, char const* new_origin = NULL)
+    : origin(str_clone(new_origin))
+    , data(arr)
+    { }
 
     /* Create a new JSON root by parsing source from a str */
     static ENGINE_API JSON from_str (char const* origin, char const* source, size_t source_length = 0);

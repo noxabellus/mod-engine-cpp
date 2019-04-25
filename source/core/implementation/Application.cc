@@ -11,18 +11,7 @@ namespace mod {
   f32_t Application_t::default_font_0_scale = 26.0f;
   f32_t Application_t::default_font_1_scale = 13.0f;
   Vector2s Application_t::min_resolution = { 640, 480 };
-  Array<Control> Application_t::default_controls = Array<Control>::from_elements(
-    Control { "Forward", { { }, { Keycode::W }, { } } },
-    Control { "Left", { { }, { Keycode::A }, { } } },
-    Control { "Backward", { { }, { Keycode::S }, { } } },
-    Control { "Right", { { }, { Keycode::D }, { } } },
-    Control { "Up", { { }, { Keycode::Space }, { } } },
-    Control { "Down", { { }, { Keycode::C }, { } } },
-    Control { "Primary Action", { { }, { }, { MouseButton::Left } } },
-    Control { "Secondary Action", { { }, { }, { MouseButton::Right } } },
-    Control { "Zoom In", { {}, {}, { MouseButton::WheelUp } } },
-    Control { "Zoom Out", { {}, {}, { MouseButton::WheelDown } } }
-  );
+  
 
   Application_t Application = { };
 
@@ -252,31 +241,12 @@ namespace mod {
     show_info = show_info_item != NULL? show_info_item->get_boolean() : false;
 
 
-    JSONItem* controls = json.get_object_item("controls");
-
-    if (controls != NULL) {
-      for (auto [ i, control ] : default_controls) {
-        JSONItem* control_item = controls->get_object_item(control.name);
-
-        if (control_item != NULL) {
-          try {
-            input.bind(control.name, InputCombination::from_json_item(*control_item));
-          } catch (Exception& exception) {
-            printf("Application config warning: ");
-            exception.print();
-            exception.handle();
-            input.bind(control);
-          }
-        } else {
-          input.bind(control);
-        }
-      }
-    } else {
-      for (auto [ i, control ] : default_controls) input.bind(control);
-    }
-
-
     json.destroy();
+
+
+    Input.init();
+
+    AssetManager.init();
 
 
     SDL_ShowWindow(window);
@@ -286,8 +256,6 @@ namespace mod {
 
     // TODO use later GLSL version for ImGui?
     ImGui_ImplOpenGL3_Init("#version 130");
-
-
 
 
     return *this;
@@ -337,14 +305,20 @@ namespace mod {
       json.set_object_value(show_fps, "show_fps");
       json.set_object_value(show_info, "show_info");
 
-      json.set_object_item(input.to_json_item(), "controls");
-
       if (!json.to_file(config_path)) {
         printf("Warning: Failed to save Application config file at path '%s', make sure the containing folder exists\n", config_path);
       }
 
       json.destroy();
     }
+
+    
+    Input.destroy();
+
+    AssetManager.destroy();
+    
+
+    fonts.destroy();
 
 
     ImGui_ImplOpenGL3_Shutdown();
@@ -429,7 +403,7 @@ namespace mod {
     frame_delta = (f64_t) (frame_delta_count * 1000) / (f64_t) performance_frequency;
 
     
-    input.begin_frame();
+    Input.begin_frame();
 
 
     SDL_Event event;
@@ -437,15 +411,15 @@ namespace mod {
     while (SDL_PollEvent(&event)) {
       if (event.type == SDL_QUIT) return false;
 
-      if (input.capturing_binding) {
-        input.process_sdl_input(event);
+      if (Input.capturing_binding) {
+        Input.process_sdl_input(event);
       } else {
         ImGui_ImplSDL2_ProcessEvent(&event);
 
         switch (event.type) {
           case SDL_KEYDOWN:
           case SDL_KEYUP: {
-            if (!ig_io->WantCaptureKeyboard) input.process_sdl_input(event);
+            if (!ig_io->WantCaptureKeyboard) Input.process_sdl_input(event);
           } break;
 
           case SDL_MOUSEMOTION: {
@@ -454,13 +428,13 @@ namespace mod {
               event.motion.y = -1;
             }
 
-            input.process_sdl_input(event);
+            Input.process_sdl_input(event);
           } break;
 
           case SDL_MOUSEWHEEL:
           case SDL_MOUSEBUTTONUP:
           case SDL_MOUSEBUTTONDOWN: {
-            if (!ig_io->WantCaptureMouse) input.process_sdl_input(event);
+            if (!ig_io->WantCaptureMouse) Input.process_sdl_input(event);
           } break;
         }
       }
@@ -478,7 +452,7 @@ namespace mod {
     glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
 
 
-    input.process_raw_input(!ig_io->WantCaptureMouse, resolution);
+    Input.process_raw_input(!ig_io->WantCaptureMouse, resolution);
 
 
     return true;
