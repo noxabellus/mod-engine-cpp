@@ -8,9 +8,9 @@ namespace mod {
   }
 
   AABB3 AABB3::from_vector_list (Vector3f const* vectors, size_t vector_count) {
-    AABB3 out;
+    AABB3 out = from_center_and_size(vectors[0], { 0 });
     
-    for (size_t i = 0; i < vector_count; i ++) {
+    for (size_t i = 1; i < vector_count; i ++) {
       out.expand_to_vector(vectors[i]);
     }
 
