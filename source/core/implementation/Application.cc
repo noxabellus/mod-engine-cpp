@@ -78,7 +78,7 @@ namespace mod {
     #define gl_error_handler STANDARD_GL_ERROR_HANDLER
   #endif
 
-  Application_t& Application_t::create () {
+  Application_t& Application_t::init () {
     m_assert(SDL_Init(SDL_INIT_EVERYTHING) == 0, "Failed to initialize SDL");
 
     m_assert(SDL_GL_SetAttribute(SDL_GL_CONTEXT_PROFILE_MASK, SDL_GL_CONTEXT_PROFILE_CORE) == 0, "Failed to set OpenGL Context Profile Mask");
@@ -90,7 +90,7 @@ namespace mod {
     m_assert(SDL_GL_SetAttribute(SDL_GL_DEPTH_SIZE, 24) == 0, "Failed to set depth bpp");
     m_assert(SDL_GL_SetAttribute(SDL_GL_STENCIL_SIZE, 8) == 0, "Failed to set stencil size");
 
-    Application.window = SDL_CreateWindow(
+    window = SDL_CreateWindow(
       // TODO application name should be customizable somewhere
       "ModEngine",
       SDL_WINDOWPOS_CENTERED_MASK,
@@ -100,11 +100,11 @@ namespace mod {
       SDL_WINDOW_OPENGL | SDL_WINDOW_ALLOW_HIGHDPI | SDL_WINDOW_HIDDEN
     );
 
-    m_assert(Application.window != NULL, "Failed to create Application Window");
+    m_assert(window != NULL, "Failed to create Application Window");
 
-    Application.gl_context = SDL_GL_CreateContext(Application.window);
+    gl_context = SDL_GL_CreateContext(window);
 
-    m_assert(Application.gl_context != NULL, "Failed to create Application OpenGL Context");
+    m_assert(gl_context != NULL, "Failed to create Application OpenGL Context");
 
     m_assert(gl3wInit() == GL3W_OK, "Failed to initialize OpenGL");
 
@@ -123,21 +123,21 @@ namespace mod {
       printf("Warning: glDebugMessageCallback is not available, OpenGL errors will be uncaught");
     }
 
-    Application.ig_context = ImGui::CreateContext();
-    Application.ig_io = &ImGui::GetIO();
-    Application.ig_io->IniFilename = imgui_path;
-    Application.ig_style = &ImGui::GetStyle();
-    // Application.ig_io->ConfigFlags |= ImGuiConfigFlags_NavEnableKeyboard;
+    ig_context = ImGui::CreateContext();
+    ig_io = &ImGui::GetIO();
+    ig_io->IniFilename = imgui_path;
+    ig_style = &ImGui::GetStyle();
+    // ig_io->ConfigFlags |= ImGuiConfigFlags_NavEnableKeyboard;
 
     // TODO this should be a config property
-    ImGui::StyleColorsDark(Application.ig_style);
+    ImGui::StyleColorsDark(ig_style);
 
-    Application.ig_base_style = *Application.ig_style;
+    ig_base_style = *ig_style;
 
 
-    Application.performance_frequency = SDL_GetPerformanceFrequency();
-    Application.frame_start = SDL_GetPerformanceCounter();
-    Application.first_frame = true;
+    performance_frequency = SDL_GetPerformanceFrequency();
+    frame_start = SDL_GetPerformanceCounter();
+    first_frame = true;
 
 
     JSON json;
@@ -160,38 +160,38 @@ namespace mod {
 
         f64_t& font_size = font_item->get_object_item("size")->get_number();
 
-        ImFont* font = Application.ig_io->Fonts->AddFontFromFileTTF(font_path.value, font_size * max_ui_scale);
+        ImFont* font = ig_io->Fonts->AddFontFromFileTTF(font_path.value, font_size * max_ui_scale);
 
         m_asset_assert(font != NULL, font_path.value, "Failed to load Font from source");
 
-        Application.fonts.append(font);
+        fonts.append(font);
       }
     }
 
-    if (Application.fonts.count == 0) {
+    if (fonts.count == 0) {
       DEFAULT_FONT_CONFIG.SizePixels = default_font_0_scale * max_ui_scale;
-      Application.fonts.append(Application.ig_io->Fonts->AddFontDefault(&DEFAULT_FONT_CONFIG));
+      fonts.append(ig_io->Fonts->AddFontDefault(&DEFAULT_FONT_CONFIG));
     }
 
-    if (Application.fonts.count == 1) {
+    if (fonts.count == 1) {
       f32_t orig = DEFAULT_FONT_CONFIG.SizePixels;
       DEFAULT_FONT_CONFIG.SizePixels = default_font_1_scale * max_ui_scale;
-      Application.fonts.append(Application.ig_io->Fonts->AddFontDefault(&DEFAULT_FONT_CONFIG));
+      fonts.append(ig_io->Fonts->AddFontDefault(&DEFAULT_FONT_CONFIG));
       DEFAULT_FONT_CONFIG.SizePixels = orig;
     }
 
 
     JSONItem* ui_scale_item = json.get_object_item("ui_scale");
     
-    Application.set_ui_scale(ui_scale_item != NULL? ui_scale_item->get_number() : 1.0);
+    set_ui_scale(ui_scale_item != NULL? ui_scale_item->get_number() : 1.0);
 
     
     // TODO add string value option for vsync config
     JSONItem* vsync_item = json.get_object_item("vsync");
 
-    Application.vsync = vsync_item != NULL? vsync_item->get_number() : ApplicationVSyncMode::VBlank;
+    vsync = vsync_item != NULL? vsync_item->get_number() : ApplicationVSyncMode::VBlank;
 
-    if (Application.vsync == ApplicationVSyncMode::VBlank) {
+    if (vsync == ApplicationVSyncMode::VBlank) {
       m_assert(SDL_GL_SetSwapInterval(1) == 0, "Failed to enable VBlank VSync mode");
     } else {
       m_assert(SDL_GL_SetSwapInterval(0) == 0, "Failed to disable VBlank VSync mode");
@@ -199,37 +199,37 @@ namespace mod {
 
     
     // Defaults to prevent accessing uninitialized data
-    Application.window_mode = 0; 
-    Application.resolution = min_resolution;
+    window_mode = 0; 
+    resolution = min_resolution;
 
 
     JSONItem* display_item = json.get_object_item("display");
 
-    Application.set_display(display_item != NULL? display_item->get_number() : 0);
+    set_display(display_item != NULL? display_item->get_number() : 0);
 
 
     // TODO add string value option for window mode config
     JSONItem* window_mode_item = json.get_object_item("window_mode");
 
-    Application.set_window_mode(window_mode_item != NULL? window_mode_item->get_number() : ApplicationWindowMode::Windowed);
+    set_window_mode(window_mode_item != NULL? window_mode_item->get_number() : ApplicationWindowMode::Windowed);
 
 
     JSONItem* resolution_item = json.get_object_item("resolution");
 
     if (resolution_item != NULL) {
-      Application.set_resolution({
+      set_resolution({
         (s32_t) resolution_item->get_array_item(0)->get_number(),
         (s32_t) resolution_item->get_array_item(1)->get_number(),
       });
     }
 
 
-    if (Application.window_mode == ApplicationWindowMode::Windowed) {
+    if (window_mode == ApplicationWindowMode::Windowed) {
       JSONItem* position_item = json.get_object_item("position");
 
       if (position_item != NULL) {
         SDL_SetWindowPosition(
-          Application.window,
+          window,
           (s32_t) position_item->get_array_item(0)->get_number(),
           (s32_t) position_item->get_array_item(1)->get_number()
         );
@@ -239,17 +239,17 @@ namespace mod {
 
     JSONItem* target_framerate_item = json.get_object_item("target_framerate");
 
-    Application.target_framerate = target_framerate_item != NULL? target_framerate_item->get_number() : Application.get_native_framerate();
+    target_framerate = target_framerate_item != NULL? target_framerate_item->get_number() : get_native_framerate();
 
 
     JSONItem* show_fps_item = json.get_object_item("show_fps");
 
-    Application.show_fps = show_fps_item != NULL? show_fps_item->get_boolean() : false;
+    show_fps = show_fps_item != NULL? show_fps_item->get_boolean() : false;
 
     
     JSONItem* show_info_item = json.get_object_item("show_info");
 
-    Application.show_info = show_info_item != NULL? show_info_item->get_boolean() : false;
+    show_info = show_info_item != NULL? show_info_item->get_boolean() : false;
 
 
     JSONItem* controls = json.get_object_item("controls");
@@ -260,29 +260,29 @@ namespace mod {
 
         if (control_item != NULL) {
           try {
-            Application.input.bind(control.name, InputCombination::from_json_item(*control_item));
+            input.bind(control.name, InputCombination::from_json_item(*control_item));
           } catch (Exception& exception) {
             printf("Application config warning: ");
             exception.print();
             exception.handle();
-            Application.input.bind(control);
+            input.bind(control);
           }
         } else {
-          Application.input.bind(control);
+          input.bind(control);
         }
       }
     } else {
-      for (auto [ i, control ] : default_controls) Application.input.bind(control);
+      for (auto [ i, control ] : default_controls) input.bind(control);
     }
 
 
     json.destroy();
 
 
-    SDL_ShowWindow(Application.window);
+    SDL_ShowWindow(window);
 
     
-    ImGui_ImplSDL2_InitForOpenGL(Application.window, Application.gl_context);
+    ImGui_ImplSDL2_InitForOpenGL(window, gl_context);
 
     // TODO use later GLSL version for ImGui?
     ImGui_ImplOpenGL3_Init("#version 130");
@@ -290,7 +290,7 @@ namespace mod {
 
 
 
-    return Application;
+    return *this;
   }
 
 

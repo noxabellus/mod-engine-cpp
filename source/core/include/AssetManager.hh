@@ -262,7 +262,7 @@ namespace mod {
     bool have_lock;
 
 
-    ENGINE_API static void create ();
+    ENGINE_API AssetManager_t& init ();
 
     ENGINE_API void destroy ();
 

@@ -9,15 +9,14 @@ MODULE_API void module_init () {
 
 
   Application.default_controls.append({ "Mod Control", { { }, { Keycode::X }, { } } });
-  Application.create();
+  Application.init();
 
 
-  AssetManager.create();
+  AssetManager.init();
   AssetManager.load_database_from_file("./assets/asset_db.json");
 
 
-  draw_debug_2d.create();
-  draw_debug_3d.create();
+  draw_debug.init();
 
 
   ECS& ecs = *new ECS;
@@ -268,7 +267,7 @@ MODULE_API void module_init () {
           Vector3f normal = tri.normal();
           Vector3f center = tri.center();
 
-          draw_debug_3d.line(Line3 { center, center + normal * .1 }.apply_matrix(transform_matrix), { 1, 0, 1 });
+          draw_debug.line3(Line3 { center, center + normal * .1 }.apply_matrix(transform_matrix), { 1, 0, 1 });
         }
       }
     }
@@ -294,7 +293,7 @@ MODULE_API void module_init () {
         for (auto [ i, normal ] : mesh.normals) {
           Vector3f& pos = mesh.positions[i];
           
-          draw_debug_3d.line(Line3 { pos, pos + normal * .1 }.apply_matrix(transform_matrix), { 0, 1, 1 });
+          draw_debug.line3(Line3 { pos, pos + normal * .1 }.apply_matrix(transform_matrix), { 0, 1, 1 });
         }
       }
     }
@@ -354,7 +353,7 @@ MODULE_API void module_init () {
       }
     }
 
-    draw_debug_3d.cube(AABB3::from_center_and_size(ray.origin, { 10 }), { 1, 1, 0 });
+    draw_debug.cube(AABB3::from_center_and_size(ray.origin, { 10 }), { 1, 1, 0 });
 
     ImGui::Begin("Ray", NULL);
     ImGui::Text("Origin: %.3fx%.3fx%.3f", ray.origin.x, ray.origin.y, ray.origin.z);
@@ -371,7 +370,7 @@ MODULE_API void module_init () {
       RenderMesh3D& m = *entity.get_component<RenderMesh3DHandle>();
       AABB3 b = m.get_aabb().apply_matrix(Matrix4::compose(t));
 
-      draw_debug_3d.cube(AABB3::from_center_and_size(intersect, { 15 }), { 0, 1, 1 });
+      draw_debug.cube(AABB3::from_center_and_size(intersect, { 15 }), { 0, 1, 1 });
 
       ImGui::Text("Intersect: %.3fx%.3fx%.3f", intersect.x, intersect.y, intersect.z);
       ImGui::Text("Entity:");
@@ -379,14 +378,14 @@ MODULE_API void module_init () {
       ImGui::Text("- Position: %.3fx%.3fx%.3f", t.position.x, t.position.y, t.position.z);
       ImGui::Text("- Mesh Origin: %s", m.origin);
 
-      draw_debug_3d.cube(AABB3::from_center_and_size(b.min, { 10 }), { 1, 0, 1 });
-      draw_debug_3d.cube(AABB3::from_center_and_size(b.max, { 10 }), { 1, 0, 1 });
-      draw_debug_3d.cube(AABB3::from_center_and_size({ b.min.x, b.min.y, b.max.z }, { 10 }), { 1, 0, 1 });
-      draw_debug_3d.cube(AABB3::from_center_and_size({ b.min.x, b.max.y, b.min.z }, { 10 }), { 1, 0, 1 });
-      draw_debug_3d.cube(AABB3::from_center_and_size({ b.min.x, b.max.y, b.max.z }, { 10 }), { 1, 0, 1 });
-      draw_debug_3d.cube(AABB3::from_center_and_size({ b.max.x, b.min.y, b.min.z }, { 10 }), { 1, 0, 1 });
-      draw_debug_3d.cube(AABB3::from_center_and_size({ b.max.x, b.min.y, b.max.z }, { 10 }), { 1, 0, 1 });
-      draw_debug_3d.cube(AABB3::from_center_and_size({ b.max.x, b.max.y, b.min.z }, { 10 }), { 1, 0, 1 });
+      draw_debug.cube(AABB3::from_center_and_size(b.min, { 10 }), { 1, 0, 1 });
+      draw_debug.cube(AABB3::from_center_and_size(b.max, { 10 }), { 1, 0, 1 });
+      draw_debug.cube(AABB3::from_center_and_size({ b.min.x, b.min.y, b.max.z }, { 10 }), { 1, 0, 1 });
+      draw_debug.cube(AABB3::from_center_and_size({ b.min.x, b.max.y, b.min.z }, { 10 }), { 1, 0, 1 });
+      draw_debug.cube(AABB3::from_center_and_size({ b.min.x, b.max.y, b.max.z }, { 10 }), { 1, 0, 1 });
+      draw_debug.cube(AABB3::from_center_and_size({ b.max.x, b.min.y, b.min.z }, { 10 }), { 1, 0, 1 });
+      draw_debug.cube(AABB3::from_center_and_size({ b.max.x, b.min.y, b.max.z }, { 10 }), { 1, 0, 1 });
+      draw_debug.cube(AABB3::from_center_and_size({ b.max.x, b.max.y, b.min.z }, { 10 }), { 1, 0, 1 });
     }
     ImGui::End();
   });
@@ -414,8 +413,7 @@ MODULE_API void module_init () {
     }
 
 
-    draw_debug_2d.begin_frame();
-    draw_debug_3d.begin_frame();
+    draw_debug.begin_frame();
 
 
     ecs.update();
@@ -437,8 +435,7 @@ MODULE_API void module_init () {
     // vendor_ex();
 
 
-    draw_debug_3d.end_frame(camera_matrix);
-    draw_debug_2d.end_frame(Application.resolution);
+    draw_debug.end_frame(camera_matrix, Application.resolution);
 
 
     Application.end_frame();
@@ -451,7 +448,7 @@ MODULE_API void module_init () {
   ecs.destroy();
   
 
-  draw_debug_2d.destroy();
+  draw_debug.destroy();
   AssetManager.destroy();
   Application.destroy();
 }

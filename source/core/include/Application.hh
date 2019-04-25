@@ -168,7 +168,7 @@ namespace mod {
 
     /* Create the global ModEngine Application, load the config file,
      * and perform supporting library initialization */
-    ENGINE_API static Application_t& create ();
+    ENGINE_API Application_t& init ();
 
     /* Destroy the Application, free allocations, save the config file,
      * and perform supporting library clean up */

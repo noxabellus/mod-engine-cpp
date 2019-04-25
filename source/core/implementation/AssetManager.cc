@@ -5,11 +5,12 @@
 namespace mod {
   AssetManager_t AssetManager = { };
 
-  void AssetManager_t::create () {
-    AssetManager.have_lock = false;
-    AssetManager.watch_list.shutdown = false;
-    mtx_init_safe(&AssetManager.watch_list.mtx, mtx_plain);
-    thrd_create_safe(&AssetManager.watch_list.thrd, (thrd_start_t) AssetManager_t::watch_files, NULL);
+  AssetManager_t& AssetManager_t::init () {
+    have_lock = false;
+    watch_list.shutdown = false;
+    mtx_init_safe(&watch_list.mtx, mtx_plain);
+    thrd_create_safe(&watch_list.thrd, (thrd_start_t) AssetManager_t::watch_files, NULL);
+    return *this;
   }
 
   void AssetManager_t::destroy () {
