@@ -614,7 +614,10 @@ namespace mod {
       mouse_usable = in_mouse_usable;
 
       if (mouse_usable) {
-        mouse_position_unit = ((Vector2f { 2.0f } / app_resolution) * (Vector2f) mouse_position_px) - 1.0f;
+        mouse_position_unit = {
+          (2.0f * mouse_position_px.x) / app_resolution.x - 1.0f,
+          1.0f - (2.0f * mouse_position_px.y) / app_resolution.y
+        };
       } else {
         mouse_position_unit = { -2, -2 };
       }
