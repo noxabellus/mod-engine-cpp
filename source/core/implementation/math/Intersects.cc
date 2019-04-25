@@ -579,8 +579,8 @@ namespace mod::Intersects {
   }
 
   pair_t<bool, f32_t> ray3_triangle (Ray3 const& ray, Triangle const& triangle, bool allow_backface) {
-    Vector3f edge1 = triangle.b - triangle.a;
-    Vector3f edge2 = triangle.c - triangle.a;
+    Vector3f edge1 = triangle.c - triangle.a;
+    Vector3f edge2 = triangle.b - triangle.a;
 
     Vector3f normal = edge1.cross(edge2);
 
