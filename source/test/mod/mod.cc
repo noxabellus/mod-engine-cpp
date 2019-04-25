@@ -202,7 +202,7 @@ MODULE_API void module_init () {
 
     Vector2f half_screen = Vector2f { Application.ig_io->DisplaySize } / 2.0f;
 
-    Vector2f half_screen_zoom = half_screen;// * camera_zoom;
+    Vector2f half_screen_zoom = half_screen * camera_zoom;
     
     projection_matrix = Matrix4::from_orthographic(
       -half_screen_zoom.x, half_screen_zoom.x,
