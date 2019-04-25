@@ -53,6 +53,7 @@ MODULE_API void module_init () {
       100
     });
     cube.add_component(directional_light_mat);
+    cube.add_component(BasicInput { true, 64 });
     cube.add_component(test_cube_mesh);
   }
 
@@ -76,7 +77,6 @@ MODULE_API void module_init () {
     });
     light.add_component(test_cube_mesh);
     light.add_component(unlit_color_mat);
-    light.add_component(BasicInput { true, 64 });
     light.add_component(DirectionalLight { { 1, 1, 1 }, 1 });
   };
 
@@ -112,8 +112,8 @@ MODULE_API void module_init () {
   
   f32_t camera_rot_base = (M_PI * 2) * .25;
   f32_t camera_rot = (M_PI * 2) * .125;
-  f32_t camera_dist = 400;
-  f32_t camera_height = camera_dist;
+  f32_t camera_dist = 100;
+  f32_t camera_height = 0;
   f32_t camera_zoom = 1;
 
   f32_t camera_rot_rate = M_PI;
@@ -127,6 +127,12 @@ MODULE_API void module_init () {
   f32_t camera_height_start;
   bool camera_drag = false;
 
+  f32_t camera_near = 0.01f;
+  f32_t camera_far = 2500.0f;
+
+
+  Matrix4 view_matrix;
+  Matrix4 projection_matrix;
   Matrix4 camera_matrix;
   
 
@@ -151,7 +157,7 @@ MODULE_API void module_init () {
         camera_drag_delta = Application.input.mouse_position_unit - camera_drag_start;
 
         camera_rot = camera_rot_start + camera_drag_delta.x * camera_rot_rate;
-        camera_height = camera_height_start + camera_drag_delta.y * camera_roll_rate;
+        camera_height = camera_height_start + -camera_drag_delta.y * camera_roll_rate;
       }
     } else if (camera_drag) { // drag end
       camera_drag = false;
@@ -163,8 +169,11 @@ MODULE_API void module_init () {
     Vector3f camera_position = { cosf(camera_rot + camera_rot_base) * camera_dist, sinf(camera_rot + camera_rot_base) * camera_dist, camera_height };
     
     using namespace ImGui;
-    SetNextWindowPos({ 10, 10 }, ImGuiCond_Always, { 0, 0 });
-    Begin("Info", NULL, ImGuiWindowFlags_NoResize | ImGuiWindowFlags_NoMove); {
+    SetNextWindowPos({ 10, 10 }, ImGuiCond_Appearing, { 0, 0 });
+    SetNextWindowCollapsed(true, ImGuiCond_Appearing);
+    Begin("Info", NULL); {
+      Text("Mouse PX: %dx%d", Application.input.mouse_position_px.x, Application.input.mouse_position_px.y);
+      Text("Mouse NDC: %.3fx%.3f", Application.input.mouse_position_unit.x, Application.input.mouse_position_unit.y);
       Text("Camera Position: x %f, y %f, z %f", camera_position.x, camera_position.y, camera_position.z);
       Text("- Rotation: %f", camera_rot);
       Text("- Height: %f", camera_height);
@@ -189,16 +198,16 @@ MODULE_API void module_init () {
       directional_light_mat->set_uniform("specular_power", specular_power);
     } End();
 
-    Matrix4 view_matrix = Matrix4::from_look(camera_position, { 0, 0, 0 }, Constants::Vector3f::down, true).inverse();
+    view_matrix = Matrix4::from_look(camera_position, { 0, 0, 0 }, Constants::Vector3f::down, true).inverse();
 
     Vector2f half_screen = Vector2f { Application.ig_io->DisplaySize } / 2.0f;
 
-    Vector2f half_screen_zoom = half_screen * camera_zoom;
+    Vector2f half_screen_zoom = half_screen;// * camera_zoom;
     
-    Matrix4 projection_matrix = Matrix4::from_orthographic(
+    projection_matrix = Matrix4::from_orthographic(
       -half_screen_zoom.x, half_screen_zoom.x,
       -half_screen_zoom.y, half_screen_zoom.y,
-      0.01f, 10000.0f
+      camera_near, camera_far
     );
 
     camera_matrix = projection_matrix * view_matrix;
@@ -289,6 +298,82 @@ MODULE_API void module_init () {
         }
       }
     }
+  });
+
+  
+  struct Hit {
+    Vector3f intersect;
+    EntityHandle entity;
+  };
+
+  Array<Hit> hits;
+
+  ecs.create_system("Object Picker", [&] (ECS* ecs) {
+    ComponentMask mask = ComponentMask {
+      ecs->get_component_type_by_instance_type<Transform3D>().id,
+      ecs->get_component_type_by_instance_type<RenderMesh3DHandle>().id
+    };
+
+    Vector3f origin_n = { Application.input.mouse_position_unit.x, Application.input.mouse_position_unit.y, -.99 };
+    Vector3f end_n = { Application.input.mouse_position_unit.x, Application.input.mouse_position_unit.y, .9 };
+
+    Matrix4 inverse_projection_matrix = projection_matrix.inverse();
+    Matrix4 inverse_view_matrix = view_matrix.inverse();
+
+    Vector3f origin = origin_n.unproject(inverse_view_matrix, inverse_projection_matrix);
+
+    Vector3f direction = (end_n.unproject(inverse_view_matrix, inverse_projection_matrix) - origin).normalize();
+
+    Ray3 ray = { origin, direction };
+
+    hits.clear();
+
+    for (u32_t i = 0; i < ecs->entity_count; i ++) {
+      EntityHandle entity = ecs->get_handle(i);
+      if (entity->enabled_components.match_subset(mask)) {
+        Transform3D& tran = entity.get_component<Transform3D>();
+        RenderMesh3D& mesh = *entity.get_component<RenderMesh3DHandle>();
+        AABB3 mesh_bounds = mesh.get_aabb().apply_matrix(Matrix4::compose(tran));
+        
+        if (auto res = Intersects::ray3_aabb3(ray, mesh_bounds); res.a) {
+          hits.append({ res.b, entity });
+        }
+      }
+    }
+
+    draw_debug_3d.cube(AABB3::from_center_and_size(ray.origin, { 10 }), { 1, 1, 0 });
+
+    ImGui::Begin("Ray", NULL);
+    ImGui::Text("Origin: %.3fx%.3fx%.3f", ray.origin.x, ray.origin.y, ray.origin.z);
+    if (hits.count > 0) {
+      hits.sort_in_place([&] (Hit const& a, Hit const& b) -> bool {
+        return ray.origin.distance_sq(a.intersect) < ray.origin.distance_sq(b.intersect);
+      });
+
+      auto [ intersect, entity ] = hits[0];
+
+      Transform3D& t = entity.get_component<Transform3D>();
+      RenderMesh3D& m = *entity.get_component<RenderMesh3DHandle>();
+      AABB3 b = m.get_aabb().apply_matrix(Matrix4::compose(t));
+
+      draw_debug_3d.cube(AABB3::from_center_and_size(intersect, { 15 }), { 0, 1, 1 });
+
+      ImGui::Text("Intersect: %.3fx%.3fx%.3f", intersect.x, intersect.y, intersect.z);
+      ImGui::Text("Entity:");
+      ImGui::Text("- ID: %u", entity->id);
+      ImGui::Text("- Position: %.3fx%.3fx%.3f", t.position.x, t.position.y, t.position.z);
+      ImGui::Text("- Mesh Origin: %s", m.origin);
+
+      draw_debug_3d.cube(AABB3::from_center_and_size(b.min, { 10 }), { 1, 0, 1 });
+      draw_debug_3d.cube(AABB3::from_center_and_size(b.max, { 10 }), { 1, 0, 1 });
+      draw_debug_3d.cube(AABB3::from_center_and_size({ b.min.x, b.min.y, b.max.z }, { 10 }), { 1, 0, 1 });
+      draw_debug_3d.cube(AABB3::from_center_and_size({ b.min.x, b.max.y, b.min.z }, { 10 }), { 1, 0, 1 });
+      draw_debug_3d.cube(AABB3::from_center_and_size({ b.min.x, b.max.y, b.max.z }, { 10 }), { 1, 0, 1 });
+      draw_debug_3d.cube(AABB3::from_center_and_size({ b.max.x, b.min.y, b.min.z }, { 10 }), { 1, 0, 1 });
+      draw_debug_3d.cube(AABB3::from_center_and_size({ b.max.x, b.min.y, b.max.z }, { 10 }), { 1, 0, 1 });
+      draw_debug_3d.cube(AABB3::from_center_and_size({ b.max.x, b.max.y, b.min.z }, { 10 }), { 1, 0, 1 });
+    }
+    ImGui::End();
   });
   
 
