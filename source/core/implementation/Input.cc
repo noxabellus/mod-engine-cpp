@@ -191,7 +191,7 @@ namespace mod {
     JSONObject object;
 
 
-    if (modifiers.match_any()) {
+    if (modifiers.any_bits()) {
       JSONArray modifier_arr;
 
       for (u8_t modifier = 0; modifier < ModifierKey::total_modifier_count; modifier ++) {
@@ -203,7 +203,7 @@ namespace mod {
       object.set(modifier_arr, "modifiers");
     }
 
-    if (keys.match_any()) {
+    if (keys.any_bits()) {
       JSONArray key_arr;
 
       for (u8_t key = 0; key < Keycode::total_key_count; key ++) {
@@ -216,7 +216,7 @@ namespace mod {
     }
 
 
-    if (buttons.match_any()) {
+    if (buttons.any_bits()) {
       JSONArray button_arr;
 
       for (u8_t button = 0; button < MouseButton::total_button_count; button ++) {

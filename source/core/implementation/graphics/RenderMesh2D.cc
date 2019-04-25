@@ -467,7 +467,7 @@ namespace mod {
       recalculate_bounds();
     }
 
-    if (needs_update.match_any()) {
+    if (needs_update.any_bits()) {
       s32_t draw_arg = dynamic? GL_DYNAMIC_DRAW : GL_STATIC_DRAW;
 
       glBindVertexArray(gl_vao);

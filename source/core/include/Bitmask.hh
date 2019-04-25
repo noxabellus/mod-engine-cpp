@@ -216,7 +216,7 @@ namespace mod {
     }
 
     /* Determine if any bits are enabled for a Bitmask */
-    bool match_any () const {
+    bool any_bits () const {
       for (size_t i = 0; i < byte_count; i ++) {
         if (bytes[i] != 0) return true;
       }
