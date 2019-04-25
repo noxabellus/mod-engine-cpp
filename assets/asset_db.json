@@ -2,8 +2,8 @@
   "shaders": {
     "Minimal2D Vert": "shaders/minimal2d.vert",
     "Minimal2D Frag": "shaders/minimal2d.frag",
-    "DirectionalLight Vert": "shaders/DirectionalLight.vert",
-    "DirectionalLight Frag": "shaders/DirectionalLight.frag",
+    "PointLight Vert": "shaders/PointLight.vert",
+    "PointLight Frag": "shaders/PointLight.frag",
     "UnlitColor Vert": "shaders/UnlitColor.vert",
     "UnlitColor Frag": "shaders/UnlitColor.frag"
   },
@@ -13,9 +13,9 @@
       "vertex": "Minimal2D Vert",
       "fragment": "Minimal2D Frag"
     },
-    "DirectionalLight": {
-      "vertex": "DirectionalLight Vert",
-      "fragment": "DirectionalLight Frag"
+    "PointLight": {
+      "vertex": "PointLight Vert",
+      "fragment": "PointLight Frag"
     },
     "UnlitColor": {
       "vertex": "UnlitColor Vert",
@@ -34,7 +34,7 @@
     "Minimal2DA": "materials/minimal2dA.json",
     "Minimal2DB": "materials/minimal2dB.json",
     "Minimal2DC": "materials/minimal2dC.json",
-    "DirectionalLight": "materials/DirectionalLight.json",
+    "PointLight": "materials/PointLight.json",
     "UnlitColor": "materials/UnlitColor.json"
   },
 

@@ -26,12 +26,12 @@ MODULE_API void module_init () {
     f32_t movement_rate;
   };
 
-  struct DirectionalLight {
+  struct PointLight {
     Vector3f color;
     f32_t brightness;
   };
   
-  MaterialHandle directional_light_mat = AssetManager.get<Material>("DirectionalLight");
+  MaterialHandle directional_light_mat = AssetManager.get<Material>("PointLight");
   MaterialHandle unlit_color_mat = AssetManager.get<Material>("UnlitColor");
   RenderMesh3DHandle test_cube_mesh = AssetManager.get<RenderMesh3D>("Test Cube");
 
@@ -39,7 +39,7 @@ MODULE_API void module_init () {
   ecs.create_component_type<MaterialHandle>();
   ecs.create_component_type<RenderMesh3DHandle>();
   ecs.create_component_type<BasicInput>();
-  ecs.create_component_type<DirectionalLight>();
+  ecs.create_component_type<PointLight>();
 
 
   EntityHandle cube; {
@@ -74,7 +74,7 @@ MODULE_API void module_init () {
     });
     light.add_component(test_cube_mesh);
     light.add_component(unlit_color_mat);
-    light.add_component(DirectionalLight { { 1, 1, 1 }, 1 });
+    light.add_component(PointLight { { 1, 1, 1 }, 1 });
   };
 
 
@@ -180,8 +180,8 @@ MODULE_API void module_init () {
         camera_zoom = 1;
       }
 
-      ColorPicker3("Light Color", light.get_component<DirectionalLight>().color.elements);
-      SliderFloat("Light Brightness", &light.get_component<DirectionalLight>().brightness, 0.01f, 5.0f);
+      ColorPicker3("Light Color", light.get_component<PointLight>().color.elements);
+      SliderFloat("Light Brightness", &light.get_component<PointLight>().brightness, 0.01f, 5.0f);
       if (Button("Light Orbit")) light_orbit = !light_orbit;
       SameLine(); Text("(%s)", light_orbit? "Enabled" : "Disabled");
       SliderFloat("Light Height", &light.get_component<Transform3D>().position.z, 0.0f, 400.0f);
@@ -233,7 +233,7 @@ MODULE_API void module_init () {
 
         if (ref.supports_uniform("light_pos")) {
           ref.set_uniform("light_pos", light.get_component<Transform3D>().position);
-          ref.set_uniform("light_color", light.get_component<DirectionalLight>().color * light.get_component<DirectionalLight>().brightness);
+          ref.set_uniform("light_color", light.get_component<PointLight>().color * light.get_component<PointLight>().brightness);
         }
 
         mesh.draw_with_material(material);
