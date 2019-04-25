@@ -333,10 +333,23 @@ MODULE_API void module_init () {
       if (entity->enabled_components.match_subset(mask)) {
         Transform3D& tran = entity.get_component<Transform3D>();
         RenderMesh3D& mesh = *entity.get_component<RenderMesh3DHandle>();
-        AABB3 mesh_bounds = mesh.get_aabb().apply_matrix(Matrix4::compose(tran));
+        Matrix4 world_matrix = Matrix4::compose(tran);
+        AABB3 mesh_bounds = mesh.get_aabb().apply_matrix(world_matrix);
         
-        if (auto res = Intersects::ray3_aabb3(ray, mesh_bounds); res.a) {
-          hits.append({ res.b, entity });
+        if (auto aabb_res = Intersects::ray3_aabb3(ray, mesh_bounds); aabb_res.a) {
+          // hits.append({ res.b, entity });
+
+          for (auto [ i, face ] : mesh.faces) {
+            Triangle world_tri = Triangle {
+              mesh.positions[face[0]],
+              mesh.positions[face[1]],
+              mesh.positions[face[2]]
+            }.apply_matrix(world_matrix);
+
+            if (auto tri_res = Intersects::ray3_triangle(ray, world_tri, false); tri_res.a) {
+              hits.append({ tri_res.b, entity });
+            }
+          }
         }
       }
     }
