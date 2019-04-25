@@ -224,6 +224,15 @@ namespace mod {
       return false;
     }
 
+    /* Determine if a Bitmask matches any bits from another Bitmask */
+    bool match_any (Bitmask const& r) const {
+      for (size_t i = 0; i < bit_count; i ++) {
+        if (r.match_index(i) && match_index(i)) return true;
+      }
+
+      return false;
+    }
+
     /* Determine if another Bitmask is a subset of the caller instance */
     bool match_subset (Bitmask const& r) const {
       for (size_t i = 0; i < byte_count; i ++) {
