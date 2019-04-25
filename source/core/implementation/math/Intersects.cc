@@ -508,7 +508,6 @@ namespace mod::Intersects {
       tmax = (aabb.min.x - ray.origin.x) * idx;
     }
 
-
     if (idy >= 0.0f) {
       tymin = (aabb.min.y - ray.origin.y) * idy;
       tymax = (aabb.max.y - ray.origin.y) * idy;
@@ -519,10 +518,10 @@ namespace mod::Intersects {
 
     if ((tmin > tymax) || (tymin > tmax)) return v3_intersect_none;
 
+
     if (tymin > tmin || tmin != tmin) tmin = tymin;
 
     if (tymax < tmax || tmax != tmax) tmax = tymax;
-
 
     if (idz >= 0.0f) {
       tzmin = (aabb.min.z - ray.origin.z) * idz;
@@ -534,17 +533,15 @@ namespace mod::Intersects {
 
     if ((tmin > tzmax) || (tzmin > tmax)) return v3_intersect_none;
 
+
     if (tzmin > tmin || tmin != tmin) tmin = tzmin;
 
     if (tzmax < tmax || tmax != tmax) tmax = tzmax;
 
-
     if (tmax < 0.0f) return v3_intersect_none;
 
+
     return { true, ray.vector_at_offset(tmin >= 0.0f? tmin : tmax) };
-
-
-    return v3_intersect_none;
   }
 
   pair_t<bool, Vector3f> ray3_sphere (Ray3 const& ray, Sphere const& sphere) {
