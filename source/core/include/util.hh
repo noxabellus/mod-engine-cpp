@@ -176,10 +176,22 @@ namespace mod {
         || c == '\r';
   }
 
+  /* Determine if an ASCII character is 'a' thru 'z' or 'A' thru 'Z' */
+  static constexpr bool char_is_alpha (char c) {
+    return (c >= 'a' && c <= 'z')
+        || (c >= 'A' && c <= 'Z');
+  }
+
   /* Determine if an ASCII character is '0' thru '9' */
   static constexpr bool char_is_numeric (char c) {
     return c >= '0'
         && c <= '9';
+  }
+
+  /* Determine if an ASCII character is 'a' thru 'z', 'A' thru 'Z' or '0' thru '9' */
+  static constexpr bool char_is_alpha_numeric (char c) {
+    return char_is_alpha(c)
+        || char_is_numeric(c);
   }
 
 
