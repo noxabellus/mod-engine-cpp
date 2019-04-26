@@ -15,24 +15,24 @@ ModEngine is a C++ game engine project, designed to be highly modifiable by the 
 ## Code Basis
 All dependencies are embedded in the source tracking so no extra downloads or build steps are necessary. This also allowed adaptation of the headers where necessary. It may make updating a bit more difficult but all of the APIs used are fairly stable so it shouldn't be too much of an issue. All sources utilize free, open source, or public domain licenses; see their respective directories for details
 
-+ SDL2
++ SDL2 ([zlib](http://libsdl.org/license.php))
   > https://www.libsdl.org/download-2.0.php
 
-+ FreeImage
++ FreeImage ([FreeImage Public](http://freeimage.sourceforge.net/freeimage-license.txt))
   > http://freeimage.sourceforge.net/index.html
 
-+ GL3W / OpenGL 4
++ GL3W / OpenGL 4 ([Unlicense](https://github.com/skaslev/gl3w/blob/master/UNLICENSE) / None)
   > https://github.com/skaslev/gl3w
 
   > https://www.khronos.org/opengl/
 
-+ Dear ImGUI
++ Dear ImGUI ([MIT](https://github.com/ocornut/imgui/blob/master/LICENSE.txt))
   > https://github.com/ocornut/imgui
 
-+ ImGuiColorTextEdit
++ ImGuiColorTextEdit ([MIT](https://github.com/BalazsJako/ImGuiColorTextEdit/blob/master/LICENSE))
   > https://github.com/BalazsJako/ImGuiColorTextEdit
 
-+ tinycthread
++ tinycthread ([zlib](https://github.com/tinycthread/tinycthread/blob/master/README.txt#L71))
   > https://github.com/tinycthread/tinycthread
 
 ## Third Party Assets
