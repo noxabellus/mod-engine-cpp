@@ -67,6 +67,7 @@ This is still very early in production, and code is being ported from the C-only
 + Input to generic Control binding abstractionwith config file i/o
 + Source file editor with ImGuiColorTextEdit
 + JSON parser + stringifier
++ XML parser + stringifier
 + ECS (Highly experimental)
 + Application window abstraction with config file i/o
 + Extensive linear algebra library including:
