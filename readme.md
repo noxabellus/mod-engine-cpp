@@ -39,15 +39,20 @@ All dependencies are embedded in the source tracking so no extra downloads or bu
 All assets used by the engine or test game utilize open source or public domain licenses, see their respective directories for details
 
 - Fonts
-  + ProggyClean
+  + ProggyClean ([MIT](https://github.com/bluescan/proggyfonts/blob/master/LICENSE))
     > http://upperbounds.net/
 
-  + Roboto
+  + Roboto ([Apache 2.0](https://github.com/google/roboto/blob/master/LICENSE))
     > https://fonts.google.com/specimen/Roboto
 
-  + Teko
+  + Teko ([Open Font](http://scripts.sil.org/cms/scripts/page.php?site_id=nrsi&id=OFL_web))
     > https://fonts.google.com/specimen/Teko
 
+- Meshes
+  + ThinMatrix's Cowboy Skinned Mesh ([Unlicense](https://github.com/TheThinMatrix/OpenGL-Animation/blob/master/LICENSE))
+    > https://github.com/TheThinMatrix/OpenGL-Animation/blob/master/Resources/res/model.dae
+
+    > This is from his [tutorial series](https://www.youtube.com/playlist?list=PLRIWtICgwaX2tKWCxdeB7Wv_rTET9JtWW) on skinned meshes ([Full repo here](https://github.com/TheThinMatrix/OpenGL-Animation))
 
 
 ## Project Status
