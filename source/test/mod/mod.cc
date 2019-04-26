@@ -19,6 +19,13 @@ MODULE_API void module_init () {
 
   ECS& ecs = *new ECS;
 
+
+  // XML TEST //
+
+  XML xml = XML::from_file("./assets/meshes/thinmatrix_cowboy.dae");
+
+  m_assert(xml.to_file("./assets/meshes/thinmatrix_cowboy_restring.dae"), "Failed to save XML restring");
+
   
   struct BasicInput {
     bool enabled;
