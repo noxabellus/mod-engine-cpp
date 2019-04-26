@@ -12,6 +12,7 @@
 #include "SharedLib.hh"
 #include "ThreadPool.hh"
 #include "JSON.hh"
+#include "XML.hh"
 #include "ECS.hh"
 
 #include "math/lib.hh"
