@@ -110,131 +110,146 @@ namespace mod {
 
 
 
+
+
+
+
   JSONItem JSONItem::from_str (JSON* root, char const* str, size_t* offset) {
     while (char_is_whitespace(str[*offset])) ++ *offset;
 
     JSONItem item = { root, *offset };
 
-    switch (str[*offset]) {
-      case 't':
-      case 'f': {
-        item.type = JSONType::Boolean;
+    try {
+      switch (str[*offset]) {
+        case 't':
+        case 'f': {
+          item.type = JSONType::Boolean;
 
-        if (strncmp(str + *offset, "true", 4) == 0) {
-          *offset += 4;
-          item.boolean = true;
-        } else if (strncmp(str + *offset, "false", 5) == 0) {
-          *offset += 5;
-          item.boolean = false;
-        } else {
-          ++ *offset;
-          goto err;
-        }
-      } break;
-
-
-      case '0': case '1': case '2': case '3': case '4':
-      case '5': case '6': case '7': case '8': case '9':
-      case '+': case '-':
-      case '.': {
-        item.type = JSONType::Number;
-        char const* base = str + *offset;
-        char const* end = NULL;
-
-        double number = strtod(base, (char**) &end);
-
-        item.asset_assert(end != NULL && end > base, "Failed to parse number");
-
-        *offset += end - base;
-
-        item.number = number;
-      } break;
-
-
-      case '"': {
-        item.type = JSONType::String;
-        item.string = root->unescape_string_from_source(str, offset);
-      } break;
-
-
-      case '[': {
-        ++ *offset;
-
-        item.type = JSONType::Array;
-
-        item.array = { };
-
-        while (str[*offset] != ']' && str[*offset] != '\0') {
-          if (item.array.count > 0) {
-            root->asset_assert(str[*offset] == ',', *offset, "Expected a value separator ',' or end of array ']', not '%c'", str[*offset]);
+          if (strncmp(str + *offset, "true", 4) == 0) {
+            *offset += 4;
+            item.boolean = true;
+          } else if (strncmp(str + *offset, "false", 5) == 0) {
+            *offset += 5;
+            item.boolean = false;
+          } else {
             ++ *offset;
+            goto err;
+          }
+        } break;
+
+
+        case '0': case '1': case '2': case '3': case '4':
+        case '5': case '6': case '7': case '8': case '9':
+        case '+': case '-':
+        case '.': {
+          item.type = JSONType::Number;
+          char const* base = str + *offset;
+          char const* end = NULL;
+
+          double number = strtod(base, (char**) &end);
+
+          item.asset_assert(end != NULL && end > base, "Failed to parse number");
+
+          *offset += end - base;
+
+          item.number = number;
+        } break;
+
+
+        case '"': {
+          item.type = JSONType::String;
+          item.string = root->unescape_string_from_source(str, offset);
+        } break;
+
+
+        case '[': {
+          ++ *offset;
+
+          item.type = JSONType::Array;
+
+          item.array = { };
+
+          while (str[*offset] != ']' && str[*offset] != '\0') {
+            if (item.array.count > 0) {
+              root->asset_assert(str[*offset] == ',', *offset, "Expected a value separator ',' or end of array ']', not '%c'", str[*offset]);
+              ++ *offset;
+            }
+
+            item.array.append(JSONItem::from_str(root, str, offset));
+
+            while (char_is_whitespace(str[*offset])) ++ *offset;
           }
 
-          item.array.append(JSONItem::from_str(root, str, offset));
+          root->asset_assert(str[*offset] == ']', *offset, "Unexpected end of input, expected ']' to close array");
 
-          while (char_is_whitespace(str[*offset])) ++ *offset;
-        }
-
-        root->asset_assert(str[*offset] == ']', *offset, "Unexpected end of input, expected ']' to close array");
-
-        ++ *offset;
-      } break;
+          ++ *offset;
+        } break;
 
 
-      case '{': {
-        ++ *offset;
+        case '{': {
+          ++ *offset;
 
-        item.type = JSONType::Object;
-        item.object = { };
+          item.type = JSONType::Object;
+          item.object = { };
 
-        while (str[*offset] != '}' && str[*offset] != '\0') {
-          if (item.object.items.count > 0) {
-            root->asset_assert(str[*offset] == ',', *offset, "Expected a value separator ',' or end of object '}', not '%c'", str[*offset]);
+          while (str[*offset] != '}' && str[*offset] != '\0') {
+            if (item.object.items.count > 0) {
+              root->asset_assert(str[*offset] == ',', *offset, "Expected a value separator ',' or end of object '}', not '%c'", str[*offset]);
+              ++ *offset;
+            }
+
+
+            String key = root->unescape_string_from_source(str, offset);
+
+
+            while (char_is_whitespace(str[*offset])) ++ *offset;
+
+            root->asset_assert(str[*offset] == ':', *offset, "Expected a key/value pair separator ':', not '%c'", str[*offset]);
             ++ *offset;
+            
+
+            auto obj_value = JSONItem::from_str(root, str, offset);
+            item.set_object_item_unique_string_key(obj_value, key);
+
+
+            while (char_is_whitespace(str[*offset])) ++ *offset;
           }
 
+          root->asset_assert(str[*offset] == '}', *offset, "Unexpected end of input, expected '}' to close object");
 
-          String key = root->unescape_string_from_source(str, offset);
-
-
-          while (char_is_whitespace(str[*offset])) ++ *offset;
-
-          root->asset_assert(str[*offset] == ':', *offset, "Expected a key/value pair separator ':', not '%c'", str[*offset]);
           ++ *offset;
-          
-
-          item.set_object_item_unique_string_key(JSONItem::from_str(root, str, offset), key);
+        } break;
 
 
-          while (char_is_whitespace(str[*offset])) ++ *offset;
-        }
-
-        root->asset_assert(str[*offset] == '}', *offset, "Unexpected end of input, expected '}' to close object");
-
-        ++ *offset;
-      } break;
-
-
-      default: err: item.asset_error("Unexpected character '%c' while parsing JSONItem from str", str[*offset]);
+        default: err: item.asset_error("Unexpected character '%c' while parsing JSONItem from str", str[*offset]);
+      }
+    } catch (Exception& exception) {
+      item.destroy();
+      throw exception;
     }
 
     return item;
   }
 
 
-  void JSONItem::destroy () {
+  void JSONItem::destroy () const {
     switch (type) {
-      case JSONType::String: string.destroy(); break;
+      case JSONType::String: free((void*) string.value); break;
       case JSONType::Array: {
         for (auto [ i, item ] : array) item.destroy();
 
-        array.destroy();
+        free((void*) array.elements);
       } break;
-      case JSONType::Object: object.destroy(); break;
+      case JSONType::Object: {
+        for (auto [ i, key ] : object.keys) free((void*) key.value);
+        free((void*) object.keys.elements);
+        for (auto [ i, item ] : object.items) item.destroy();
+        free((void*) object.items.elements);
+      } break;
       default: break;
     }
 
-    type = JSONType::Invalid;
+    // type = JSONType::Invalid;
   }
 
 
@@ -291,6 +306,11 @@ namespace mod {
 
 
 
+
+
+
+
+
   String JSON::unescape_string_from_source (char const* source, size_t* offset) const {
     while (char_is_whitespace(source[*offset])) ++ *offset;
 
@@ -299,32 +319,37 @@ namespace mod {
 
     String new_string;
 
-    while (source[*offset] != '"' && source[*offset] != '\0') {
-      if (source[*offset] == '\\') {
-        ++ *offset;
+    try {
+      while (source[*offset] != '"' && source[*offset] != '\0') {
+        if (source[*offset] == '\\') {
+          ++ *offset;
 
-        switch (source[*offset]) {
-          case 'n': new_string.append("\n"); break;
-          case 'f': new_string.append("\f"); break;
-          case 'r': new_string.append("\r"); break;
-          case 't': new_string.append("\t"); break;
-          case 'b': new_string.append("\b"); break;
-          case '\\': new_string.append("\\"); break;
-          case '/': new_string.append("/"); break;
-          case '"': new_string.append("\""); break;
-          case 'u': asset_error(*offset, "Error parsing String: Unicode escapes are not yet supported", *offset); break;
-          default: asset_error(*offset, "Invalid escape character '%c' in String ", source[*offset]);
+          switch (source[*offset]) {
+            case 'n': new_string.append("\n"); break;
+            case 'f': new_string.append("\f"); break;
+            case 'r': new_string.append("\r"); break;
+            case 't': new_string.append("\t"); break;
+            case 'b': new_string.append("\b"); break;
+            case '\\': new_string.append("\\"); break;
+            case '/': new_string.append("/"); break;
+            case '"': new_string.append("\""); break;
+            case 'u': asset_error(*offset, "Error parsing String: Unicode escapes are not yet supported", *offset); break;
+            default: asset_error(*offset, "Invalid escape character '%c' in String ", source[*offset]);
+          }
+        } else {
+          new_string.append(source + *offset, 1);
         }
-      } else {
-        new_string.append(source + *offset, 1);
+        
+        ++ *offset;
       }
       
-      ++ *offset;
-    }
-    
-    asset_assert(source[*offset] == '\"', *offset, "Unexpected end of input, expected '\"' to close String");
+      asset_assert(source[*offset] == '\"', *offset, "Unexpected end of input, expected '\"' to close String");
 
-    ++ *offset;
+      ++ *offset;
+    } catch (Exception& exception) {
+      new_string.destroy();
+      throw exception;
+    }
 
     return new_string;
   }
@@ -334,7 +359,7 @@ namespace mod {
     out_string->append("\"");
 
     for (size_t i = 0; i < in_string->length; i ++) {
-      char* curr_char = in_string->value + i;
+      char const* curr_char = in_string->value + i;
 
       switch (*curr_char) {
         case '\n': out_string->append("\\n"); break;
@@ -354,11 +379,16 @@ namespace mod {
 
   JSON JSON::from_str (char const* origin, char const* source, size_t source_length) {
     JSON json { origin, source, source_length };
-    
-    size_t offset = 0;
-    json.data = JSONItem::from_str(&json, json.source, &offset);
 
-    json.data.asset_assert(json.data.type == JSONType::Array || json.data.type == JSONType::Object, "Invalid data type, expected Array or Object, not %s", JSONType::name(json.data.type));
+    try {
+      size_t offset = 0;
+      json.data = JSONItem::from_str(&json, json.source, &offset);
+
+      json.data.asset_assert(json.data.type == JSONType::Array || json.data.type == JSONType::Object, "Invalid data type, expected Array or Object, not %s", JSONType::name(json.data.type));
+    } catch (Exception& exception) {
+      json.destroy();
+      throw exception;
+    }
 
     return json;
   }
@@ -366,13 +396,29 @@ namespace mod {
   JSON JSON::from_str_ex (char const* origin, char* source) {
     JSON json { str_clone(origin), source, JSONItem { } };
     
-    size_t offset = 0;
-    json.data = JSONItem::from_str(&json, json.source, &offset);
+    try {
+      size_t offset = 0;
+      json.data = JSONItem::from_str(&json, json.source, &offset);
 
-    json.data.asset_assert(json.data.type == JSONType::Array || json.data.type == JSONType::Object, "Invalid data type, expected Array or Object, not %s", JSONType::name(json.data.type));
+      json.data.asset_assert(json.data.type == JSONType::Array || json.data.type == JSONType::Object, "Invalid data type, expected Array or Object, not %s", JSONType::name(json.data.type));
+    } catch (Exception& exception) {
+      json.destroy();
+      throw exception;
+    }
 
     return json;
   }
+
+  JSON JSON::from_file (char const* path) {
+    auto [ data, length ] = load_file(path);
+    
+    m_asset_assert(data != NULL, path, "Failed to load source file");
+
+    return from_str_ex(path, (char*) data);
+  }
+
+
+
 
   pair_t<s32_t, s32_t> JSON::get_line_column_info (size_t origin_offset) const {
     if (origin_offset == 0 || source == NULL) return { -1, -1 };

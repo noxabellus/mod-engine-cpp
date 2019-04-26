@@ -53,6 +53,9 @@ namespace mod {
   }
   
 
+
+
+
   struct JSONItem;
   
   struct JSON;
@@ -61,6 +64,12 @@ namespace mod {
 
   struct JSONObjectIterator;
   
+
+
+
+
+
+
   struct JSONObject {
     Array<String> keys;
     Array<JSONItem> items;
@@ -147,6 +156,20 @@ namespace mod {
     ENGINE_API void remove (char const* key_value, size_t key_length = 0);
   };
 
+
+
+
+
+
+
+
+
+
+
+
+
+
+
   struct JSONItem {
     JSON* root = NULL;
     size_t origin_offset = 0;
@@ -160,7 +183,7 @@ namespace mod {
     };
 
 
-    /* Create a new uninitialized JSONItem with an root and offset from its origin */
+    /* Create a new uninitialized JSONItem with an optional root and offset from its origin */
     JSONItem (JSON* new_root = NULL, size_t new_origin_offset = 0)
     : root(new_root)
     , origin_offset(new_origin_offset)
@@ -182,7 +205,8 @@ namespace mod {
     , number(new_number)
     { }
 
-    /* Create a new String JSONItem with an optional root and offset from its origin */
+    /* Create a new String JSONItem with an optional root and offset from its origin.
+     * Takes ownership of the String */
     JSONItem (String new_string, JSON* new_root = NULL, size_t new_origin_offset = 0)
     : root(new_root)
     , origin_offset(new_origin_offset)
@@ -198,7 +222,8 @@ namespace mod {
     , string(new_string_str)
     { }
 
-    /* Create a new Array JSONItem with an optional root and offset from its origin */
+    /* Create a new Array JSONItem with an optional root and offset from its origin.
+     * Takes ownership of the Array */
     JSONItem (JSONArray new_array, JSON* new_root = NULL, size_t new_origin_offset = 0)
     : root(new_root)
     , origin_offset(new_origin_offset)
@@ -206,7 +231,8 @@ namespace mod {
     , array(new_array)
     { }
 
-    /* Create a new Object JSONItem with an optional root and offset from its origin */
+    /* Create a new Object JSONItem with an optional root and offset from its origin.
+     * Takes ownership of the Object */
     JSONItem (JSONObject new_object, JSON* new_root = NULL, size_t new_origin_offset = 0)
     : root(new_root)
     , origin_offset(new_origin_offset)
@@ -214,30 +240,31 @@ namespace mod {
     , object(new_object)
     { }
 
-    /* Create a new JSONItem from a type identifier with an optional root and offset from its origin */
-    JSONItem (u8_t new_type, JSON* new_root = NULL, size_t new_origin_offset = 0)
-    : root(new_root)
-    , origin_offset(new_origin_offset)
-    , type(new_type)
-    {
-      switch (type) {
-        case JSONType::Boolean: boolean = false; break;
-        case JSONType::Number: number = 0.0; break;
-        case JSONType::String:
-        case JSONType::Array:
-        case JSONType::Object: break;
-        default: m_error("Cannot create JSONItem with Invalid type");
-      }
-    }
+    // /* Create a new JSONItem from a type identifier with an optional root and offset from its origin */
+    // JSONItem (u8_t new_type, JSON* new_root = NULL, size_t new_origin_offset = 0)
+    // : root(new_root)
+    // , origin_offset(new_origin_offset)
+    // , type(new_type)
+    // {
+    //   switch (type) {
+    //     case JSONType::Boolean: boolean = false; break;
+    //     case JSONType::Number: number = 0.0; break;
+    //     case JSONType::String:
+    //     case JSONType::Array:
+    //     case JSONType::Object: break;
+    //     default: m_error("Cannot create JSONItem with invalid type %" PRIu8, type);
+    //   }
+    // }
 
 
-    /* Decode any generic JSONItem from an offset within a textual representation. Increments offset by the amount of str consumed */
+    /* Decode any generic JSONItem from an offset within a textual representation.
+     * Increments `offset` by the amount of `str` consumed */
     static ENGINE_API JSONItem from_str (JSON* origin, char const* str, size_t* offset);
 
 
 
     /* Destroy a JSONItem and clean up its heap allocation if its type has one */
-    ENGINE_API void destroy ();
+    ENGINE_API void destroy () const;
 
 
 
@@ -275,21 +302,21 @@ namespace mod {
 
     /* Overwrite a JSONItem's value with a String, changing its type and destroying the old value where necessary */
     void set (String value) {
-      if (type != JSONType::String) destroy();
+      destroy();
       type = JSONType::String;
       string = value;
     }
 
     /* Overwrite a JSONItem's value with an Array, changing its type and destroying the old value where necessary */
     void set (JSONArray value) {
-      if (type != JSONType::Array) destroy();
+      destroy();
       type = JSONType::Array;
       array = value;
     }
 
     /* Overwrite a JSONItem's value with an Object, changing its type and destroying the old value where necessary */
     void set (JSONObject value) {
-      if (type != JSONType::Object) destroy();
+      destroy();
       type = JSONType::Object;
       object = value;
     }
@@ -424,37 +451,52 @@ namespace mod {
 
 
     /* Assume a JSONItem is a JSONObject and set the value of a subitem associated with a particular key.
-     * Throws if the active item is not actually a JSONObject */
+     * Takes ownership of the subitem.
+     * Throws if the active item is not actually a JSONObject, and destroys the subitem immediately */
     void set_object_item (JSONItem const* item, char const* key_value, size_t key_length = 0) {
-      get_object().set(item, key_value, key_length);
+      try {
+        get_object().set(item, key_value, key_length);
+      } catch (Exception& exception) {
+        item->destroy();
+        throw exception;
+      }
     }
 
     /* Assume a JSONItem is a JSONObject and set the value of a subitem associated with a particular key, by reference.
-     * Throws if the active item is not actually a JSONObject */
+     * Takes ownership of the subitem.
+     * Throws if the active item is not actually a JSONObject, and destroys the subitem immediately */
     void set_object_item (JSONItem const& item, char const* key_value, size_t key_length = 0) {
       return set_object_item(&item, key_value, key_length);
     }
 
     /* Assume a JSONItem is a JSONObject and set the value of a subitem associated with a particular key to a value.
-     * Throws if no key matching the input is found, or if the active item is not actually a JSONObject */
+     * Takes ownership of the value
+     * Throws if no key matching the input is found, or if the active item is not actually a JSONObject, and destroys the value immediately */
     template <typename T> void set_object_value (T value, char const* key_value, size_t key_length, size_t value_origin_offset = 0) {
       return set_object_item(JSONItem { value, root, value_origin_offset == 0? origin_offset : value_origin_offset }, key_value, key_length);
     }
 
     /* Assume a JSONItem is a JSONObject and set the value of a subitem associated with a particular key to a value.
-     * Throws if the active item is not actually a JSONObject */
+     * Takes ownership of the value
+     * Throws if the active item is not actually a JSONObject, and destroys the value immediately */
     template <typename T> void set_object_value (T value, char const* key_value, size_t value_origin_offset = 0) {
       return set_object_item(JSONItem { value, root, value_origin_offset == 0? origin_offset : value_origin_offset }, key_value, 0);
     }
 
 
     /* Assume a JSONItem is a JSONObject and set the value of a subitem associated with a particular key.
-     * Throws if a key matching the input is found, or if the active item is not actually a JSONObject */
+     * Takes ownership of the subitem.
+     * Throws if a key matching the input is found, or if the active item is not actually a JSONObject, and destroys the subitem immediately */
     void set_object_item_unique (JSONItem const* item, char const* key_value, size_t key_length = 0) {
-      if (key_length != 0) {
-        asset_assert(get_object().set_unique(item, key_value, key_length) != -1, "Item with key '%.*s' already exists", (s32_t) key_length, key_value);
-      } else {
-        asset_assert(get_object().set_unique(item, key_value, key_length) != -1, "Item with key '%s' already exists", key_value);
+      try {
+        if (key_length != 0) {
+          asset_assert(get_object().set_unique(item, key_value, key_length) != -1, "Item with key '%.*s' already exists", (s32_t) key_length, key_value);
+        } else {
+          asset_assert(get_object().set_unique(item, key_value, key_length) != -1, "Item with key '%s' already exists", key_value);
+        }
+      } catch (Exception& exception) {
+        item->destroy();
+        throw exception;
       }
     }
 
@@ -480,9 +522,14 @@ namespace mod {
 
     /* Assume a JSONItem is a JSONObject and set the value of a subitem associated with a particular key.
      * Takes ownership of the String passed as key.
-     * Throws if a key matching the input is found, or if the active item is not actually a JSONObject */
+     * Throws if a key matching the input is found, or if the active item is not actually a JSONObject, and destroys the key String immediately */
     void set_object_item_unique_string_key (JSONItem const* item, String key) {
-      asset_assert(get_object().set_unique_string_key(item, key) != -1, "Item with key '%s' already exists", key.value);
+      try {
+        asset_assert(get_object().set_unique_string_key(item, key) != -1, "Item with key '%s' already exists", key.value);
+      } catch (Exception& exception) {
+        key.destroy();
+        throw exception;
+      }
     }
 
     /* Assume a JSONItem is a JSONObject and set the value of a subitem associated with a particular key, by reference.
@@ -592,9 +639,17 @@ namespace mod {
     }
 
     /* Assume a JSONItem is a JSONArray and set the value of a subitem associated with a particular index.
-     * Throws if the index is out of range, or if the active item is not actually a JSONArray */
+     * Takes ownership of the subitem.
+     * Throws if the index is out of range, or if the active item is not actually a JSONArray, and immediately destroys the subitem */
     void set_array_item (JSONItem const* item, size_t index) {
-      get_array()[index] = *item;
+      try {
+        JSONItem& old_item = get_array()[index];
+        old_item.destroy();
+        old_item = *item;
+      } catch (Exception& exception) {
+        item->destroy();
+        throw exception;
+      }
     }
 
     /* Assume a JSONItem is a JSONArray and set the value of a subitem associated with a particular index, by reference.
@@ -613,7 +668,12 @@ namespace mod {
     /* Assume a JSONItem is a JSONArray and append an item to the end of the array.
      * Throws if the index is out of range, or if the active item is not actually a JSONArray */
     void append_array_item (JSONItem const* item) {
-      return get_array().append(item);
+      try {
+        return get_array().append(item);
+      } catch (Exception& exception) {
+        item->destroy();
+        throw exception;
+      }
     }
 
     /* Assume a JSONItem is a JSONArray and append an item to the end of the array, by reference.
@@ -632,7 +692,12 @@ namespace mod {
     /* Assume a JSONItem is a JSONArray and insert an item into the array.
      * Throws if the index is out of range, or if the active item is not actually a JSONArray */
     void insert_array_item (JSONItem const* item, size_t index) {
-      return get_array().insert(index, item);
+      try {
+        return get_array().insert(index, item);
+      } catch (Exception& exception) {
+        item->destroy();
+        throw exception;
+      }
     }
 
     /* Assume a JSONItem is a JSONArray and insert an item into the array, by reference.
@@ -676,6 +741,15 @@ namespace mod {
   };
 
 
+
+
+
+
+
+
+
+
+
   struct JSONObjectIterator {
     String* keys;
     JSONItem* items;
@@ -687,6 +761,14 @@ namespace mod {
 
     pair_t<String&, JSONItem&> operator * () const { return { keys[index], items[index] }; }
   };
+
+
+
+
+
+
+
+
 
 
   struct JSON {
@@ -723,13 +805,13 @@ namespace mod {
     , data(new_data)
     { }
 
-    /* Create a new JSON root with type and optional origin */
-    JSON (u8_t type, char const* new_origin = NULL)
-    : origin(str_clone(new_origin))
-    { 
-      m_assert(type == JSONType::Object || type == JSONType::Array, "JSON root Item must be either JSONType::Object or JSONType::Array, not %s", JSONType::name(type));
-      data = { type, this, 0 };
-    }
+    // /* Create a new JSON root with type and optional origin */
+    // JSON (u8_t type, char const* new_origin = NULL)
+    // : origin(str_clone(new_origin))
+    // { 
+    //   m_assert(type == JSONType::Object || type == JSONType::Array, "JSON root Item must be either JSONType::Object or JSONType::Array, not %s", JSONType::name(type));
+    //   data = { type, this, 0 };
+    // }
 
     /* Create a new JSON root from a JSONObject and optional origin */
     JSON (JSONObject obj, char const* new_origin = NULL)
@@ -751,13 +833,7 @@ namespace mod {
 
 
     /* Create a new JSON root by parsing source from a file */
-    static JSON from_file (char const* path) {
-      auto [ data, length ] = load_file(path);
-
-      m_asset_assert(data != NULL, path, "Failed to load source file");
-
-      return from_str_ex(path, (char*) data);
-    }
+    ENGINE_API static JSON from_file (char const* path);
 
 
     /* Destroy a JSON root and clean up all of its descendants */
@@ -892,7 +968,7 @@ namespace mod {
      * Returns NULL if no key matching the input is found.
      * Throws if the active item is not actually a JSONObject */
     String* get_object_key (char const* key_value, size_t key_length = 0) const {
-      return data.get_object().get_key(key_value, key_length);
+      return data.get_object_key(key_value, key_length);
     }
 
 
@@ -900,7 +976,7 @@ namespace mod {
      * Returns NULL if no key matching the input is found.
      * Throws if the active item is not actually a JSONObject */
     JSONItem* get_object_item (char const* key_value, size_t key_length = 0) const {
-      return data.get_object().get(key_value, key_length);
+      return data.get_object_item(key_value, key_length);
     }
 
     /* Assume a JSONItem is a JSONObject and get a value from a subitem associated with a particular key.
@@ -953,42 +1029,44 @@ namespace mod {
 
 
     /* Assume a JSONItem is a JSONObject and set the value of a subitem associated with a particular key.
-     * Throws if the active item is not actually a JSONObject */
+     * Takes ownership of the subitem.
+     * Throws if the active item is not actually a JSONObject, and destroys the subitem immediately */
     void set_object_item (JSONItem const* item, char const* key_value, size_t key_length = 0) {
-      data.get_object().set(item, key_value, key_length);
+      return data.set_object_item(item, key_value, key_length);
     }
 
     /* Assume a JSONItem is a JSONObject and set the value of a subitem associated with a particular key, by reference.
-     * Throws if the active item is not actually a JSONObject */
+     * Takes ownership of the subitem.
+     * Throws if the active item is not actually a JSONObject, and destroys the subitem immediately */
     void set_object_item (JSONItem const& item, char const* key_value, size_t key_length = 0) {
       return data.set_object_item(&item, key_value, key_length);
     }
 
     /* Assume a JSONItem is a JSONObject and set the value of a subitem associated with a particular key to a value.
-     * Throws if no key matching the input is found, or if the active item is not actually a JSONObject */
+     * Takes ownership of the value.
+     * Throws if no key matching the input is found, or if the active item is not actually a JSONObject, and destroys the value immediately */
     template <typename T> void set_object_value (T value, char const* key_value, size_t key_length, size_t value_origin_offset = 0) {
       return data.set_object_item(JSONItem { value, this, value_origin_offset == 0? data.origin_offset : value_origin_offset }, key_value, key_length);
     }
 
     /* Assume a JSONItem is a JSONObject and set the value of a subitem associated with a particular key to a value.
-     * Throws if the active item is not actually a JSONObject */
+     * Takes ownership of the value.
+     * Throws if the active item is not actually a JSONObject, and destroys the value immediately */
     template <typename T> void set_object_value (T value, char const* key_value, size_t value_origin_offset = 0) {
-      return data.set_object_item(JSONItem { value, this, value_origin_offset == 0? data.origin_offset : value_origin_offset }, key_value, 0);
+      data.set_object_item(JSONItem { value, this, value_origin_offset == 0? data.origin_offset : value_origin_offset }, key_value, 0);
     }
 
 
     /* Assume a JSONItem is a JSONObject and set the value of a subitem associated with a particular key.
-     * Throws if a key matching the input is found, or if the active item is not actually a JSONObject */
+     * Takes ownership of the subitem.
+     * Throws if a key matching the input is found, or if the active item is not actually a JSONObject, and destroys the subitem immediately */
     void set_object_item_unique (JSONItem const* item, char const* key_value, size_t key_length = 0) {
-      if (key_length != 0) {
-        data.asset_assert(data.get_object().set_unique(item, key_value, key_length) != -1, "Item with key '%.*s' already exists", (s32_t) key_length, key_value);
-      } else {
-        data.asset_assert(data.get_object().set_unique(item, key_value, key_length) != -1, "Item with key '%s' already exists", key_value);
-      }
+      return data.set_object_item_unique(item, key_value, key_length);
     }
 
     /* Assume a JSONItem is a JSONObject and set the value of a subitem associated with a particular key, by reference.
-     * Throws if a key matching the input is found, or if the active item is not actually a JSONObject */
+     * Takes ownership of the subitem.
+     * Throws if a key matching the input is found, or if the active item is not actually a JSONObject, and destroys the subitem immediately */
     void set_object_item_unique (JSONItem const& item, char const* key_value, size_t key_length = 0) {
       return data.set_object_item_unique(&item, key_value, key_length);
     }
@@ -1003,28 +1081,28 @@ namespace mod {
     /* Assume a JSONItem is a JSONObject and set the value of a subitem associated with a particular key to a value.
      * Throws if a key matching the input is found, or if the active item is not actually a JSONObject */
     template <typename T> void set_object_value_unique (T value, char const* key_value, size_t value_origin_offset = 0) {
-      return set_object_item_unique(JSONItem { value, this, value_origin_offset == 0? data.origin_offset : value_origin_offset }, key_value, 0);
+      return data.set_object_item_unique(JSONItem { value, this, value_origin_offset == 0? data.origin_offset : value_origin_offset }, key_value, 0);
     }
 
 
     /* Assume a JSONItem is a JSONObject and set the value of a subitem associated with a particular key.
-     * Takes ownership of the String passed as key.
-     * Throws if a key matching the input is found, or if the active item is not actually a JSONObject */
+     * Takes ownership of the subitem and the String passed as key.
+     * Throws if a key matching the input is found, or if the active item is not actually a JSONObject, and destroys the key String and subitem immediately */
     void set_object_item_unique_string_key (JSONItem const* item, String key) {
-      data.asset_assert(data.get_object().set_unique_string_key(item, key) != -1, "Item with key '%s' already exists", key.value);
+      return data.set_object_item_unique_string_key(item, key);
     }
 
     /* Assume a JSONItem is a JSONObject and set the value of a subitem associated with a particular key, by reference.
-     * Takes ownership of the String passed as key.
-     * Throws if a key matching the input is found, or if the active item is not actually a JSONObject */
+     * Takes ownership of the value and the String passed as key.
+     * Throws if a key matching the input is found, or if the active item is not actually a JSONObject, and destroys the key String and value immediately */
     void set_object_item_unique_string_key (JSONItem const& item, String key) {
       return data.set_object_item_unique_string_key(&item, key);
     }
 
     
     /* Assume a JSONItem is a JSONObject and set the value of a subitem associated with a particular key.
-     * Takes ownership of the String passed as key.
-     * Throws if a key matching the input is found, or if the active item is not actually a JSONObject */
+     * Takes ownership of the value and the String passed as key.
+     * Throws if a key matching the input is found, or if the active item is not actually a JSONObject, and destroys the key String and value immediately */
     template <typename T> void set_object_value_unique_string_key (T value, String key) {
       return data.set_object_item_unique_string_key(JSONItem { value, this, value_origin_offset == 0? data.origin_offset : value_origin_offset }, key);
     }
@@ -1096,8 +1174,8 @@ namespace mod {
 
     /* Assume a JSONItem is a JSONArray and set the value of a subitem associated with a particular index.
      * Throws if the index is out of range, or if the active item is not actually a JSONArray */
-    void set_array_item (JSONItem const* item, size_t index) {
-      data.get_array()[index] = *item;
+    void set_array_item (JSONItem* item, size_t index) {
+      return data.set_array_item(item, index);
     }
 
     /* Assume a JSONItem is a JSONArray and set the value of a subitem associated with a particular index, by reference.
@@ -1116,7 +1194,7 @@ namespace mod {
     /* Assume a JSONItem is a JSONArray and append an item to the end of the array.
      * Throws if the index is out of range, or if the active item is not actually a JSONArray */
     void append_array_item (JSONItem const* item) {
-      return data.get_array().append(item);
+      return data.append_array_item(item);
     }
 
     /* Assume a JSONItem is a JSONArray and append an item to the end of the array, by reference.
@@ -1135,7 +1213,7 @@ namespace mod {
     /* Assume a JSONItem is a JSONArray and insert an item into the array.
      * Throws if the index is out of range, or if the active item is not actually a JSONArray */
     void insert_array_item (JSONItem const* item, size_t index) {
-      return data.get_array().insert(index, item);
+      return data.insert_array_item(item, index);
     }
 
     /* Assume a JSONItem is a JSONArray and insert an item into the array, by reference.
@@ -1154,7 +1232,7 @@ namespace mod {
     /* Assume a JSONItem is a JSONArray and remove a subitem associated with a particular index.
      * Throws if the index is out of range, or if the active item is not actually a JSONArray */
     void remove_array_item (size_t index) {
-      return data.get_array().remove(index);
+      return data.remove_array_item(index);
     }
   };
 }
