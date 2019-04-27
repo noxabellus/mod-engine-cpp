@@ -20,11 +20,537 @@ MODULE_API void module_init () {
   ECS& ecs = *new ECS;
 
 
-  // XML TEST //
+  /* XML TEST */
+  RenderMesh3D dae_mesh; {
+    XML xml = XML::from_file("./assets/meshes/thinmatrix_cowboy.dae");
 
-  XML xml = XML::from_file("./assets/meshes/thinmatrix_cowboy.dae");
+    XMLItem collada = xml.first_named("COLLADA");
 
-  m_assert(xml.to_file("./assets/meshes/thinmatrix_cowboy_restring.dae"), "Failed to save XML restring");
+    XMLItem geometries = collada.first_named("library_geometries");
+
+    XMLItem geometry = geometries.first_named("geometry");
+
+    if (geometries.count_of_name("geometry") > 1) printf(
+      "Warning: Collada loader currently only supports single geometries, only the first (named '%s') will be loaded\n",
+      geometry.get_attribute("name").value.value
+    );
+
+    XMLItem mesh = geometry.first_named("mesh");
+
+
+    // gather source data //
+
+    size_t sources_count = mesh.count_of_name("source");
+
+    struct Source {
+      String id;
+      Array<f64_t> floats;
+    };
+
+    Array<Source> sources;
+
+    struct Accessor {
+      String id;
+      String source_id;
+      size_t count;
+      size_t offset;
+      size_t stride;
+      size_t elements;
+    };
+
+    Array<Accessor> accessors;
+
+    for (size_t i = 0; i < sources_count; i ++) {
+      XMLItem source = mesh.nth_named(i, "source");
+
+      XMLItem* float_array = source.first_named_pointer("float_array");
+
+      if (float_array != NULL) {
+        String id = float_array->get_attribute("id").value; // borrowing string here, destroyed by XML
+
+        size_t float_count = strtoumax(float_array->get_attribute("count").value.value, NULL, 10);
+        Array<f64_t> floats { float_count };
+
+        char* base = float_array->get_text().value;
+
+        for (size_t i = 0; i < float_count; i ++) {
+          floats.append(strtod(base, &base));
+        }
+
+        sources.append({ id, floats });
+      }
+
+      XMLItem accessor = source.first_named("technique_common").first_named("accessor");
+
+      XMLAttribute* offset = accessor.get_attribute_pointer("offset");
+
+      accessors.append({
+        source.get_attribute("id").value, // borrowing string here, destroyed by XML
+        accessor.get_attribute("source").value, // borrowing string here, destroyed by XML
+        strtoumax(accessor.get_attribute("count").value.value, NULL, 10),
+        offset != NULL? strtoumax(offset->value.value, NULL, 10) : 0,
+        strtoumax(accessor.get_attribute("stride").value.value, NULL, 10),
+        accessor.count_of_name("param")
+      });
+    }
+
+
+
+    
+    // Gather inputs //
+
+    struct VertexBinding {
+      String id;
+      String source_id;
+    };
+
+    size_t vertex_binding_count = mesh.count_of_name("vertices");
+
+    Array<VertexBinding> vertex_bindings { vertex_binding_count };
+
+    for (size_t i = 0; i < vertex_binding_count; i ++) {
+      XMLItem& vertices = mesh.nth_named(i, "vertices");
+      XMLItem& input = vertices.first_named("input");
+
+      vertex_bindings.append({
+        vertices.get_attribute("id").value, // borrowing string here, destroyed by XML
+        input.get_attribute("source").value // borrowing string here, destroyed by XML
+      });
+    }
+
+    const auto get_vertex_binding = [&] (String const& id) -> VertexBinding& {
+      for (auto [ k, binding ] : vertex_bindings) {
+        if (binding.id == id.value + 1) return binding;
+      }
+
+      mesh.asset_error("Could not find VertexBinding '%s'", id);
+    };
+
+
+    struct Input {
+      String semantic;
+      String source_id;
+      size_t offset;
+      size_t set;
+    };
+
+    struct Polylist {
+      XMLItem& origin;
+      size_t count;
+      Array<Input> inputs;
+      Array<u32_t> indices;
+    };
+
+    size_t polylist_count = mesh.count_of_name("polylist");
+
+    Array<Polylist> polylists { polylist_count };
+
+    for (size_t i = 0; i < polylist_count; i ++) {
+      XMLItem& polylist = mesh.nth_named(i, "polylist");
+
+      size_t input_count = polylist.count_of_name("input");
+
+      Array<Input> inputs = { input_count };
+
+      for (size_t j = 0; j < input_count; j ++) {
+        XMLItem& input = polylist.nth_named(j, "input");
+
+        String semantic = input.get_attribute("semantic").value; // borrowing string here, destroyed by XML
+        String source_id = input.get_attribute("source").value; // borrowing string here, destroyed by XML
+
+        if (semantic == "VERTEX") {
+          source_id = get_vertex_binding(source_id).source_id;
+        }
+
+        XMLAttribute* set = input.get_attribute_pointer("set");
+
+        inputs.append({
+          semantic,
+          source_id,
+          strtoumax(input.get_attribute("offset").value.value, NULL, 10),
+          set != NULL? strtoumax(set->value.value, NULL, 10) : 0
+        });
+      }
+
+
+      size_t count = strtoumax(polylist.get_attribute("count").value.value, NULL, 10);
+      
+
+      size_t indices_count = count * inputs.count * 3;
+
+      Array<u32_t> indices = { indices_count };
+      
+      XMLItem& p = polylist.first_named("p");
+      char* base = p.get_text().value;
+      char* end = NULL;
+
+      for (size_t k = 0; k < indices_count; k ++) {
+        u32_t index = strtoul(base, &end, 10);
+        p.asset_assert(end != NULL && end != base, "Less indices than expected or other parsing error at index %zu (expected %zu indices)", k, indices_count);
+        base = end;
+        indices.append(index);
+      }
+
+
+      polylists.append({
+        polylist,
+        count,
+        inputs,
+        indices
+      });
+    }
+
+
+
+    const auto get_accessor = [&] (String const& id) -> Accessor& {
+      for (auto [ i, accessor ] : accessors) {
+        if (accessor.id == id.value + 1) return accessor;
+      }
+
+      mesh.asset_error("Could not find Accessor '%s'", id.value);
+    };
+
+    const auto get_source = [&] (String const& id) -> Source& {
+      for (auto [ i, source ] : sources) {
+        if (source.id == id.value + 1) return source;
+      }
+
+      mesh.asset_error("Could not find Source '%s'", id.value);
+    };
+
+    const auto get_input = [&] (Polylist const& polylist, char const* semantic) -> Input& {
+      for (auto [ i, input ] : polylist.inputs) {
+        if (input.semantic == semantic) return input;
+      }
+
+      polylist.origin.asset_error("Could not find semantic Input '%s'", semantic);
+    };
+
+    const auto get_input_pointer = [&] (Polylist const& polylist, char const* semantic) -> Input* {
+      for (auto [ i, input ] : polylist.inputs) {
+        if (input.semantic == semantic) return &input;
+      }
+
+      return NULL;
+    };
+
+
+
+    // /*
+      // print //
+
+      // for (auto [ i, polylist ] : polylists) {
+      //   auto& [ _p, count, inputs, indices ] = polylist;
+
+      //   printf("Polylist %zu\n- Count: %zu\n- Inputs: %zu\n- Indices: %zu\n", i, count, inputs.count, indices.count);
+
+      //   printf("  Indices\n  - [ ");
+      //   for (size_t j = 0; j < indices.count; j += inputs.count) {
+      //     printf("[ ");
+      //     for (size_t k = j; k < j + inputs.count; k ++) {
+      //       printf("%" PRIu32, indices[k]);
+      //       if (k < j + inputs.count - 1) printf(", ");
+      //     }
+      //     printf(" ], ");
+
+      //     if (j > 4 * inputs.count) {
+      //       printf("...");
+      //       break;
+      //     }
+      //   }
+      //   printf(" ]\n");
+
+      //   for (auto [ j, input ] : inputs) {
+      //     auto& [ semantic, source_id, offset, set ] = input;
+      //     printf("  Input %zu\n  - Semantic: %s\n  - Source ID: %s\n  - Offset: %zu\n  - Set: %zu\n", j, semantic.value, source_id.value, offset, set);
+
+      //     auto& [ id, asource_id, acount, aoffset, stride, elements ] = get_accessor(source_id);
+      //     printf("    Accessor\n    - Source ID: %s\n    - Count: %zu\n    - Offset: %zu\n    - Stride: %zu\n    - Elements: %zu\n", asource_id.value, acount, aoffset, stride, elements);
+
+      //     auto& [ sid, floats ] = get_source(asource_id);
+      //     printf("      Source\n      - Count: %zu\n      - Floats: [ ", floats.count);
+
+      //     for (size_t k = aoffset; k < acount * stride; k += stride) {
+      //       printf("[ ");
+      //       for (size_t l = k; l < k + elements; l ++) {
+      //         printf("%lf", floats[l]);
+      //         if (l < k + elements - 1) printf(", ");
+      //       }
+      //       printf(" ], ");
+
+      //       if (k > 3 * 3) {
+      //         printf("...");
+      //         break;
+      //       }
+      //     }
+      //     printf(" ]\n");
+      //   }
+
+      //   printf("\n");
+      // }
+    // */
+
+
+
+    static constexpr size_t max_attributes = 8;
+    struct IVertex {
+      Polylist& polylist;
+
+      bool set;
+
+      size_t index;
+
+      s64_t duplicate;
+
+      u32_t position;
+
+      s64_t normal;
+      s64_t uv;
+      s64_t color;
+
+
+      void set_attributes (s64_t in_normal, s64_t in_uv, s64_t in_color) {
+        normal = in_normal;
+        uv = in_uv;
+        color = in_color;
+        
+        set = true;
+      }
+
+      bool has_same_attributes (s64_t test_normal, s64_t test_uv, s64_t test_color) const {
+        return normal == test_normal
+            && uv == test_uv
+            && color == test_color;
+      }
+    };
+
+    Array<MaterialInfo> material_config_data;
+    Array<IVertex> i_vertices;
+    Array<u32_t> i_indices;
+
+    size_t max_inputs = 0;
+
+    for (auto [ i, polylist ] : polylists) {
+      auto& [ _p, face_count, inputs, indices ] = polylist;
+      
+      max_inputs = num::max(inputs.count, max_inputs);
+
+      MaterialInfo mat_info = { i, indices.count / 3, 0 };
+
+
+      Input& position_input = get_input(polylist, "VERTEX");
+
+      for (size_t j = 0; j < indices.count; j += inputs.count) {
+        size_t iv_index = j / inputs.count;
+
+        u32_t position = indices[j + position_input.offset];
+
+        IVertex iv = { polylist, false, iv_index, -1 };
+        iv.position = position;
+        i_vertices.append(iv);
+      }
+
+
+      Input* normal_input = get_input_pointer(polylist, "NORMAL");
+      Input* uv_input = get_input_pointer(polylist, "TEXCOORD");
+      Input* color_input = get_input_pointer(polylist, "COLOR");
+
+      bool have_normal = normal_input != NULL;
+      bool have_uv = uv_input != NULL;
+      bool have_color = color_input != NULL;
+
+      if (have_normal || have_uv || have_color) {
+        for (size_t j = 0; j < indices.count; j += inputs.count) {
+          size_t iv_index = j / inputs.count;
+
+          s64_t normal = have_normal? indices[j + normal_input->offset] : -1;
+          s64_t uv = have_uv? indices[j + uv_input->offset] : -1;
+          s64_t color = have_color? indices[j + color_input->offset] : -1;
+
+          IVertex* existing_vertex = &i_vertices[iv_index];
+
+          if (!existing_vertex->set) {
+            existing_vertex->set_attributes(normal, uv, color);
+            i_indices.append(iv_index);
+          } else if (existing_vertex->has_same_attributes(normal, uv, color)) {
+            i_indices.append(iv_index);
+          } else {
+            bool found_existing = false;
+
+            while (existing_vertex->duplicate != -1) {
+              existing_vertex = &i_vertices[existing_vertex->duplicate];
+
+              if (existing_vertex->has_same_attributes(normal, uv, color)) {
+                i_indices.append(existing_vertex->index);
+                found_existing = true;
+                break;
+              }
+            }
+
+            if (!found_existing) {
+              size_t new_iv_index = i_vertices.count;
+
+              IVertex new_iv = { polylist, false, new_iv_index, -1 };
+              new_iv.set_attributes(normal, uv, color);
+              i_vertices.append(new_iv);
+
+              existing_vertex->duplicate = new_iv_index;
+
+              i_indices.append(new_iv_index);
+            }
+          }
+        }
+      }
+      
+
+      mat_info.length = indices.count / 3 - mat_info.start_index;
+
+      material_config_data.append(mat_info);
+    }
+
+
+    mesh.asset_assert(i_indices.count % 3 == 0, "Final indices count was not cleanly divisible by 3, make sure your mesh is triangulated");
+
+
+    Array<Vector3f> final_positions { i_vertices.count };
+    Array<Vector3f> final_normals { i_vertices.count };
+    Array<Vector2f> final_uvs { i_vertices.count };
+    Array<Vector3f> final_colors { i_vertices.count };
+    Array<Vector3u> final_faces = { i_indices.count / 3 };
+
+
+    for (size_t i = 0; i < i_indices.count; i += 3) {
+      final_faces.append({ i_indices[i], i_indices[i + 2], i_indices[i + 1] });
+    }
+
+
+    MaterialConfig final_material_config;
+
+    if (material_config_data.count != 1) {
+      final_material_config = MaterialConfig::from_ex(material_config_data);
+    } else {
+      material_config_data.destroy();
+    }
+
+
+    bool incomplete_normals = false;
+
+    for (auto [ i, iv ] : i_vertices) {
+      Input& position_input = get_input(iv.polylist, "VERTEX");
+      Accessor& position_accessor = get_accessor(position_input.source_id);
+      Source& position_source = get_source(position_accessor.source_id);
+
+      Vector3f pos;
+
+      for (size_t j = 0; j < 3; j ++) {
+        pos.elements[j] = position_source.floats[position_accessor.offset + iv.position * position_accessor.stride + j];
+      }
+
+      final_positions.append(pos);
+
+
+      if (!incomplete_normals) {
+        if (iv.normal != -1) {
+          Vector3f norm = { 0, 0, 0 };
+
+          Input& normal_input = get_input(iv.polylist, "NORMAL");
+          Accessor& normal_accessor = get_accessor(normal_input.source_id);
+          Source& normal_source = get_source(normal_accessor.source_id);
+
+          for (size_t j = 0; j < 3; j ++) {
+            norm.elements[j] = normal_source.floats[normal_accessor.offset + iv.normal * normal_accessor.stride + j];
+          }
+
+          final_normals.append(norm);
+        } else {
+          incomplete_normals = true;
+          final_normals.destroy();
+        }
+      }
+
+
+      Vector2f uv = { 0, 0 };
+      
+      if (iv.uv != -1) {
+        Input& uv_input = get_input(iv.polylist, "TEXCOORD");
+        Accessor& uv_accessor = get_accessor(uv_input.source_id);
+        Source& uv_source = get_source(uv_accessor.source_id);
+
+        for (size_t j = 0; j < 2; j ++) {
+          uv.elements[j] = uv_source.floats[uv_accessor.offset + iv.uv * uv_accessor.stride + j];
+        }
+      }
+
+      final_uvs.append(uv);
+
+
+      Vector3f color = { 1, 1, 1 };
+      
+      if (iv.color != -1) {
+        Input& color_input = get_input(iv.polylist, "COLOR");
+        Accessor& color_accessor = get_accessor(color_input.source_id);
+        Source& color_source = get_source(color_accessor.source_id);
+
+        for (size_t j = 0; j < 3; j ++) {
+          color.elements[j] = color_source.floats[color_accessor.offset + iv.color * color_accessor.stride + j];
+        }
+      }
+
+      final_colors.append(color);
+    }
+
+
+    dae_mesh = RenderMesh3D::from_ex(
+      "collada!",
+
+      true,
+
+      final_positions.count,
+      final_positions.elements,
+      incomplete_normals || final_normals.count == 0? NULL : final_normals.elements,
+      final_uvs.count == 0? NULL : final_uvs.elements,
+      final_colors.count == 0? NULL : final_colors.elements,
+
+      final_faces.count,
+      final_faces.elements,
+
+      final_material_config
+    );
+
+
+
+    // cleanup //
+
+    for (auto [ i, source ] : sources) {
+      source.floats.destroy();
+    }
+
+    sources.destroy();
+
+
+    accessors.destroy();
+
+
+    vertex_bindings.destroy();
+
+
+    for (auto [ i, polylist ] : polylists) {
+      polylist.inputs.destroy();
+      polylist.indices.destroy();
+    }
+
+    polylists.destroy();
+
+    i_vertices.destroy();
+
+    i_indices.destroy();
+
+    xml.destroy();
+  }
+
+
+
+
 
   
   struct BasicInput {
@@ -58,7 +584,7 @@ MODULE_API void module_init () {
     });
     cube.add_component(directional_light_mat);
     cube.add_component(BasicInput { true, 64 });
-    cube.add_component(test_cube_mesh);
+    cube.add_component(RenderMesh3DHandle { &dae_mesh });
   }
 
   EntityHandle plane; {
