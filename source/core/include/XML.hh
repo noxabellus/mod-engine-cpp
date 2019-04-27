@@ -221,6 +221,9 @@ namespace mod {
     /* Destroy an XMLItem, its attributes, and its descendant items or text */
     ENGINE_API void destroy ();
 
+    /* Destroy an XMLItem, its attributes, and its descendant items or text, without modifying any of the structure */
+    ENGINE_API void destroy () const;
+
 
 
     /* Decode any generic XMLItem from an offset within a textual representation
@@ -280,84 +283,147 @@ namespace mod {
 
     /* Set the value of an XMLItem to an array and destroy its old value.
      * Takes ownership of the XMLArray provided */
-    ENGINE_API void set_array (XMLArray& arr);
+    ENGINE_API void set_array (XMLArray arr);
 
     /* Set the value of an XMLItem to text and destroy its old value.
      * Takes ownership of the String provided */
-    ENGINE_API void set_text (String& txt);
+    ENGINE_API void set_text (String txt);
 
     /* Set the value of an XMLItem to CDATA and destroy its old value.
      * Takes ownership of the String provided */
-    ENGINE_API void set_cdata (String& txt);
+    ENGINE_API void set_cdata (String txt);
 
     /* Set the value of an XMLItem to DOCTYPE and destroy its old value.
      * Takes ownership of the String provided */
-    ENGINE_API void set_doctype (String& txt);
+    ENGINE_API void set_doctype (String txt);
 
 
     /* Assume an XMLItem is an array and get a pointer to a subitem at the given index in its list.
      * Throws if the XMLItem is not actually an array.
      * Returns NULL if the index is out of range */
-    ENGINE_API XMLItem* get_item (size_t index);
+    ENGINE_API XMLItem* item_pointer (size_t index) const;
 
     /* Assume an XMLItem is an array and get a pointer to the nth subitem with the given name in its list.
      * Throws if the XMLItem is not actually an array.
      * Returns NULL if n is out of range */
-    ENGINE_API XMLItem* get_nth_named (size_t n, char const* name, size_t name_length = 0);
+    ENGINE_API XMLItem* nth_named_pointer (size_t n, char const* name, size_t name_length = 0) const;
 
     /* Assume an XMLItem is an array and get a pointer to the first subitem with the given name in its list.
      * Throws if the XMLItem is not actually an array.
      * Returns NULL if there is no item with the given name */
-    ENGINE_API XMLItem* get_first_named (char const* name, size_t name_length = 0);
+    ENGINE_API XMLItem* first_named_pointer (char const* name, size_t name_length = 0) const;
 
     /* Assume an XMLItem is an array and get a pointer to the first subitem with the given name in its list.
      * Throws if the XMLItem is not actually an array.
      * Returns NULL if there is no item with the given name */
-    ENGINE_API XMLItem* get_last_named (char const* name, size_t name_length = 0);
+    ENGINE_API XMLItem* last_named_pointer (char const* name, size_t name_length = 0) const;
+
+    /* Assume an XMLItem is an array and get the count of subitems with a given name.
+     * Throws if the XMLItem is not actually an array */
+    ENGINE_API size_t count_of_name (char const* name, size_t name_length = 0) const;
 
 
     /* Assume an XMLItem is an array and get a pointer to the nth subitem with the given name in its list.
      * Throws if the XMLItem is not actually an array, or if the given type is invalid
      * Returns NULL if n is out of range */
-    ENGINE_API XMLItem* get_nth_of_type (size_t n, u8_t type);
+    ENGINE_API XMLItem* nth_of_type_pointer (size_t n, u8_t type) const;
 
     /* Assume an XMLItem is an array and get a pointer to the first subitem with the given type in its list.
      * Throws if the XMLItem is not actually an array, or if the given type is invalid
      * Returns NULL if there is no item with the given type */
-    ENGINE_API XMLItem* get_first_of_type (u8_t type);
+    ENGINE_API XMLItem* first_of_type_pointer (u8_t type) const;
 
     /* Assume an XMLItem is an array and get a pointer to the first subitem with the given type in its list.
      * Throws if the XMLItem is not actually an array, or if the given type is invalid
      * Returns NULL if there is no item with the given type */
-    ENGINE_API XMLItem* get_last_of_type (u8_t type);
+    ENGINE_API XMLItem* last_of_type_pointer (u8_t type) const;
+
+    /* Assume an XMLItem is an array and get the count of subitems with a given type.
+     * Throws if the XMLItem is not actually an array */
+    ENGINE_API size_t count_of_type (u8_t type) const;
+
+
+    /* Assume an XMLItem is an array and get reference to a subitem at the given index in its list.
+     * Throws if the XMLItem is not actually an array,
+     * or if the index is out of range */
+    ENGINE_API XMLItem& item (size_t index) const;
+
+    /* Assume an XMLItem is an array and get reference to the nth subitem with the given name in its list.
+     * Throws if the XMLItem is not actually an array,
+     * or if n is out of range */
+    ENGINE_API XMLItem& nth_named (size_t n, char const* name, size_t name_length = 0) const;
+
+    /* Assume an XMLItem is an array and get reference to the first subitem with the given name in its list.
+     * Throws if the XMLItem is not actually an array,
+     * or if there is no item with the given name */
+    ENGINE_API XMLItem& first_named (char const* name, size_t name_length = 0) const;
+
+    /* Assume an XMLItem is an array and get reference to the first subitem with the given name in its list.
+     * Throws if the XMLItem is not actually an array,
+     * or if there is no item with the given name */
+    ENGINE_API XMLItem& last_named (char const* name, size_t name_length = 0) const;
+
+
+    /* Assume an XMLItem is an array and get reference to the nth subitem with the given name in its list.
+     * Throws if the XMLItem is not actually an array,
+     * if the given type is invalid,
+     * or if n is out of range */
+    ENGINE_API XMLItem& nth_of_type (size_t n, u8_t type) const;
+
+    /* Assume an XMLItem is an array and get reference to the first subitem with the given type in its list.
+     * Throws if the XMLItem is not actually an array,
+     * if the given type is invalid,
+     * or if there is no item with the given type */
+    ENGINE_API XMLItem& first_of_type (u8_t type) const;
+
+    /* Assume an XMLItem is an array and get reference to the first subitem with the given type in its list.
+     * Throws if the XMLItem is not actually an array,
+     * if the given type is invalid,
+     * or if there is no item with the given type */
+    ENGINE_API XMLItem& last_of_type (u8_t type) const;
+
 
     /* Assume an XMLItem is an array and add a subitem to the end of its list.
      * Takes ownership of the subitem.
      * Throws if the XMLItem is not actually an array, and destroys the subitem immediately */
-    ENGINE_API void append_item (XMLItem* item);
+    ENGINE_API void append_item (XMLItem const* item);
 
     /* Assume an XMLItem is an array and add a subitem to the end of its list.
      * Takes ownership of the subitem.
      * Throws if the XMLItem is not actually an array, and destroys the subitem immediately */
-    void append_item (XMLItem& item) {
+    void append_item (XMLItem const& item) {
       return append_item(&item);
     }
 
     /* Assume an XMLItem is an array and insert a subitem at the given index in its list.
      * Takes ownership of the subitem.
      * Throws if the XMLItem is not actually an array, and destroys the subitem immediately */
-    ENGINE_API void insert_item (size_t index, XMLItem* item);
+    ENGINE_API void insert_item (size_t index, XMLItem const* item);
     
     /* Assume an XMLItem is an array and insert a subitem at the given index in its list.
      * Takes ownership of the subitem.
      * Throws if the XMLItem is not actually an array, and destroys the subitem immediately */
-    void insert_item(size_t index, XMLItem& item) {
+    void insert_item(size_t index, XMLItem const& item) {
       return insert_item(index, &item);
     }
 
     /* Assume an XMLItem is an array and remove a subitem at the given index in its list.
      * Throws if the XMLItem is not actually an array */
     ENGINE_API void remove_item (size_t index);
+
+    /* Assume an XMLItem is an array and add a named value to the end of its list.
+     * Takes ownership of the name and the value.
+     * Throws if the XMLItem is not actually an array, and destroys the inputs immediately */
+    template <typename T> void append_value (String new_name, T value, size_t new_origin_offset = 0) {
+      return append_item(XMLItem { new_name, value, root, new_origin_offset == 0? origin_offset : new_origin_offset });
+    }
+
+    /* Assume an XMLItem is an array and insert a named value at the given index in its list.
+     * Takes ownership of the name and the value.
+     * Throws if the XMLItem is not actually an array, and destroys the inputs immediately */
+    template <typename T> void insert_value (size_t index, String new_name, T value, size_t new_origin_offset = 0) {
+      return insert_item(index, XMLItem { new_name, value, root, new_origin_offset == 0? origin_offset : new_origin_offset });
+    }
 
 
 
@@ -456,24 +522,24 @@ namespace mod {
     /* Set the value of an element in an XML root, at the given index.
      * Takes ownership of the value.
      * Throws if the index is out of range, and immediately destroys the value */
-    ENGINE_API void set (size_t index, XMLItem* item);
+    ENGINE_API void set (size_t index, XMLItem const* item);
 
     /* Set the value of an element in an XML root, at the given index.
      * Takes ownership of the value.
      * Throws if the index is out of range, and immediately destroys the value */
-    void set (size_t index, XMLItem& item) {
+    void set (size_t index, XMLItem const& item) {
       return set(index, &item);
     }
 
     /* Append an element to the end of an XML root.
      * Takes ownership of the element value */
-    void append (XMLItem* item) {
+    void append (XMLItem const* item) {
       return data.append(item);
     }
 
     /* Append an element to the end of an XML root.
      * Takes ownership of the element value */
-    void append (XMLItem& item) {
+    void append (XMLItem const& item) {
       return data.append(item);
     }
 
@@ -496,30 +562,66 @@ namespace mod {
     }
 
 
-    /* Get the nth element in an XML root matching the given name.
-     * Returns null if no element with the given name is found or if n is out of range */
-    ENGINE_API XMLItem* nth_named (size_t n, char const* name, size_t name_length = 0) const;
 
-    /* Get the first element in an XML root matching the given name.
-     * Returns NULL if no element with the given name is found */
-    ENGINE_API XMLItem* first_named (char const* name, size_t name_length = 0) const;
+    /* Get a pointer to the nth element in an XML root matching the given name.
+     * Returns NULL if no element with the given name is found or if n is out of range */
+    ENGINE_API XMLItem* nth_named_pointer (size_t n, char const* name, size_t name_length = 0) const;
 
-    /* Get the last element in an XML root matching the given name.
+    /* Get a pointer to the first element in an XML root matching the given name.
      * Returns NULL if no element with the given name is found */
-    ENGINE_API XMLItem* last_named (char const* name, size_t name_length = 0) const;
+    ENGINE_API XMLItem* first_named_pointer (char const* name, size_t name_length = 0) const;
+
+    /* Get a pointer to the last element in an XML root matching the given name.
+     * Returns NULL if no element with the given name is found */
+    ENGINE_API XMLItem* last_named_pointer (char const* name, size_t name_length = 0) const;
+
+    /* Get the count of items in an XML root matching the given name */
+    ENGINE_API size_t count_of_name (char const* name, size_t name_length = 0) const;
+
 
     
-    /* Get the nth element in an XML root matching the given type.
-     * Returns null if no element with the given type is found or if n is out of range */
-    ENGINE_API XMLItem* nth_of_type (size_t n, u8_t type) const;
+    /* Get a pointer to the nth element in an XML root matching the given type.
+     * Returns NULL if no element with the given type is found or if n is out of range */
+    ENGINE_API XMLItem* nth_of_type_pointer (size_t n, u8_t type) const;
 
-    /* Get the first element in an XML root matching the given type.
+    /* Get a pointer to the first element in an XML root matching the given type.
      * Returns NULL if no element with the given type is found */
-    ENGINE_API XMLItem* first_of_type (u8_t type) const;
+    ENGINE_API XMLItem* first_of_type_pointer (u8_t type) const;
 
-    /* Get the last element in an XML root matching the given type.
+    /* Get a pointer to the last element in an XML root matching the given type.
      * Returns NULL if no element with the given type is found */
-    ENGINE_API XMLItem* last_of_type (u8_t type) const;
+    ENGINE_API XMLItem* last_of_type_pointer (u8_t type) const;
+
+    /* Get the count of items in an XML root matching the given type */
+    ENGINE_API size_t count_of_type (u8_t type) const;
+
+
+
+    /* Get a reference to the nth element in an XML root matching the given name.
+     * Throws if no element with the given name is found or if n is out of range */
+    ENGINE_API XMLItem& nth_named (size_t n, char const* name, size_t name_length = 0) const;
+
+    /* Get a reference to the first element in an XML root matching the given name.
+     * Throws if no element with the given name is found */
+    ENGINE_API XMLItem& first_named (char const* name, size_t name_length = 0) const;
+
+    /* Get a reference to the last element in an XML root matching the given name.
+     * Throws if no element with the given name is found */
+    ENGINE_API XMLItem& last_named (char const* name, size_t name_length = 0) const;
+
+    
+    /* Get a reference to the nth element in an XML root matching the given type.
+     * Throws if no element with the given type is found or if n is out of range */
+    ENGINE_API XMLItem& nth_of_type (size_t n, u8_t type) const;
+
+    /* Get a reference to the first element in an XML root matching the given type.
+     * Throws if no element with the given type is found */
+    ENGINE_API XMLItem& first_of_type (u8_t type) const;
+
+    /* Get a reference to the last element in an XML root matching the given type.
+     * Throws if no element with the given type is found */
+    ENGINE_API XMLItem& last_of_type (u8_t type) const;
+
 
 
     /* Create a source String from an XML root */

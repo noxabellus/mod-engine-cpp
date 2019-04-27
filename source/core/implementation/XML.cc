@@ -32,6 +32,33 @@ namespace mod {
   }
 
 
+  void XMLItem::destroy () const {
+    free((void*) name.value);
+
+    for (auto [ i, attribute ] : attributes) {
+      free((void*) attribute.name.value);
+      free((void*) attribute.value.value);
+    }
+
+    free((void*) attributes.elements);
+    
+    switch (type) {
+      case XMLType::Comment:
+      case XMLType::ProcessingInstruction: break;
+
+      case XMLType::CDATA:
+      case XMLType::DocumentType:
+      case XMLType::Text: free(text.value); break;
+
+      case XMLType::Array: {
+        for (auto [ i, element ] : array) ((XMLItem const&) element).destroy();
+        free((void*) array.elements);
+        break;
+      }
+    }
+  }
+
+
 
 
 
@@ -449,25 +476,25 @@ namespace mod {
   }
   
 
-  void XMLItem::set_array (XMLArray& arr) {
+  void XMLItem::set_array (XMLArray arr) {
     destroy_value();
     type = XMLType::Array;
     array = arr;
   }
   
-  void XMLItem::set_text (String& txt) {
+  void XMLItem::set_text (String txt) {
     destroy_value();
     type = XMLType::Text;
     text = txt;
   }
   
-  void XMLItem::set_cdata (String& txt) {
+  void XMLItem::set_cdata (String txt) {
     destroy_value();
     type = XMLType::CDATA;
     text = txt;
   }
   
-  void XMLItem::set_doctype (String& txt) {
+  void XMLItem::set_doctype (String txt) {
     destroy_value();
     type = XMLType::DocumentType;
     text = txt;
@@ -475,12 +502,13 @@ namespace mod {
   
 
   
-  XMLItem* XMLItem::get_item (size_t index) {
+  XMLItem* XMLItem::item_pointer (size_t index) const {
     if (type == XMLType::Array) return array.get_element(index);
     else asset_error("Expected an Array, not %s", XMLType::name(type));
   }
 
-  XMLItem* XMLItem::get_nth_named (size_t n, char const* name, size_t name_length) {
+
+  XMLItem* XMLItem::nth_named_pointer (size_t n, char const* name, size_t name_length) const {
     if (type == XMLType::Array) {
       size_t x = 0;
 
@@ -497,11 +525,11 @@ namespace mod {
     } else asset_error("Expected an Array, not %s", XMLType::name(type));
   }
 
-  XMLItem* XMLItem::get_first_named (char const* name, size_t name_length) {
-    return get_nth_named(0, name, name_length);
+  XMLItem* XMLItem::first_named_pointer (char const* name, size_t name_length) const {
+    return nth_named_pointer(0, name, name_length);
   }
 
-  XMLItem* XMLItem::get_last_named (char const* name, size_t name_length) {
+  XMLItem* XMLItem::last_named_pointer (char const* name, size_t name_length) const {
     if (type == XMLType::Array) {
       if (name_length == 0) name_length = strlen(name);
 
@@ -517,7 +545,22 @@ namespace mod {
     } else asset_error("Expected an Array, not %s", XMLType::name(type));
   }
 
-  XMLItem* XMLItem::get_nth_of_type (size_t n, u8_t seek_type) {
+  size_t XMLItem::count_of_name (char const* name, size_t name_length) const {
+    asset_assert(type == XMLType::Array, "Expected an Array");
+
+    if (name_length == 0) name_length = strlen(name);
+
+    size_t count = 0;
+    
+    for (auto [ i, item ] : array) {
+      if (strncmp(item.name.value, name, name_length) == 0) ++ count;
+    }
+
+    return count;
+  }
+
+
+  XMLItem* XMLItem::nth_of_type_pointer (size_t n, u8_t seek_type) const {
     asset_assert(XMLType::validate(seek_type), "Cannot seek %s XML type", XMLType::name(seek_type));
     if (type == XMLType::Array) {
       size_t x = 0;
@@ -533,11 +576,11 @@ namespace mod {
     } else asset_error("Expected an Array, not %s", XMLType::name(type));
   }
 
-  XMLItem* XMLItem::get_first_of_type (u8_t seek_type) {
-    return get_nth_of_type(0, type);
+  XMLItem* XMLItem::first_of_type_pointer (u8_t seek_type) const {
+    return nth_of_type_pointer(0, type);
   }
 
-  XMLItem* XMLItem::get_last_of_type (u8_t seek_type) {
+  XMLItem* XMLItem::last_of_type_pointer (u8_t seek_type) const {
     asset_assert(XMLType::validate(seek_type), "Cannot seek %s XML type", XMLType::name(seek_type));
     if (type == XMLType::Array) {
       XMLItem* last = NULL;
@@ -550,11 +593,72 @@ namespace mod {
 
       return last;
     } else asset_error("Expected an Array, not %s", XMLType::name(type));
+  }
+
+  size_t XMLItem::count_of_type (u8_t seek_type) const {
+    asset_assert(seek_type == XMLType::Array, "Expected an Array");
+
+    size_t count = 0;
+    
+    for (auto [ i, item ] : array) {
+      if (item.type == seek_type) ++ count;
+    }
+
+    return count;
+  }
+
+
+
+  XMLItem& XMLItem::item (size_t index) const {
+    XMLItem* ptr = item_pointer(index);
+    asset_assert(ptr != NULL, "Expected an item at index %zu, but count is only %zu", index, array.count);
+    return *ptr;
+  }
+
+
+  XMLItem& XMLItem::nth_named (size_t n, char const* name, size_t name_length) const {
+    if (name_length == 0) name_length = strlen(name);
+    XMLItem* ptr = nth_named_pointer(n, name, name_length);
+    asset_assert(ptr != NULL, "Expected at least %zu items named %.*s", n, (s32_t) name_length, name);
+    return *ptr;
+  }
+
+  XMLItem& XMLItem::first_named (char const* name, size_t name_length) const {
+    if (name_length == 0) name_length = strlen(name);
+    XMLItem* ptr = first_named_pointer(name, name_length);
+    asset_assert(ptr != NULL, "Expected an item named %.*s", (s32_t) name_length, name);
+    return *ptr;
+  }
+
+  XMLItem& XMLItem::last_named (char const* name, size_t name_length) const {
+    if (name_length == 0) name_length = strlen(name);
+    XMLItem* ptr = last_named_pointer(name, name_length);
+    asset_assert(ptr != NULL, "Expected an item named %.*s", (s32_t) name_length, name);
+    return *ptr;
+  }
+
+
+  XMLItem& XMLItem::nth_of_type (size_t n, u8_t seek_type) const {
+    XMLItem* ptr = nth_of_type_pointer(n, seek_type);
+    asset_assert(ptr != NULL, "Expected at least %zu items with type %s", n, XMLType::name(seek_type));
+    return *ptr;
+  }
+
+  XMLItem& XMLItem::first_of_type (u8_t seek_type) const {
+    XMLItem* ptr = first_of_type_pointer(seek_type);
+    asset_assert(ptr != NULL, "Expected an item with type %s", XMLType::name(seek_type));
+    return *ptr;
+  }
+
+  XMLItem& XMLItem::last_of_type (u8_t seek_type) const {
+    XMLItem* ptr = last_of_type_pointer(seek_type);
+    asset_assert(ptr != NULL, "Expected an item with type %s", XMLType::name(seek_type));
+    return *ptr;
   }
   
 
 
-  void XMLItem::append_item (XMLItem* item) {
+  void XMLItem::append_item (XMLItem const* item) {
     if (type == XMLType::Array) array.append(item);
     else {
       item->destroy();
@@ -562,7 +666,7 @@ namespace mod {
     }
   }
   
-  void XMLItem::insert_item (size_t index, XMLItem* item) {
+  void XMLItem::insert_item (size_t index, XMLItem const* item) {
     if (type == XMLType::Array) array.insert(index, item);
     else {
       item->destroy();
@@ -757,7 +861,7 @@ namespace mod {
     return data.elements[index];
   }
   
-  void XML::set (size_t index, XMLItem* item) {
+  void XML::set (size_t index, XMLItem const* item) {
     XMLItem* existing_item = get_pointer(index);
     if (existing_item == NULL) {
       item->destroy();
@@ -774,7 +878,7 @@ namespace mod {
 
 
 
-  XMLItem* XML::nth_named (size_t n, char const* name, size_t name_length) const {
+  XMLItem* XML::nth_named_pointer (size_t n, char const* name, size_t name_length) const {
     if (name_length == 0) name_length = strlen(name);
 
     size_t x = 0;
@@ -789,11 +893,11 @@ namespace mod {
     return NULL;
   }
 
-  XMLItem* XML::first_named (char const* name, size_t name_length) const {
-    return nth_named(0, name, name_length);
+  XMLItem* XML::first_named_pointer (char const* name, size_t name_length) const {
+    return nth_named_pointer(0, name, name_length);
   }
 
-  XMLItem* XML::last_named (char const* name, size_t name_length) const {
+  XMLItem* XML::last_named_pointer (char const* name, size_t name_length) const {
     if (name_length == 0) name_length = strlen(name);
 
     XMLItem* last = NULL;
@@ -807,9 +911,21 @@ namespace mod {
     return last;
   }
 
+  size_t XML::count_of_name (char const* name, size_t name_length) const {
+    if (name_length == 0) name_length = strlen(name);
+    
+    size_t count = 0;
+
+    for (auto [ i, item ] : data) {
+      if (strncmp(item.name.value, name, name_length) == 0) ++ count;
+    }
+
+    return count;
+  }
 
 
-  XMLItem* XML::nth_of_type (size_t n, u8_t type) const {
+
+  XMLItem* XML::nth_of_type_pointer (size_t n, u8_t type) const {
     size_t x = 0;
 
     for (auto [ i, element ] : data) {
@@ -822,11 +938,11 @@ namespace mod {
     return NULL;
   }
 
-  XMLItem* XML::first_of_type (u8_t type) const {
-    return nth_of_type(0, type);
+  XMLItem* XML::first_of_type_pointer (u8_t type) const {
+    return nth_of_type_pointer(0, type);
   }
 
-  XMLItem* XML::last_of_type (u8_t type) const {
+  XMLItem* XML::last_of_type_pointer (u8_t type) const {
     XMLItem* last = NULL;
 
     for (auto [ i, element ] : data) {
@@ -837,6 +953,59 @@ namespace mod {
 
     return last;
   }
+
+  size_t XML::count_of_type (u8_t type) const {
+    size_t count = 0;
+    
+    for (auto [ i, item ] : data) {
+      if (type == item.type) ++ count;
+    }
+
+    return count;
+  }
+
+
+
+  XMLItem& XML::nth_named (size_t n, char const* name, size_t name_length) const {
+    if (name_length == 0) name_length = strlen(name);
+    XMLItem* ptr = nth_named_pointer(n, name, name_length);
+    asset_assert(ptr != NULL, "Expected at least %zu items named %.*s", n, (s32_t) name_length, name);
+    return *ptr;
+  }
+
+  XMLItem& XML::first_named (char const* name, size_t name_length) const {
+    if (name_length == 0) name_length = strlen(name);
+    XMLItem* ptr = first_named_pointer(name, name_length);
+    asset_assert(ptr != NULL, "Expected an item named %.*s", (s32_t) name_length, name);
+    return *ptr;
+  }
+
+  XMLItem& XML::last_named (char const* name, size_t name_length) const {
+    if (name_length == 0) name_length = strlen(name);
+    XMLItem* ptr = last_named_pointer(name, name_length);
+    asset_assert(ptr != NULL, "Expected an item named %.*s", (s32_t) name_length, name);
+    return *ptr;
+  }
+
+
+  XMLItem& XML::nth_of_type (size_t n, u8_t type) const {
+    XMLItem* ptr = nth_of_type_pointer(n, type);
+    asset_assert(ptr != NULL, "Expected at least %zu items of type %s", n, XMLType::name(type));
+    return *ptr;
+  }
+
+  XMLItem& XML::first_of_type (u8_t type) const {
+    XMLItem* ptr = first_of_type_pointer(type);
+    asset_assert(ptr != NULL, "Expected an item of type %s", XMLType::name(type));
+    return *ptr;
+  }
+
+  XMLItem& XML::last_of_type (u8_t type) const {
+    XMLItem* ptr = last_of_type_pointer(type);
+    asset_assert(ptr != NULL, "Expected an item of type %s", XMLType::name(type));
+    return *ptr;
+  }
+
 
 
 
