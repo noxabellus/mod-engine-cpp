@@ -457,7 +457,7 @@ namespace mod {
     /* Get a Keycode from its name in str form */
     static constexpr u8_t from_name (char const* name, size_t max_length = SIZE_MAX) {
       for (size_t code = 0; code < total_key_count; code ++) {
-        if (str_cmp_caseless(name, names[code], max_length) == 0) return code;
+        if ((max_length == SIZE_MAX || strlen(names[code]) == max_length) && str_cmp_caseless(name, names[code], max_length) == 0) return code;
       }
 
       return Invalid;
@@ -703,7 +703,7 @@ namespace mod {
     /* Get a LockKey from its name in str form */
     static constexpr u8_t from_name (char const* name, size_t max_length = SIZE_MAX) {
       for (u8_t lock = 0; lock < total_lock_count; lock ++) {
-        if (str_cmp_caseless(name, names[lock], max_length) == 0) return lock;
+        if ((max_length == SIZE_MAX || strlen(names[lock]) == max_length) && str_cmp_caseless(name, names[lock], max_length) == 0) return lock;
       }
 
       return Invalid;
@@ -778,7 +778,7 @@ namespace mod {
     /* Get a ModifierKey from its name in str form */
     static constexpr u8_t from_name (char const* name, size_t max_length = SIZE_MAX) {
       for (u8_t modifier = 0; modifier < total_modifier_count; modifier ++) {
-        if (str_cmp_caseless(name, names[modifier], max_length) == 0) return modifier;
+        if ((max_length == SIZE_MAX || strlen(names[modifier]) == max_length) && str_cmp_caseless(name, names[modifier], max_length) == 0) return modifier;
       }
 
       return Invalid;
@@ -857,7 +857,7 @@ namespace mod {
     /* Get a MouseButton from its name in str form */
     static constexpr u8_t from_name (char const* name, size_t max_length = SIZE_MAX) {
       for (u8_t button = 0; button < total_button_count; button ++) {
-        if (str_cmp_caseless(name, names[button], max_length) == 0) return button;
+        if ((max_length == SIZE_MAX || strlen(names[button]) == max_length) && str_cmp_caseless(name, names[button], max_length) == 0) return button;
       }
 
       return Invalid;

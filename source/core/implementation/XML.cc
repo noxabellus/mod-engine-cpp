@@ -385,7 +385,7 @@ namespace mod {
       if (name_length == 0) name_length = strlen(name);
 
       for (auto [ i, attribute ] : attributes) {
-        if (strncmp(name, attribute.name.value, name_length) == 0) return &attribute;
+        if (name_length == attribute.name.length && strncmp(name, attribute.name.value, name_length) == 0) return &attribute;
       }
     }
 
@@ -444,7 +444,7 @@ namespace mod {
       if (name_length == 0) name_length = strlen(name);
 
       for (auto [ i, attribute ] : attributes) {
-        if (strncmp(name, attribute.name.value, name_length) == 0) {
+        if (name_length == attribute.name.length && strncmp(name, attribute.name.value, name_length) == 0) {
           attribute.destroy();
           attributes.remove(i);
           break;
@@ -515,7 +515,7 @@ namespace mod {
       if (name_length == 0) name_length = strlen(name);
 
       for (auto [ i, item ] : array) {
-        if (strncmp(name, item.name.value, name_length) == 0) {
+        if (name_length == item.name.length && strncmp(name, item.name.value, name_length) == 0) {
           if (x == n) return &item;
           else ++ x;
         }
@@ -536,7 +536,7 @@ namespace mod {
       XMLItem* last = NULL;
 
       for (auto [ i, item ] : array) {
-        if (strncmp(name, item.name.value, name_length) == 0) {
+        if (name_length == item.name.length && strncmp(name, item.name.value, name_length) == 0) {
           last = &item;
         }
       }
@@ -553,7 +553,7 @@ namespace mod {
     size_t count = 0;
     
     for (auto [ i, item ] : array) {
-      if (strncmp(item.name.value, name, name_length) == 0) ++ count;
+      if (name_length == item.name.length && strncmp(item.name.value, name, name_length) == 0) ++ count;
     }
 
     return count;
@@ -884,7 +884,7 @@ namespace mod {
     size_t x = 0;
 
     for (auto [ i, element ] : data) {
-      if (strncmp(element.name.value, name, name_length) == 0) {
+      if (name_length == element.name.length && strncmp(element.name.value, name, name_length) == 0) {
         if (x == n) return &element;
         else ++ x;
       }
@@ -903,7 +903,7 @@ namespace mod {
     XMLItem* last = NULL;
 
     for (auto [ i, element ] : data) {
-      if (strncmp(element.name.value, name, name_length) == 0) {
+      if (name_length == element.name.length && strncmp(element.name.value, name, name_length) == 0) {
         last = &element;
       }
     }
@@ -917,7 +917,7 @@ namespace mod {
     size_t count = 0;
 
     for (auto [ i, item ] : data) {
-      if (strncmp(item.name.value, name, name_length) == 0) ++ count;
+      if (name_length == item.name.length && strncmp(item.name.value, name, name_length) == 0) ++ count;
     }
 
     return count;

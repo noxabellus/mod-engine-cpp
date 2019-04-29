@@ -48,7 +48,7 @@ namespace mod {
 
     static constexpr u8_t from_name (char const* name, size_t max_length = SIZE_MAX) {
       for (u8_t attribute = 0; attribute < total_attribute_count; attribute ++) {
-        if (str_cmp_caseless(name, names[attribute], max_length) == 0) return attribute;
+        if ((max_length == SIZE_MAX || strlen(names[attribute]) == max_length) && str_cmp_caseless(name, names[attribute], max_length) == 0) return attribute;
       }
 
       return Invalid;

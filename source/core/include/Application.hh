@@ -52,7 +52,7 @@ namespace mod {
     /* Get an ApplicationWindowMode from its name in str form */
     static constexpr u8_t from_name (char const* name, size_t max_length = SIZE_MAX) {
       for (u8_t mode = 0; mode < total_mode_count; mode ++) {
-        if (str_cmp_caseless(name, names[mode], max_length) == 0) return mode;
+        if ((max_length == SIZE_MAX || strlen(names[mode]) == max_length) && str_cmp_caseless(name, names[mode], max_length) == 0) return mode;
       }
       
       return Invalid;
@@ -114,7 +114,7 @@ namespace mod {
     /* Get an ApplicationVSyncMode from its name in str form */
     static constexpr u8_t from_name (char const* name, size_t max_length = SIZE_MAX) {
       for (u8_t mode = 0; mode < total_mode_count; mode ++) {
-        if (str_cmp_caseless(name, names[mode], max_length) == 0) return mode;
+        if ((max_length == SIZE_MAX || strlen(names[mode]) == max_length) && str_cmp_caseless(name, names[mode], max_length) == 0) return mode;
       }
 
       return Invalid;

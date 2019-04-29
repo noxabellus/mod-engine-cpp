@@ -46,7 +46,7 @@ namespace mod {
     /* Get a TextureWrap from its name in str form */
     static u8_t from_name (char const* name, size_t max_length = SIZE_MAX) {
       for (u8_t wrap = 0; wrap < total_wrap_count; wrap ++) {
-        if (str_cmp_caseless(name, names[wrap], max_length) == 0) return wrap;
+        if ((max_length == SIZE_MAX || strlen(names[wrap]) == max_length) && str_cmp_caseless(name, names[wrap], max_length) == 0) return wrap;
       }
 
       return Invalid;
@@ -130,7 +130,7 @@ namespace mod {
     /* Get a TextureFilter from its name in str form */
     static constexpr u8_t from_name (char const* name, size_t max_length = SIZE_MAX) {
       for (u8_t filter = 0; filter < total_filter_count; filter ++) {
-        if (str_cmp_caseless(name, names[filter], max_length) == 0) return filter;
+        if ((max_length == SIZE_MAX || strlen(names[filter]) == max_length) && str_cmp_caseless(name, names[filter], max_length) == 0) return filter;
       }
 
       return Invalid;

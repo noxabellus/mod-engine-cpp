@@ -42,7 +42,7 @@ namespace mod {
     /* Get a ShaderType from its name in str form */
     static constexpr u8_t from_name (char const* name, size_t max_length = SIZE_MAX) {
       for (u8_t type = 0; type < total_type_count; type ++) {
-        if (str_cmp_caseless(name, names[type], max_length) == 0) return type;
+        if ((max_length == SIZE_MAX || strlen(names[type]) == max_length) && str_cmp_caseless(name, names[type], max_length) == 0) return type;
       }
 
       return Invalid;
@@ -66,7 +66,7 @@ namespace mod {
       size_t offset_max = ext_offset == -1? max_length : max_length - ext_offset - 1;
 
       for (u8_t type = 0; type < total_type_count; type ++) {
-        if (str_cmp_caseless(offset_path, extensions[type], offset_max) == 0) return type;
+        if ((max_length == SIZE_MAX || strlen(extensions[type]) == max_length) && str_cmp_caseless(offset_path, extensions[type], offset_max) == 0) return type;
       }
 
       return Invalid;

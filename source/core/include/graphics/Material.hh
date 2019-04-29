@@ -181,7 +181,7 @@ namespace mod {
     /* Get a UniformType from its name in str form */
     static constexpr u8_t from_name (char const* name, size_t max_length = SIZE_MAX) {
       for (u8_t type = 0; type < total_type_count; type ++) {
-        if (str_cmp_caseless(name, names[type], max_length) == 0) return type;
+        if ((max_length == SIZE_MAX || strlen(names[type]) == max_length) && str_cmp_caseless(name, names[type], max_length) == 0) return type;
       }
 
       return Invalid;
@@ -317,19 +317,23 @@ namespace mod {
 
 
   namespace FaceCullingSide {
-    enum: s8_t {
-      Invalid = -1,
-      Back = 0,
-      Front
+    enum: u8_t {
+      Back,
+      Front,
+
+      total_side_count,
+
+      Invalid = (u8_t) -1
+    };
+
+    static constexpr char const* names [total_side_count] = {
+      "Back", "Front"
     };
 
     /* Get the name of a FaceCullingSide as a str */
     static constexpr char const* name (u8_t side) {
-      switch (side) {
-        case Back: return "Back";
-        case Front: return "Front";
-        default: return "Invalid";
-      }
+      if (side < total_side_count) return names[side];
+      else return "Invalid";
     }
 
     static constexpr char const* valid_values = (
@@ -338,52 +342,60 @@ namespace mod {
     );
 
     /* Get a FaceCullingSide from its name in str form */
-    static s8_t from_name (char const* name, size_t max_length = SIZE_MAX) {
-      if (str_cmp_caseless(name, "Back", max_length) == 0) return Back;
-      else if (str_cmp_caseless(name, "Front", max_length) == 0) return Front;
-      else return Invalid;
+    static u8_t from_name (char const* name, size_t max_length = SIZE_MAX) {
+      for (u8_t side = 0; side < total_side_count; side ++) {
+        if ((max_length == SIZE_MAX || strlen(names[side]) == max_length) && str_cmp_caseless(name, names[side], max_length) == 0) return side;
+      }
+
+      return Invalid;
     }
+
+    static constexpr s32_t gl_versions [total_side_count] = {
+      GL_BACK,
+      GL_FRONT
+    };
 
     /* Get an OpenGL enum from a FaceCullingSide.
      * Returns GL_INVALID_ENUM if the FaceCullingSide was invalid */
     static constexpr s32_t to_gl (u8_t side) {
-      switch (side) {
-        case Back: return GL_BACK;
-        case Front: return GL_FRONT;
-        default: return GL_INVALID_ENUM;
-      }
+      if (side < total_side_count) return gl_versions[side];
+      else return GL_INVALID_ENUM;
     }
 
     /* Get a FaceCullingSide from an OpenGL enum */
-    static constexpr s8_t from_gl (s32_t gl_side) {
-      switch (gl_side) {
-        case GL_BACK: return Back;
-        case GL_FRONT: return Front;
-        default: return Invalid;
+    static constexpr u8_t from_gl (s32_t gl_side) {
+      for (u8_t side = 0; side < total_side_count; side ++) {
+        if (gl_versions[side] == gl_side) return side;
       }
+
+      return Invalid;
     }
 
     /* Determine if a value is a valid FaceCullingSide */
     static constexpr bool validate (u8_t side) {
-      return side == Back
-          || side == Front;
+      return side < total_side_count;
     }
   }
 
   namespace VertexWinding {
-    enum: s8_t {
-      Invalid = -1,
-      Clockwise = 0,
-      CounterClockwise
+    enum: u8_t {
+      Clockwise,
+      CounterClockwise,
+
+      total_wind_count,
+
+      Invalid = (u8_t) -1
+    };
+
+    static constexpr char const* names [total_wind_count] = {
+      "Clockwise",
+      "CounterClockwise"
     };
 
     /* Get the name of a VertexWinding as a str */
     static constexpr char const* name (u8_t wind) {
-      switch (wind) {
-        case Clockwise: return "Clockwise";
-        case CounterClockwise: return "CounterClockwise";
-        default: return "Invalid";
-      }
+      if (wind < total_wind_count) return names[wind];
+      else return "Invalid";
     }
 
     static constexpr char const* valid_values = (
@@ -392,42 +404,43 @@ namespace mod {
     );
 
     /* Get a VertexWinding from its name in str form */
-    static s8_t from_name (char const* name, size_t max_length = SIZE_MAX) {
-      if (str_cmp_caseless(name, "Clockwise", max_length) == 0) return Clockwise;
-      else if (str_cmp_caseless(name, "CounterClockwise", max_length) == 0) return CounterClockwise;
-      else return Invalid;
+    static u8_t from_name (char const* name, size_t max_length = SIZE_MAX) {
+      for (u8_t wind = 0; wind < total_wind_count; wind ++) {
+        if ((max_length == SIZE_MAX || strlen(names[wind]) == max_length) && str_cmp_caseless(name, names[wind], max_length) == 0) return wind;
+      }
+      return Invalid;
     }
+
+    static constexpr s32_t gl_versions [total_wind_count] = {
+      GL_CW,
+      GL_CCW
+    };
 
     /* Get an OpenGL enum from a VertexWinding.
      * Returns GL_INVALID_ENUM if the VertexWinding was invalid */
     static constexpr s32_t to_gl (u8_t wind) {
-      switch (wind) {
-        case Clockwise: return GL_CW;
-        case CounterClockwise: return GL_CCW;
-        default: return GL_INVALID_ENUM;
-      }
+      if (wind < total_wind_count) return gl_versions[wind];
+      else return GL_INVALID_ENUM;
     }
 
     /* Get a VertexWinding from an OpenGL enum */
-    static constexpr s8_t from_gl (s32_t gl_wind) {
-      switch (gl_wind) {
-        case GL_CW: return Clockwise;
-        case GL_CCW: return CounterClockwise;
-        default: return Invalid;
+    static constexpr u8_t from_gl (s32_t gl_wind) {
+      for (u8_t wind = 0; wind < total_wind_count; wind ++) {
+        if (gl_versions[wind] == gl_wind) return wind;
       }
+
+      return Invalid;
     }
 
     /* Determine if a value is a valid VertexWinding */
     static constexpr bool validate (u8_t wind) {
-      return wind == Clockwise
-          || wind == CounterClockwise;
+      return wind < total_wind_count;
     }
   }
 
   namespace AlphaBlend {
-    enum: s8_t {
-      Invalid = -1,
-      Zero = 0,
+    enum: u8_t {
+      Zero,
       One,
       SourceColor,
       OneMinusSourceColor,
@@ -441,29 +454,35 @@ namespace mod {
       OneMinusConstantColor,
       ConstantAlpha,
       OneMinusConstantAlpha,
-      SourceAlphaSaturate
+      SourceAlphaSaturate,
+
+      total_blend_count,
+
+      Invalid = (u8_t) -1
+    };
+
+    static constexpr char const* names [total_blend_count] = {
+      "Zero",
+      "One",
+      "SourceColor",
+      "OneMinusSourceColor",
+      "DestinationColor",
+      "OneMinusDestinationColor",
+      "SourceAlpha",
+      "OneMinusSourceAlpha",
+      "DestinationAlpha",
+      "OneMinusDestinationAlpha",
+      "ConstantColor",
+      "OneMinusConstantColor",
+      "ConstantAlpha",
+      "OneMinusConstantAlpha",
+      "SourceAlphaSaturate"
     };
 
     /* Get the name of an AlphaBlend as a str */
     static constexpr char const* name (u8_t blend) {
-      switch (blend) {
-        case Zero: return "Zero";
-        case One: return "One";
-        case SourceColor: return "SourceColor";
-        case OneMinusSourceColor: return "OneMinusSourceColor";
-        case DestinationColor: return "DestinationColor";
-        case OneMinusDestinationColor: return "OneMinusDestinationColor";
-        case SourceAlpha: return "SourceAlpha";
-        case OneMinusSourceAlpha: return "OneMinusSourceAlpha";
-        case DestinationAlpha: return "DestinationAlpha";
-        case OneMinusDestinationAlpha: return "OneMinusDestinationAlpha";
-        case ConstantColor: return "ConstantColor";
-        case OneMinusConstantColor: return "OneMinusConstantColor";
-        case ConstantAlpha: return "ConstantAlpha";
-        case OneMinusConstantAlpha: return "OneMinusConstantAlpha";
-        case SourceAlphaSaturate: return "SourceAlphaSaturate";
-        default: return "Invalid";
-      }
+      if (blend < total_blend_count) return names[blend];
+      else return "Invalid";
     }
 
     static constexpr char const* valid_values = (
@@ -486,103 +505,85 @@ namespace mod {
 
     /* Get an AlphaBlend from its name in str form */
     static s8_t from_name (char const* name, size_t max_length = SIZE_MAX) {
-      if (str_cmp_caseless(name, "Zero", max_length) == 0) return Zero;
-      else if (str_cmp_caseless(name, "One", max_length) == 0) return One;
-      else if (str_cmp_caseless(name, "SourceColor", max_length) == 0) return SourceColor;
-      else if (str_cmp_caseless(name, "OneMinusSourceColor", max_length) == 0) return OneMinusSourceColor;
-      else if (str_cmp_caseless(name, "DestinationColor", max_length) == 0) return DestinationColor;
-      else if (str_cmp_caseless(name, "OneMinusDestinationColor", max_length) == 0) return OneMinusDestinationColor;
-      else if (str_cmp_caseless(name, "SourceAlpha", max_length) == 0) return SourceAlpha;
-      else if (str_cmp_caseless(name, "OneMinusSourceAlpha", max_length) == 0) return OneMinusSourceAlpha;
-      else if (str_cmp_caseless(name, "DestinationAlpha", max_length) == 0) return DestinationAlpha;
-      else if (str_cmp_caseless(name, "OneMinusDestinationAlpha", max_length) == 0) return OneMinusDestinationAlpha;
-      else if (str_cmp_caseless(name, "ConstantColor", max_length) == 0) return ConstantColor;
-      else if (str_cmp_caseless(name, "OneMinusConstantColor", max_length) == 0) return OneMinusConstantColor;
-      else if (str_cmp_caseless(name, "ConstantAlpha", max_length) == 0) return ConstantAlpha;
-      else if (str_cmp_caseless(name, "OneMinusConstantAlpha", max_length) == 0) return OneMinusConstantAlpha;
-      else if (str_cmp_caseless(name, "SourceAlphaSaturate", max_length) == 0) return SourceAlphaSaturate;
-      else return Invalid;
+      for (u8_t blend = 0; blend < total_blend_count; blend ++) {
+        if ((max_length == SIZE_MAX || strlen(names[blend]) == max_length) && str_cmp_caseless(name, names[blend], max_length) == 0) return blend;
+      }
+
+      return Invalid;
     }
+
+    static constexpr s32_t gl_versions [total_blend_count] = {
+      GL_ZERO,
+      GL_ONE,
+      GL_SRC_COLOR,
+      GL_ONE_MINUS_SRC_COLOR,
+      GL_DST_COLOR,
+      GL_ONE_MINUS_DST_COLOR,
+      GL_SRC_ALPHA,
+      GL_ONE_MINUS_SRC_ALPHA,
+      GL_DST_ALPHA,
+      GL_ONE_MINUS_DST_ALPHA,
+      GL_CONSTANT_COLOR,
+      GL_ONE_MINUS_CONSTANT_COLOR,
+      GL_CONSTANT_ALPHA,
+      GL_ONE_MINUS_CONSTANT_ALPHA,
+      GL_SRC_ALPHA_SATURATE
+    };
 
     /* Get an OpenGL enum from an AlphaBlend.
      * Returns GL_INVALID_ENUM if the AlphaBlend was invalid */
     static constexpr s32_t to_gl (u8_t blend) {
-      switch (blend) {
-        case Zero: return GL_ZERO;
-        case One: return GL_ONE;
-        case SourceColor: return GL_SRC_COLOR;
-        case OneMinusSourceColor: return GL_ONE_MINUS_SRC_COLOR;
-        case DestinationColor: return GL_DST_COLOR;
-        case OneMinusDestinationColor: return GL_ONE_MINUS_DST_COLOR;
-        case SourceAlpha: return GL_SRC_ALPHA;
-        case OneMinusSourceAlpha: return GL_ONE_MINUS_SRC_ALPHA;
-        case DestinationAlpha: return GL_DST_ALPHA;
-        case OneMinusDestinationAlpha: return GL_ONE_MINUS_DST_ALPHA;
-        case ConstantColor: return GL_CONSTANT_COLOR;
-        case OneMinusConstantColor: return GL_ONE_MINUS_CONSTANT_COLOR;
-        case ConstantAlpha: return GL_CONSTANT_ALPHA;
-        case OneMinusConstantAlpha: return GL_ONE_MINUS_CONSTANT_ALPHA;
-        case SourceAlphaSaturate: return GL_SRC_ALPHA_SATURATE;
-        default: return GL_INVALID_ENUM;
-      }
+      if (blend < total_blend_count) return gl_versions[blend];
+      else return GL_INVALID_ENUM;
     }
 
     /* Get an AlphaBlend from an OpenGL enum */
-    static constexpr s8_t from_gl (s32_t gl_blend) {
-      switch (gl_blend) {
-        case GL_ZERO: return Zero;
-        case GL_ONE: return One;
-        case GL_SRC_COLOR: return SourceColor;
-        case GL_ONE_MINUS_SRC_COLOR: return OneMinusSourceColor;
-        case GL_DST_COLOR: return DestinationColor;
-        case GL_ONE_MINUS_DST_COLOR: return OneMinusDestinationColor;
-        case GL_SRC_ALPHA: return SourceAlpha;
-        case GL_ONE_MINUS_SRC_ALPHA: return OneMinusSourceAlpha;
-        case GL_DST_ALPHA: return DestinationAlpha;
-        case GL_ONE_MINUS_DST_ALPHA: return OneMinusDestinationAlpha;
-        case GL_CONSTANT_COLOR: return ConstantColor;
-        case GL_ONE_MINUS_CONSTANT_COLOR: return OneMinusConstantColor;
-        case GL_CONSTANT_ALPHA: return ConstantAlpha;
-        case GL_ONE_MINUS_CONSTANT_ALPHA: return OneMinusConstantAlpha;
-        case GL_SRC_ALPHA_SATURATE: return SourceAlphaSaturate;
-        default: return Invalid;
+    static constexpr u8_t from_gl (s32_t gl_blend) {
+      for (u8_t blend = 0; blend < total_blend_count; blend ++) {
+        if (gl_versions[blend] == gl_blend) return blend;
       }
+
+      return Invalid;
     }
 
     /* Determine if a value is a valid AlphaBlend */
     static constexpr bool validate (u8_t blend) {
-      return blend >= Zero
-          && blend <= SourceAlphaSaturate;
+      return blend < total_blend_count;
     }
   }
 
 
   namespace DepthFactor {
-    enum: s8_t {
-      Invalid = -1,
-      Always = 0,
+    enum: u8_t {
+      Always,
       Never,
       Equal,
       NotEqual,
       Lesser,
       LesserOrEqual,
       Greater,
-      GreaterOrEqual
+      GreaterOrEqual,
+
+      total_factor_count,
+
+      Invalid = (u8_t) -1
+    };
+
+    static constexpr char const* names [total_factor_count] = {
+      "Always",
+      "Never",
+      "Equal",
+      "NotEqual",
+      "Lesser",
+      "LesserOrEqual",
+      "Greater",
+      "GreaterOrEqual"
     };
 
     /* Get the name of a DepthFactor as a str */
     static constexpr char const* name (u8_t factor) {
-      switch (factor) {
-        case Always: return "Always";
-        case Never: return "Never";
-        case Equal: return "Equal";
-        case NotEqual: return "NotEqual";
-        case Lesser: return "Lesser";
-        case LesserOrEqual: return "LesserOrEqual";
-        case Greater: return "Greater";
-        case GreaterOrEqual: return "GreaterOrEqual";
-        default: return "Invalid";
-      }
+      if (factor < total_factor_count) return names[factor];
+      else return "Invalid";
     }
 
     static constexpr char const* valid_values = (
@@ -597,53 +598,44 @@ namespace mod {
     );
 
     /* Get a DepthFactor from its name in str form */
-    static s8_t from_name (char const* name, size_t max_length = SIZE_MAX) {
-      if (str_cmp_caseless(name, "Always", max_length) == 0) return Always;
-      if (str_cmp_caseless(name, "Never", max_length) == 0) return Never;
-      if (str_cmp_caseless(name, "Equal", max_length) == 0) return Equal;
-      if (str_cmp_caseless(name, "NotEqual", max_length) == 0) return NotEqual;
-      if (str_cmp_caseless(name, "Lesser", max_length) == 0) return Lesser;
-      if (str_cmp_caseless(name, "LesserOrEqual", max_length) == 0) return LesserOrEqual;
-      if (str_cmp_caseless(name, "Greater", max_length) == 0) return Greater;
-      if (str_cmp_caseless(name, "GreaterOrEqual", max_length) == 0) return GreaterOrEqual;
-      else return Invalid;
+    static u8_t from_name (char const* name, size_t max_length = SIZE_MAX) {
+      for (u8_t factor = 0; factor < total_factor_count; factor ++) {
+        if ((max_length == SIZE_MAX || strlen(names[factor]) == max_length) && str_cmp_caseless(name, names[factor], max_length) == 0) return factor;
+      }
+
+      return Invalid;
     }
+
+    static constexpr s32_t gl_versions [total_factor_count] = {
+      GL_ALWAYS,
+      GL_NEVER,
+      GL_EQUAL,
+      GL_NOTEQUAL,
+      GL_LESS,
+      GL_LEQUAL,
+      GL_GREATER,
+      GL_GEQUAL
+    };
 
     /* Get an OpenGL enum from a DepthFactor.
      * Returns GL_INVALID_ENUM if the DepthFactor was invalid */
     static constexpr s32_t to_gl (u8_t factor) {
-      switch (factor) {
-        case Always: return GL_ALWAYS;
-        case Never: return GL_NEVER;
-        case Equal: return GL_EQUAL;
-        case NotEqual: return GL_NOTEQUAL;
-        case Lesser: return GL_LESS;
-        case LesserOrEqual: return GL_LEQUAL;
-        case Greater: return GL_GREATER;
-        case GreaterOrEqual: return GL_GEQUAL;
-        default: return GL_INVALID_ENUM;
-      }
+      if (factor < total_factor_count) return gl_versions[factor];
+      else return GL_INVALID_ENUM;
     }
 
     /* Get a DepthFactor from an OpenGL enum */
-    static constexpr s8_t from_gl (s32_t gl_factor) {
-      switch (gl_factor) {
-        case GL_ALWAYS: return Always;
-        case GL_NEVER: return Never;
-        case GL_EQUAL: return Equal;
-        case GL_NOTEQUAL: return NotEqual;
-        case GL_LESS: return Lesser;
-        case GL_LEQUAL: return LesserOrEqual;
-        case GL_GREATER: return Greater;
-        case GL_GEQUAL: return GreaterOrEqual;
-        default: return Invalid;
+    static constexpr u8_t from_gl (s32_t gl_factor) {
+      for (u8_t factor = 0; factor < total_factor_count; factor ++) {
+        if (gl_versions[factor] == gl_factor) return factor;
       }
+
+      return Invalid;
     }
 
     /* Determine if a value is a valid DepthFactor */
     static constexpr bool validate (u8_t factor) {
-      return factor >= Always
-          && factor <= GreaterOrEqual;
+      return factor < total_factor_count;
     }
   }
 
