@@ -48,9 +48,12 @@ All assets used by the engine or test game utilize open source or public domain 
   + Teko ([Open Font](http://scripts.sil.org/cms/scripts/page.php?site_id=nrsi&id=OFL_web))
     > https://fonts.google.com/specimen/Teko
 
-- Meshes
+- Other
   + ThinMatrix's Cowboy Skinned Mesh ([Unlicense](https://github.com/TheThinMatrix/OpenGL-Animation/blob/master/LICENSE))
+    > `Mesh`:
     > https://github.com/TheThinMatrix/OpenGL-Animation/blob/master/Resources/res/model.dae
+
+    > `Texture`: https://github.com/TheThinMatrix/OpenGL-Animation/blob/master/Resources/res/diffuse.png
 
     > This is from his [tutorial series](https://www.youtube.com/playlist?list=PLRIWtICgwaX2tKWCxdeB7Wv_rTET9JtWW) on skinned meshes ([Full repo here](https://github.com/TheThinMatrix/OpenGL-Animation))
 
