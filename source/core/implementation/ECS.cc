@@ -129,13 +129,15 @@ namespace mod {
   }
 
   void System::execute (ECS* ecs) const {
-    if (custom) {
-      custom_callback(ecs);
-    } else {
-      if (parallel && ecs->thread_pool != NULL) {
-        execute_parallel(ecs);
+    if (enabled) {
+      if (custom) {
+        custom_callback(ecs);
       } else {
-        execute_sequential(ecs);
+        if (parallel && ecs->thread_pool != NULL) {
+          execute_parallel(ecs);
+        } else {
+          execute_sequential(ecs);
+        }
       }
     }
   }
