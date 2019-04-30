@@ -204,7 +204,7 @@ namespace mod {
 
     
   /* A generic quicksort implementation using a comparison callback */
-  template <typename T, typename FN> void quick_sort(T* buffer, s64_t low, s64_t high, FN fn) {
+  template <typename T, typename FN> void quick_sort (T* buffer, s64_t low, s64_t high, FN fn) {
     static const auto partition = [] (T* buffer, s64_t low, s64_t high, FN fn) -> s64_t {
       T const& pivot = buffer[high];
 
@@ -231,9 +231,36 @@ namespace mod {
     quick_sort(buffer, low, pi - 1, fn);
     quick_sort(buffer, pi + 1, high, fn);
   }
+
+  /* A generic quicksort implementation using a comparison callback with indices */
+  template <typename T, typename FN> void quick_sort_indices (T* buffer, s64_t low, s64_t high, FN fn) {
+    static const auto partition = [] (T* buffer, s64_t low, s64_t high, FN fn) -> s64_t {
+      T const& pivot = buffer[high];
+
+      s64_t i = (low - 1);
+
+      for (s64_t j = low; j <= high- 1; j++) { 
+        T const& item = buffer[j];
+        
+        if (fn(item, j, pivot, high)) {
+          ++ i;
+          swap(buffer + i, buffer + j);
+        }
+      }
+
+      swap(buffer + i + 1, buffer + high);
+
+      return i + 1;
+    };
+
+    if (low >= high) return;
+    
+    s64_t pi = partition(buffer, low, high, fn);
+
+    quick_sort(buffer, low, pi - 1, fn);
+    quick_sort(buffer, pi + 1, high, fn);
+  }
 }
-
-
 
 
 /* Get the name of a GL_type enum as a str */
