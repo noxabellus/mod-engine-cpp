@@ -33,6 +33,6 @@ void main () {
 
   v_norm = m_normal * a_norm;
 
-  v_uv = vec2(a_uv.x, 1.0 - a_uv.y);
+  v_uv = vec2(a_uv.x, a_uv.y);
   v_color = a_color;
 }

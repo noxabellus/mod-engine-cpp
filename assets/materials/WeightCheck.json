@@ -1,0 +1,52 @@
+{
+  "shader_program": "WeightCheck",
+
+  "face_culling": {
+    "side": "back",
+    "winding": "counterClockwise"
+  },
+
+  "depth": "lesser",
+  
+  "uniforms": [
+    {
+      "name": "m_model",
+      "type": "matrix4",
+      "value": [
+        1, 0, 0, 0,
+        0, 1, 0, 0,
+        0, 0, 1, 0,
+        0, 0, 0, 1
+      ]
+    },
+    {
+      "name": "m_view",
+      "type": "matrix4",
+      "value": [
+        1, 0, 0, 0,
+        0, 1, 0, 0,
+        0, 0, 1, 0,
+        0, 0, 0, 1
+      ]
+    },
+    {
+      "name": "m_projection",
+      "type": "matrix4",
+      "value": [
+        1, 0, 0, 0,
+        0, 1, 0, 0,
+        0, 0, 1, 0,
+        0, 0, 0, 1
+      ]
+    },
+    {
+      "name": "m_normal",
+      "type": "matrix3",
+      "value": [
+        1, 0, 0,
+        0, 1, 0,
+        0, 0, 1
+      ]
+    }
+  ]
+}

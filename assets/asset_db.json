@@ -5,7 +5,10 @@
     "PointLight Vert": "shaders/PointLight.vert",
     "PointLight Frag": "shaders/PointLight.frag",
     "UnlitColor Vert": "shaders/UnlitColor.vert",
-    "UnlitColor Frag": "shaders/UnlitColor.frag"
+    "UnlitColor Frag": "shaders/UnlitColor.frag",
+    "UnlitTexture Frag": "shaders/UnlitTexture.frag",
+    "WeightCheck Vert": "shaders/WeightCheck.vert",
+    "WeightCheck Frag": "shaders/WeightCheck.frag"
   },
 
   "shader_programs": {
@@ -20,6 +23,14 @@
     "UnlitColor": {
       "vertex": "UnlitColor Vert",
       "fragment": "UnlitColor Frag"
+    },
+    "UnlitTexture": {
+      "vertex": "UnlitColor Vert",
+      "fragment": "UnlitTexture Frag"
+    },
+    "WeightCheck": {
+      "vertex": "WeightCheck Vert",
+      "fragment": "WeightCheck Frag"
     }
   },
 
@@ -27,7 +38,8 @@
     "ModEngine Logo": "textures/modengine.json",
     "Color Calibration Test": "textures/color_test.json",
     "Color Blending Test": "textures/blending_test.json",
-    "Transparency Test": "textures/transparency_test.json"
+    "Transparency Test": "textures/transparency_test.json",
+    "ThinMatrix Cowboy": "textures/thinmatrix_cowboy.json"
   },
 
   "materials": {
@@ -35,7 +47,9 @@
     "Minimal2DB": "materials/minimal2dB.json",
     "Minimal2DC": "materials/minimal2dC.json",
     "PointLight": "materials/PointLight.json",
-    "UnlitColor": "materials/UnlitColor.json"
+    "UnlitColor": "materials/UnlitColor.json",
+    "UnlitTexture": "materials/UnlitTexture.json",
+    "WeightCheck": "materials/WeightCheck.json"
   },
 
   "material_sets": {
