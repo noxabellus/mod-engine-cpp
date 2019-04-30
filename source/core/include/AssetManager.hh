@@ -549,7 +549,7 @@ namespace mod {
 
 
     template <typename T> char const* get_name_from_id (u32_t id) const {
-      s64_t index = get_index_from_id<T>(value);
+      s64_t index = get_index_from_id<T>(id);
 
       if (index == -1) return NULL;
       else return get_list<T>().names[index].value;
