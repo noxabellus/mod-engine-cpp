@@ -125,6 +125,7 @@ MODULE_API void module_init () {
   f32_t camera_rot = (M_PI * 2) * .125;
   f32_t camera_dist = 500;
   f32_t camera_height = camera_dist;
+  Vector3f camera_target = { 0, 0, 100 };
   f32_t camera_zoom = 1;
 
   f32_t camera_rot_rate = M_PI;
@@ -208,7 +209,7 @@ MODULE_API void module_init () {
       directional_light_mat->set_uniform("specular_power", specular_power);
     } End();
 
-    view_matrix = Matrix4::from_look(camera_position, { 0, 0, 0 }, Constants::Vector3f::down, true).inverse();
+    view_matrix = Matrix4::from_look(camera_position, camera_target, Constants::Vector3f::down, true).inverse();
 
     Vector2f half_screen = Vector2f { Application.ig_io->DisplaySize } / 2.0f;
 
