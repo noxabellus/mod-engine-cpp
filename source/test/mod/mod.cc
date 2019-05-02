@@ -2,7 +2,7 @@
 #include "../examples/gui/main_menu_ex.cc"
 #include "../examples/gui/vendor_ex.cc"
 
-#include "load_dae.cc"
+#include "DAE.cc"
 
 
 MODULE_API void module_init () {
@@ -22,12 +22,14 @@ MODULE_API void module_init () {
 
 
   /* XML TEST */
-  RenderMesh3D dae_mesh = load_dae("./assets/meshes/thinmatrix_cowboy.dae");
+  DAE dae = DAE::from_file("./assets/meshes/thinmatrix_cowboy.dae");
 
+  RenderMesh3D dae_mesh = dae.load_mesh(Matrix4::compose({ 0, Constants::Quaternion::identity, 25 }));
+
+  dae.destroy();
    
 
 
-  
   struct BasicInput {
     bool enabled;
 
@@ -54,24 +56,24 @@ MODULE_API void module_init () {
   ecs.create_component_type<PointLight>();
 
 
-  EntityHandle cube; {
-    cube = ecs.create_entity();
-    cube.add_component(Transform3D {
+  EntityHandle character; {
+    character = ecs.create_entity();
+    character.add_component(Transform3D {
       0,
       Constants::Quaternion::identity,
-      100
+      1
     });
-    cube.add_component(unlit_texture_mat);
-    cube.add_component(BasicInput { true, 64 });
-    cube.add_component(RenderMesh3DHandle { &dae_mesh });
+    character.add_component(weight_check_mat);
+    character.add_component(BasicInput { true, 64 });
+    character.add_component(RenderMesh3DHandle { &dae_mesh });
   }
 
   EntityHandle plane; {
     plane = ecs.create_entity();
     plane.add_component(Transform3D {
-      { 0, 0, -50 },
+      0,
       Constants::Quaternion::identity,
-      200
+      100
     });
     plane.add_component(directional_light_mat);
     plane.add_component(AssetManager.get<RenderMesh3D>("Test Quad 3D"));
@@ -80,7 +82,7 @@ MODULE_API void module_init () {
   EntityHandle light; {
     light = ecs.create_entity();
     light.add_component(Transform3D {
-      { 200, 200, 200 },
+      200,
       Constants::Quaternion::identity,
       10
     });
@@ -459,17 +461,19 @@ MODULE_API void module_init () {
     Checkbox("Vertex Normals", &ecs.get_system_by_name("Vertex Normal Debugger").enabled);
     Checkbox("Face Edges", &ecs.get_system_by_name("Face Edge Debugger").enabled);
     Checkbox("Object Picker", &ecs.get_system_by_name("Object Picker").enabled);
-    MaterialHandle material_options [3] = {
+
+    MaterialHandle material_options [] = {
       weight_check_mat,
       directional_light_mat,
       unlit_texture_mat
     };
-    if (BeginCombo("Mesh Material", AssetManager.get_name_from_id<Material>(cube.get_component<MaterialHandle>().get_id()))) {
-      for (u8_t i = 0; i < 3; i ++) {
-        bool is_selected = cube.get_component<MaterialHandle>().get_id() == material_options[i].get_id();
+    
+    if (BeginCombo("Mesh Material", AssetManager.get_name_from_id<Material>(character.get_component<MaterialHandle>().get_id()))) {
+      for (u8_t i = 0; i < m_array_length(material_options); i ++) {
+        bool is_selected = character.get_component<MaterialHandle>().get_id() == material_options[i].get_id();
 
         if (Selectable(AssetManager.get_name_from_id<Material>(material_options[i].get_id()), is_selected)) {
-          cube.get_component<MaterialHandle>() = material_options[i];
+          character.get_component<MaterialHandle>() = material_options[i];
         }
 
         if (is_selected) SetItemDefaultFocus();

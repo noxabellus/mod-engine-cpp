@@ -30,8 +30,8 @@ layout (location = 1) in vec3 a_norm;
 layout (location = 2) in vec2 a_uv;
 layout (location = 3) in vec3 a_color;
 
-layout (location = 4) in uvec3 a_joints;
-layout (location = 5) in vec3 a_weights;
+layout (location = 4) in uvec4 a_joints;
+layout (location = 5) in vec4 a_weights;
 
 
 uniform mat4 m_model;
@@ -64,10 +64,9 @@ void main () {
   v_uv = vec2(a_uv.x, 1.0 - a_uv.y);
   v_color = a_color;
 
-  v_weights //= a_weights;
-            = vec3(0, 0, 0)
-            + joint_colors[a_joints.x] * a_weights.x
-            + joint_colors[a_joints.y] * a_weights.y
-            + joint_colors[a_joints.z] * a_weights.z
+  v_weights = joint_colors[a_joints.x % 16] * a_weights.x
+            + joint_colors[a_joints.y % 16] * a_weights.y
+            + joint_colors[a_joints.z % 16] * a_weights.z
+            + joint_colors[a_joints.w % 16] * a_weights.w
             ;
 }
