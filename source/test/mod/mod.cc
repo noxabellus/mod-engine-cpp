@@ -277,9 +277,9 @@ MODULE_API void module_init () {
           Triangle tri = { mesh.positions[face.x], mesh.positions[face.y], mesh.positions[face.z] };
 
           Vector3f normal = tri.normal();
-          Vector3f center = tri.center();
+          Vector3f center = tri.center().apply_matrix(transform_matrix);
 
-          draw_debug.line3(Line3 { center, center + normal * .1 }.apply_matrix(transform_matrix), { 1, 0, 1 });
+          draw_debug.line3(Line3 { center, center + normal * 5 }, { 1, 0, 1 });
         }
       }
     }
@@ -303,9 +303,9 @@ MODULE_API void module_init () {
         RenderMesh3D& mesh = *entity.get_component<RenderMesh3DHandle>();
 
         for (auto [ i, normal ] : mesh.normals) {
-          Vector3f& pos = mesh.positions[i];
+          Vector3f pos = mesh.positions[i].apply_matrix(transform_matrix);
           
-          draw_debug.line3(Line3 { pos, pos + normal * .1 }.apply_matrix(transform_matrix), { 0, 1, 1 });
+          draw_debug.line3(Line3 { pos, pos + normal * 5 }, { 0, 1, 1 });
         }
       }
     }
