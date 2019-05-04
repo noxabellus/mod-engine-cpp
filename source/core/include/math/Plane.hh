@@ -103,9 +103,17 @@ namespace mod {
     }
 
 
+    /* Determine if two Planes are essentially equivalent
+     * Wrapper for num::almost_equal, see it for more details */
+    bool almost_equal (Plane const& r, s32_t ulp = 2) const {
+      return num::almost_equal(constant, r.constant, ulp)
+          && normal.almost_equal(r.normal, ulp);
+    }
+
+
     /* Determine if two Planes are identical */
     bool equal (Plane const& r) const {
-      return constant == r.constant
+      return num::flt_equal(constant, r.constant)
           && normal == r.normal;
     }
     
@@ -117,7 +125,7 @@ namespace mod {
 
     /* Determine if two Planes are not identical */
     bool not_equal (Plane const& r) const {
-      return constant != r.constant
+      return num::flt_not_equal(constant, r.constant)
           || normal != r.normal;
     }
     

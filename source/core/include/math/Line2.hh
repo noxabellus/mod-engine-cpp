@@ -98,6 +98,14 @@ namespace mod {
     ENGINE_API Line2 shortest_line_to_ray (Ray2 const& ray) const;
 
 
+    /* Determine if two line segments are essentially equivalent.
+     * Wrapper for num::almost_equal, see it for details */
+    bool almost_equal (Line2 const& r, s32_t ulp = 2) const {
+      return a.almost_equal(r.a, ulp)
+          && b.almost_equal(r.b, ulp);
+    }
+
+
     /* Determine if two line segments are identical */
     bool equal (Line2 const& r) const {
       return a == r.a

@@ -2,7 +2,7 @@
 #include "settings_menu_ex.cc"
 
 
-void main_menu_ex () {
+static void main_menu_ex () {
   using namespace mod;
   using namespace ImGui;
 

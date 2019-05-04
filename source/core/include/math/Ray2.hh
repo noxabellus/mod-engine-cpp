@@ -65,26 +65,33 @@ namespace mod {
     ENGINE_API Line2 shortest_line_to_ray (Ray2 const& other) const;
 
 
+    /* Determine if two rays are essentially equivalent.
+     * Wrapper for num::almost_equal, see it for details */
+    bool almost_equal (Ray2 const& r, s32_t ulp = 2) const {
+      return origin.almost_equal(r.origin, ulp)
+          && direction.almost_equal(r.direction, ulp);
+    }
+
     /* Determine if two rays are identical */
-    bool equal (Ray2 const& r) {
+    bool equal (Ray2 const& r) const {
       return origin == r.origin
           && direction == r.direction;
     }
 
     /* Determine if two rays are identical */
-    bool operator == (Ray2 const& r) {
+    bool operator == (Ray2 const& r) const {
       return equal(r);
     }
 
 
     /* Determine if two rays are not identical */
-    bool not_equal (Ray2 const& r) {
+    bool not_equal (Ray2 const& r) const {
       return origin != r.origin
           || direction != r.direction;
     }
 
     /* Determine if two rays are not identical */
-    bool operator != (Ray2 const& r) {
+    bool operator != (Ray2 const& r) const {
       return not_equal(r);
     }
 

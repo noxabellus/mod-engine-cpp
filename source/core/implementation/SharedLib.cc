@@ -10,17 +10,18 @@
 
       platform_ptr = LoadLibraryA(origin);
 
-      m_asset_assert((size_t) platform_ptr != -1_u64 && (size_t) platform_ptr != SIZE_MAX, origin, "Failed to load SharedLib, Windows error code was %" PRIu32, (u32_t) GetLastError());
+      auto platform_ptr_i = reinterpret_cast<size_t>(platform_ptr);
+      m_asset_assert(platform_ptr_i != -1_u64 && platform_ptr_i != SIZE_MAX, origin, "Failed to load SharedLib, Windows error code was %lu", GetLastError());
     }
 
     void SharedLib::destroy () {
-      m_asset_assert(FreeLibrary((HMODULE) platform_ptr) != 0, origin, "Failed to unload SharedLib, Windows error code was %" PRIu32, (u32_t) GetLastError());
+      m_asset_assert(FreeLibrary(reinterpret_cast<HMODULE>(platform_ptr)) != 0, origin, "Failed to unload SharedLib, Windows error code was %lu", GetLastError());
       free(origin);
     }
 
 
     void* SharedLib::get_address (char const* name) {
-      return (void*) GetProcAddress((HMODULE) platform_ptr, name);
+      return reinterpret_cast<void*>(GetProcAddress(reinterpret_cast<HMODULE>(platform_ptr), name));
     }
   }
 #else

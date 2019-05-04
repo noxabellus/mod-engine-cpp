@@ -142,21 +142,21 @@ namespace mod {
     /* Enable multiple bit indices of a Bitmask by iterating a parameter pack list of indices */
     template <typename ... A> void set_multiple (A ... args) {
       static constexpr size_t arg_count = sizeof...(args);
-      size_t indices [arg_count] = { ((size_t) args)... };
+      size_t indices [arg_count] = { static_cast<size_t>(args)... };
       set_list(indices, arg_count);
     }
 
     /* Disable multiple bit indices of a Bitmask by iterating a parameter pack list of indices */
     template <typename ... A> void unset_multiple (A ... args) {
       static constexpr size_t arg_count = sizeof...(args);
-      size_t indices [arg_count] = { ((size_t) args)... };
+      size_t indices [arg_count] = { static_cast<size_t>(args)... };
       unset_list(indices, arg_count);
     }
 
     /* Toggle multiple bit indices of a Bitmask by iterating a parameter pack list of indices */
     template <typename ... A> void toggle_multiple (A ... args) {
       static constexpr size_t arg_count = sizeof...(args);
-      size_t indices [arg_count] = { ((size_t) args)... };
+      size_t indices [arg_count] = { static_cast<size_t>(args)... };
       toggle_list(indices, arg_count);
     }
 

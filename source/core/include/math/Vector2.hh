@@ -47,7 +47,7 @@ namespace mod {
 
     /* Convert a vector to another type of vector */
     template <typename U> constexpr operator Vector2<U> () const {
-      return { (U) x, (U) y };
+      return { static_cast<U>(x), static_cast<U>(y) };
     }
 
     /* Convert a vector to an imgui vector */
@@ -59,7 +59,7 @@ namespace mod {
     /* Get an element of a vector by index.
      * For efficiency, the index is not bounds checked */
     T& operator [] (size_t index) const {
-      return (T&) elements[index];
+      return const_cast<T&>(elements[index]);
     }
 
     
@@ -273,34 +273,41 @@ namespace mod {
     
     /* x + y */
     template <typename U = T> U add_reduce () const {
-      return ((U) x) + ((U) y);
+      return static_cast<U>(x) + static_cast<U>(y);
     }
     
     /* x - y */
     template <typename U = T> U sub_reduce () const {
-      return ((U) x) - ((U) y);
+      return static_cast<U>(x) - static_cast<U>(y);
     }
     
     /* x * y */
     template <typename U = T> U mul_reduce () const {
-      return ((U) x) * ((U) y);
+      return static_cast<U>(x) * static_cast<U>(y);
     }
     
     /* x / y */
     template <typename U = T> U div_reduce () const {
-      return ((U) x) / ((U) y);
+      return static_cast<U>(x) / static_cast<U>(y);
     }
     
     /* x % y */
     template <typename U = T> U rem_reduce () const {
-      return num::remainder(((U) x), ((U) y));
+      return num::remainder(static_cast<U>(x), static_cast<U>(y));
     }
 
+
+    /* Determine whether two floating point vectors are essentially equivalent.
+     * Wrapper for num::almost_equal, see it for more detail */
+    bool almost_equal (Vector2 const& r, s32_t ulp = 2) const {
+      return num::almost_equal(x, r.x, ulp)
+          && num::almost_equal(y, r.y, ulp);
+    }
     
     /* x == r.x && y == r.y */
     bool equal (Vector2 const& r) const {
-      return x == r.x
-          && y == r.y;
+      return num::flt_equal(x, r.x)
+          && num::flt_equal(y, r.y);
     }
 
     /* x == r.x && y == r.y */
@@ -310,8 +317,8 @@ namespace mod {
 
     /* x != r.x || y != r.y */
     bool not_equal (Vector2 const& r) const {
-      return x != r.x
-          || y != r.y;
+      return num::flt_not_equal(x, r.x)
+          || num::flt_not_equal(y, r.y);
     }
 
     /* x != r.x || y != r.y */
@@ -456,7 +463,7 @@ namespace mod {
     
     /* Get the length/magnitude of a vector */
     template <typename U = typename std::conditional<std::is_floating_point<T>::value, T, f64_t>::type> U length () const {
-      return sqrt((U) length_sq());
+      return sqrt(static_cast<U>(length_sq()));
     }
     
     /* Get the dot product of two vectors */
@@ -471,7 +478,7 @@ namespace mod {
     
     /* Get the angle between two vectors */
     template <typename U = typename std::conditional<std::is_floating_point<T>::value, T, f64_t>::type> U angle (Vector2 const& r) const {
-      U t = ((U) dot(r)) / sqrt(((U) length_sq()) * ((U) r.length_sq()));
+      U t = static_cast<U>(dot(r)) / sqrt(static_cast<U>(length_sq()) * static_cast<U>(r.length_sq()));
       return acos(num::clamp<U>(t, U(-1), U(1)));
     }
     
@@ -482,14 +489,14 @@ namespace mod {
     
     /* Get the length/magnitude of the difference between two vectors */
     template <typename U = typename std::conditional<std::is_floating_point<T>::value, T, f64_t>::type> U distance (Vector2 const& r) const {
-      return sqrt((U) distance_sq(r));
+      return sqrt(static_cast<U>(distance_sq(r)));
     }
     
     /* Get the unit-scale version of a vector */
     template <typename U = typename std::conditional<std::is_floating_point<T>::value, T, f64_t>::type> Vector2<U> normalize () const {
       U l = length<U>();
-      if (l == U(0)) return { U(0), U(0) };
-      else return ((Vector2<U>) *this) / l;
+      if (num::flt_equal(l, U(0))) return { U(0), U(0) };
+      else return Vector2<U>(*this) / l;
     }
     
     /* Get the unit-scale version of a vector and multiply it by the given length/magnitude */
@@ -500,18 +507,18 @@ namespace mod {
     /* Limit the position of a vector to between a minimum and maximum distance from the origin */
     template <typename U = typename std::conditional<std::is_floating_point<T>::value, T, f64_t>::type> Vector2<U> clamp_to_length (U min_length, U max_length) const {
       U l = length<U>();
-      return (((Vector2<U>) *this) / l) * num::clamp<U>(l, min_length, max_length));
+      return (Vector2<U>(*this) / l) * num::clamp<U>(l, min_length, max_length));
     }
     
     /* Get the proportion of the components of a vector */
     template <typename U = typename std::conditional<std::is_floating_point<T>::value, T, f64_t>::type> Vector2<U> proportion () const {
       if (x < y) return {
-        .x = ((U) x) / ((U) y),
+        .x = static_cast<U>(x) / static_cast<U>(y),
         .y = U(1)
       }; else if (y < x) return {
         .x = U(1),
-        .y = ((U) y) / ((U) x)
-      }; else return Vector2<U>.unit;
+        .y = static_cast<U>(y) / static_cast<U>(x)
+      }; else return { U(1), U(1) };
     }
     
     /* Get the unit-scale direction vector from one vector to another */
@@ -521,33 +528,33 @@ namespace mod {
     
     /* Project a vector onto another vector */
     template <typename U = typename std::conditional<std::is_floating_point<T>::value, T, f64_t>::type> Vector2<U> project_on_vec (Vector2 const& r) const {
-      return ((Vector2<U>) r) * (((Vector2<U>) r.dot(l)) / (U) r.length_sq());
+      return Vector2<U>(r) * (Vector2<U>(r.dot(l)) / static_cast<U>(r.length_sq()));
     }
     
     /* Project a vector onto the normal of a vector */
     template <typename U = typename std::conditional<std::is_floating_point<T>::value, T, f64_t>::type> Vector2<U> project_on_normal (Vector2 const& r) const {
-      return ((Vector2<U>) *this) - project_on_vec<U>(r);
+      return Vector2<U>(*this) - project_on_vec<U>(r);
     }
     
     /* Reflect a vector across a normal */
     template <typename U = typename std::conditional<std::is_floating_point<T>::value, T, f64_t>::type> Vector2<U> reflect (Vector2 const* r) const {
-      return ((Vector2<U>) *this) - (((Vector2<U>) r) * U(2) * ((U) dot(r)));
+      return Vector2<U>(*this) - (Vector2<U>(r) * U(2) * static_cast<U>(dot(r)));
     }
 
     
     /* Transform a vector using a matrix3 */
     Vector2<f32_t> apply_matrix (Matrix3 const& m) const {
       return {
-        m[0] * ((f32_t) x) + m[1] * ((f32_t) y) + m[2],
-        m[3] * ((f32_t) x) + m[4] * ((f32_t) y) + m[5]
+        m[0] * static_cast<f32_t>(x) + m[1] * static_cast<f32_t>(y) + m[2],
+        m[3] * static_cast<f32_t>(x) + m[4] * static_cast<f32_t>(y) + m[5]
       };
     }
     
     /* Transform a vector using a matrix4 */
     Vector2<f32_t> apply_matrix (Matrix4 const& m) const {
       return {
-        m[0] * ((f32_t) x) + m[4] * ((f32_t) y) + m[12],
-        m[1] * ((f32_t) x) + m[5] * ((f32_t) y) + m[13]
+        m[0] * static_cast<f32_t>(x) + m[4] * static_cast<f32_t>(y) + m[12],
+        m[1] * static_cast<f32_t>(x) + m[5] * static_cast<f32_t>(y) + m[13]
       };
     }
   
@@ -561,8 +568,8 @@ namespace mod {
     /* Rotate a direction vector using a matrix4 */
     Vector2<f32_t> transform_direction (Matrix4 const& m) const {
       return (Vector2<f32_t> {
-        m[0] * ((f32_t) x) + m[4] * ((f32_t) y),
-        m[1] * ((f32_t) x) + m[5] * ((f32_t) y)
+        m[0] * static_cast<f32_t>(x) + m[4] * static_cast<f32_t>(y),
+        m[1] * static_cast<f32_t>(x) + m[5] * static_cast<f32_t>(y)
       }).normalize();
     }
   };

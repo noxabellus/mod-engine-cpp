@@ -22,7 +22,7 @@ namespace mod {
 
       total_type_count,
 
-      Invalid = (u8_t) -1
+      Invalid = -1
     };
 
     static constexpr char const* names [total_type_count] = {
@@ -238,29 +238,29 @@ namespace mod {
 
     /* Get a pointer to an XMLAttribute in an XMLItem by name.
      * Returns NULL if no XMLAttribute with the given name exists, or if the XMLItem type does not support attributes */
-    ENGINE_API XMLAttribute* get_attribute_pointer (char const* name, size_t name_length = 0) const;
+    ENGINE_API XMLAttribute* get_attribute_pointer (char const* attr_name, size_t attr_name_length = 0) const;
 
     /* Get a reference to an XMLAttribute in an XMLItem by name.
      * Throws if an item with the given name does not exist, or if the XMLItem type does not support attributes */
-    ENGINE_API XMLAttribute& get_attribute (char const* name, size_t name_length = 0) const;
+    ENGINE_API XMLAttribute& get_attribute (char const* attr_name, size_t attr_name_length = 0) const;
 
 
     /* Set the value of an XMLItem's attribute by name.
      * Creates a new attribute if one does not exist with the given name.
      * Takes ownership of the value String.
      * Throws if the XMLItem's type does not support attributes, and destroys the value String immediately */
-    ENGINE_API void set_attribute (String value, char const* name, size_t name_length = 0);
+    ENGINE_API void set_attribute (String value, char const* attr_name, size_t attr_name_length = 0);
 
     /* Set the value of an XMLItem's attribute by name.
      * Throws if an item with the given name already exists ,
      * or if the XMLItem's type does not support attributes
      * Takes ownership of the value String, and destroys it immediately on error */
-    ENGINE_API void set_attribute_unique (String value, char const* name, size_t name_length = 0);
+    ENGINE_API void set_attribute_unique (String value, char const* attr_name, size_t attr_name_length = 0);
 
 
     /* Remove an XMLItem's attribute by name.
      * Does nothing if no attribute with the given name is found or if the XMLItem type does not support attributes */
-    ENGINE_API void unset_attribute (char const* name, size_t name_length = 0);
+    ENGINE_API void unset_attribute (char const* attr_name, size_t attr_name_length = 0);
 
 
 
@@ -306,21 +306,21 @@ namespace mod {
     /* Assume an XMLItem is an array and get a pointer to the nth subitem with the given name in its list.
      * Throws if the XMLItem is not actually an array.
      * Returns NULL if n is out of range */
-    ENGINE_API XMLItem* nth_named_pointer (size_t n, char const* name, size_t name_length = 0) const;
+    ENGINE_API XMLItem* nth_named_pointer (size_t n, char const* item_name, size_t item_name_length = 0) const;
 
     /* Assume an XMLItem is an array and get a pointer to the first subitem with the given name in its list.
      * Throws if the XMLItem is not actually an array.
      * Returns NULL if there is no item with the given name */
-    ENGINE_API XMLItem* first_named_pointer (char const* name, size_t name_length = 0) const;
+    ENGINE_API XMLItem* first_named_pointer (char const* item_name, size_t item_name_length = 0) const;
 
     /* Assume an XMLItem is an array and get a pointer to the first subitem with the given name in its list.
      * Throws if the XMLItem is not actually an array.
      * Returns NULL if there is no item with the given name */
-    ENGINE_API XMLItem* last_named_pointer (char const* name, size_t name_length = 0) const;
+    ENGINE_API XMLItem* last_named_pointer (char const* item_name, size_t item_name_length = 0) const;
 
     /* Assume an XMLItem is an array and get the count of subitems with a given name.
      * Throws if the XMLItem is not actually an array */
-    ENGINE_API size_t count_of_name (char const* name, size_t name_length = 0) const;
+    ENGINE_API size_t count_of_name (char const* item_name, size_t item_name_length = 0) const;
 
 
     /* Assume an XMLItem is an array and get a pointer to the nth subitem with the given name in its list.
@@ -351,17 +351,17 @@ namespace mod {
     /* Assume an XMLItem is an array and get reference to the nth subitem with the given name in its list.
      * Throws if the XMLItem is not actually an array,
      * or if n is out of range */
-    ENGINE_API XMLItem& nth_named (size_t n, char const* name, size_t name_length = 0) const;
+    ENGINE_API XMLItem& nth_named (size_t n, char const* item_name, size_t item_name_length = 0) const;
 
     /* Assume an XMLItem is an array and get reference to the first subitem with the given name in its list.
      * Throws if the XMLItem is not actually an array,
      * or if there is no item with the given name */
-    ENGINE_API XMLItem& first_named (char const* name, size_t name_length = 0) const;
+    ENGINE_API XMLItem& first_named (char const* item_name, size_t item_name_length = 0) const;
 
     /* Assume an XMLItem is an array and get reference to the first subitem with the given name in its list.
      * Throws if the XMLItem is not actually an array,
      * or if there is no item with the given name */
-    ENGINE_API XMLItem& last_named (char const* name, size_t name_length = 0) const;
+    ENGINE_API XMLItem& last_named (char const* item_name, size_t item_name_length = 0) const;
 
 
     /* Assume an XMLItem is an array and get reference to the nth subitem with the given name in its list.

@@ -1,7 +1,7 @@
 #include "../../main.hh"
 
 
-void settings_menu_ex (u8_t prev_mode, u8_t& new_mode) {
+static void settings_menu_ex (u8_t prev_mode, u8_t& new_mode) {
   using namespace mod;
   using namespace ImGui;
 
@@ -15,7 +15,7 @@ void settings_menu_ex (u8_t prev_mode, u8_t& new_mode) {
   Vector2f win_max = { Application.ig_io->DisplaySize.x * .75f, Application.ig_io->DisplaySize.y * .75f };
   
   SetNextWindowSizeConstraints(win_min.min(win_max), win_max.max(win_min));
-  SetNextWindowPos((Vector2f) Application.ig_io->DisplaySize / 2.0f, ImGuiCond_Always, { .5f, .5f });
+  SetNextWindowPos(Vector2f(Application.ig_io->DisplaySize) / 2.0f, ImGuiCond_Always, { .5f, .5f });
   Begin("Settings", NULL, settings_flags); {
     if (CollapsingHeader("Display")) {
       /* Resolution Selection */ {
@@ -155,7 +155,7 @@ void settings_menu_ex (u8_t prev_mode, u8_t& new_mode) {
         PushItemWidth(i_win_qw);
         if (BeginCombo("UI Scale", orig_name)) {
           for (u8_t i = 0; i < 7; i ++) {
-            bool is_selected = scales[i] == Application.ui_scale;
+            bool is_selected = num::flt_equal(scales[i], Application.ui_scale);
 
             if (Selectable(names[i], is_selected)) {
               Application.set_ui_scale(scales[i]);

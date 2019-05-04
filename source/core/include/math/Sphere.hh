@@ -75,7 +75,7 @@ namespace mod {
 
     /* Get the total volume covered by a Sphere */
     f32_t volume () const {
-      return ((4.0f / 3.0f) * ((f32_t) M_PI)) * powf(radius, 3.0f);
+      return ((4.0f / 3.0f) * M_PIF) * powf(radius, 3.0f);
     }
 
 
@@ -103,10 +103,18 @@ namespace mod {
       return radius <= 0.0f;
     }
 
+    
+    /* Determine if two Spheres are essentially equivalent.
+     * Wrapper for num::almost_equal, see it for details */
+    bool almost_equal (Sphere const& r, s32_t ulp = 2) const {
+      return num::almost_equal(radius, r.radius, ulp)
+          && position.almost_equal(r.position, ulp);
+    }
+
 
     /* Determine if two Spheres are identical */
     bool equal (Sphere const& r) const {
-      return radius == r.radius
+      return num::flt_equal(radius, r.radius)
           && position == r.position;
     }
 
@@ -118,7 +126,7 @@ namespace mod {
 
     /* Determine if two Spheres are not identical */
     bool not_equal (Sphere const& r) const {
-      return radius != r.radius
+      return num::flt_not_equal(radius, r.radius)
           || position != r.position;
     }
 

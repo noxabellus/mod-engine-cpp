@@ -16,7 +16,7 @@ namespace mod {
 
     gl_id = glCreateShader(ShaderType::to_gl(type));
 
-    glShaderSource(gl_id, 1, (char const* const*) &source, NULL);
+    glShaderSource(gl_id, 1, const_cast<char const* const*>(&source), NULL);
 
     glCompileShader(gl_id);
 
@@ -55,7 +55,7 @@ namespace mod {
     Shader shader;
 
     try {
-      shader = { origin, type, (char*) source };
+      shader = { origin, type, static_cast<char*>(source) };
     } catch (Exception& exception) {
       free(source);
       throw exception;

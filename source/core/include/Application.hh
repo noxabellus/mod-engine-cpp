@@ -22,7 +22,7 @@ namespace mod {
     Index active_index;
 
     Vector2s& operator [] (Index index) const {
-      return (Vector2s&) resolutions[index];
+      return const_cast<Vector2s&>(resolutions[index]);
     }
   };
 
@@ -34,7 +34,7 @@ namespace mod {
 
       total_mode_count,
       
-      Invalid = (u8_t) -1
+      Invalid = -1
     };
 
     static constexpr char const* names [total_mode_count] = {
@@ -95,7 +95,7 @@ namespace mod {
 
       total_mode_count,
 
-      Invalid = (u8_t) -1
+      Invalid = -1
     };
 
     static constexpr char const* names [total_mode_count] = {

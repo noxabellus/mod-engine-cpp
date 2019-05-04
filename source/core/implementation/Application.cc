@@ -29,6 +29,10 @@ namespace mod {
       const GLchar* message,
       const void* user_param
     ) {
+      static_cast<void>(source);
+      static_cast<void>(length);
+      static_cast<void>(user_param);
+      
       #ifndef OPENGL_EXTREME_DEBUG
         // ignore non-significant error/warning codes
         if(id == 131169 || id == 131185 || id == 131218 || id == 131204) return; 
@@ -207,8 +211,8 @@ namespace mod {
 
     if (resolution_item != NULL) {
       set_resolution({
-        (s32_t) resolution_item->get_array_item(0)->get_number(),
-        (s32_t) resolution_item->get_array_item(1)->get_number(),
+        static_cast<s32_t>(resolution_item->get_array_item(0)->get_number()),
+        static_cast<s32_t>(resolution_item->get_array_item(1)->get_number()),
       });
     }
 
@@ -219,8 +223,8 @@ namespace mod {
       if (position_item != NULL) {
         SDL_SetWindowPosition(
           window,
-          (s32_t) position_item->get_array_item(0)->get_number(),
-          (s32_t) position_item->get_array_item(1)->get_number()
+          static_cast<s32_t>(position_item->get_array_item(0)->get_number()),
+          static_cast<s32_t>(position_item->get_array_item(1)->get_number())
         );
       }
     }
@@ -274,19 +278,19 @@ namespace mod {
       }
 
       json.set_object_value(ui_scale, "ui_scale");
-      json.set_object_value((f64_t) vsync, "vsync");
-      json.set_object_value((f64_t) window_mode, "window_mode");
-      json.set_object_value((f64_t) SDL_GetWindowDisplayIndex(window), "display");
+      json.set_object_value(static_cast<f64_t>(vsync), "vsync");
+      json.set_object_value(static_cast<f64_t>(window_mode), "window_mode");
+      json.set_object_value(static_cast<f64_t>(SDL_GetWindowDisplayIndex(window)), "display");
       
       if (vsync > ApplicationVSyncMode::VBlank) {
-        json.set_object_value((f64_t) target_framerate, "target_framerate");
+        json.set_object_value(static_cast<f64_t>(target_framerate), "target_framerate");
       } else if (json.get_object_item("target_framerate") != NULL) {
         json.remove_object_item("target_framerate");
       }
 
       json.set_object_item(JSONArray::from_elements(
-        JSONItem { (f64_t) resolution.x },
-        JSONItem { (f64_t) resolution.y }
+        JSONItem { static_cast<f64_t>(resolution.x) },
+        JSONItem { static_cast<f64_t>(resolution.y) }
       ), "resolution");
 
       if (window_mode == ApplicationWindowMode::Windowed) {
@@ -295,8 +299,8 @@ namespace mod {
         SDL_GetWindowPosition(window, &pos.x, &pos.y);
 
         json.set_object_item(JSONArray::from_elements(
-          JSONItem { (f64_t) pos.x },
-          JSONItem { (f64_t) pos.y }
+          JSONItem { static_cast<f64_t>(pos.x) },
+          JSONItem { static_cast<f64_t>(pos.y) }
         ), "position");
       } else if (json.get_object_item("position") != NULL) {
         json.remove_object_item("position");
@@ -400,7 +404,7 @@ namespace mod {
     u64_t frame_delta_count = frame_start - last_frame_start;
 
     
-    frame_delta = (f64_t) (frame_delta_count * 1000) / (f64_t) performance_frequency;
+    frame_delta = static_cast<f64_t>(frame_delta_count * 1000) / static_cast<f64_t>(performance_frequency);
 
     
     Input.begin_frame();
@@ -501,20 +505,20 @@ namespace mod {
 
 
     if (vsync > ApplicationVSyncMode::VBlank) {
-      f64_t frame_delay = 1000.0 / (f64_t) target_framerate;
+      f64_t frame_delay = 1000.0 / static_cast<f64_t>(target_framerate);
 
       // TODO cleanup vsync lock code
       if (vsync == ApplicationVSyncMode::SpinLock) {
         f64_t frame_time_ms;
         do {
           u64_t frame_end = SDL_GetPerformanceCounter();
-          u64_t frame_time = (frame_end - frame_start) * 1000;
-          frame_time_ms = (f64_t) frame_time / (f64_t) performance_frequency;
+          u64_t frame_time = (frame_end - frame_start) * 1000llu;
+          frame_time_ms = static_cast<f64_t>(frame_time) / static_cast<f64_t>(performance_frequency);
         } while (frame_delay > frame_time_ms);
       } else if (vsync == ApplicationVSyncMode::SleepLock) {
         u64_t frame_end = SDL_GetPerformanceCounter();
-        u64_t frame_time = (frame_end - frame_start) * 1000;
-        f64_t frame_time_ms = (f64_t) frame_time / (f64_t) performance_frequency;
+        u64_t frame_time = (frame_end - frame_start) * 1000llu;
+        f64_t frame_time_ms = static_cast<f64_t>(frame_time) / static_cast<f64_t>(performance_frequency);
 
         if (frame_delay > frame_time_ms) {
           SDL_Delay(frame_delay - frame_time_ms);

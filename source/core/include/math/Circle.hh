@@ -67,7 +67,7 @@ namespace mod {
 
     /* Get the total area covered by a Circle */
     f32_t area () const {
-      return ((f32_t) M_PI) * powf(radius, 2.0f);
+      return M_PIF * powf(radius, 2.0f);
     }
 
     
@@ -88,11 +88,19 @@ namespace mod {
     bool is_empty () const {
       return radius <= 0.0f;
     }
+
+
+    /* Determine if two Circles are essentially equivalent.
+     * Wrapper for num::almost_equal, see it for details */
+    bool almost_equal (Circle const& r, s32_t ulp = 2) const {
+      return num::almost_equal(radius, r.radius, ulp)
+          && position.almost_equal(r.position, ulp);
+    }
     
 
     /* Determine if two Circles are identical */
     bool equal (Circle const& r) const {
-      return radius == r.radius
+      return num::flt_equal(radius, r.radius)
           && position == r.position;
     }
 
@@ -104,7 +112,7 @@ namespace mod {
 
     /* Determine if two Circles are not identical */
     bool not_equal (Circle const& r) const {
-      return radius != r.radius
+      return num::flt_not_equal(radius, r.radius)
           || position != r.position;
     }
 

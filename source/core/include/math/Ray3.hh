@@ -80,27 +80,33 @@ namespace mod {
     /* Get the minimum distance between a ray and a plane, if the ray intersects the plane. If no intersection occurs, returns INFINITY */
     ENGINE_API f32_t distance (Plane const& plane) const;
 
+    /* Determine if two rays are essentially equivalent.
+     * Wrapper for num::almost_equal, see it for details */
+    bool almost_equal (Ray3 const& r, s32_t ulp = 2) const {
+      return origin.almost_equal(r.origin, ulp)
+          && direction.almost_equal(r.direction, ulp);
+    }
 
     /* Determine if two rays are identical */
-    bool equal (Ray3 const& r) {
+    bool equal (Ray3 const& r) const {
       return origin == r.origin
           && direction == r.direction;
     }
 
     /* Determine if two rays are identical */
-    bool operator == (Ray3 const& r) {
+    bool operator == (Ray3 const& r) const {
       return equal(r);
     }
 
 
     /* Determine if two rays are not identical */
-    bool not_equal (Ray3 const& r) {
+    bool not_equal (Ray3 const& r) const {
       return origin != r.origin
           || direction != r.direction;
     }
 
     /* Determine if two rays are not identical */
-    bool operator != (Ray3 const& r) {
+    bool operator != (Ray3 const& r) const {
       return not_equal(r);
     }
 

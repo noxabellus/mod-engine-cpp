@@ -67,7 +67,7 @@ namespace mod {
       string.append("\n");
     }
 
-    void panic (FILE* stream = stderr) {
+    NORETURN void panic (FILE* stream = stderr) {
       fprintf(stream, "Unhandled ");
       print(stream);
       handle();
@@ -79,47 +79,47 @@ namespace mod {
 
 /* Runtime exception with formatted error message */
 template <typename ... A> NORETURN void m_asset_error (char const* file, s32_t line, s32_t column, char const* fmt, A ... args) {
-  throw mod::Exception { .file = mod::str_clone(file), .line = line, .column = column, .message = mod::str_fmt(fmt, args...) };
+  throw mod::Exception { mod::str_clone(file), line, column, mod::str_fmt(fmt, args...) };
 }
 
 /* Runtime exception with formatted error message */
 template <typename ... A> NORETURN void m_asset_error (char const* file, s32_t line, char const* fmt, A ... args) {
-  throw mod::Exception { .file = mod::str_clone(file), .line = line, .message = mod::str_fmt(fmt, args...) };
+  throw mod::Exception { mod::str_clone(file), line, -1, mod::str_fmt(fmt, args...) };
 }
 
 /* Runtime exception with formatted error message */
 template <typename ... A> NORETURN void m_asset_error (char const* file, char const* fmt, A ... args) {
-  throw mod::Exception { .file = mod::str_clone(file), .message = mod::str_fmt(fmt, args...) };
+  throw mod::Exception { mod::str_clone(file), -1, -1, mod::str_fmt(fmt, args...) };
 }
 
 /* Runtime exception with formatted error message. Takes ownership of the file str */
 template <typename ... A> NORETURN void m_asset_error_ex (char* file, s32_t line, s32_t column, char const* fmt, A ... args) {
-  throw mod::Exception { .file = file, .line = line, .column = column, .message = mod::str_fmt(fmt, args...) };
+  throw mod::Exception { file, line, column, mod::str_fmt(fmt, args...) };
 }
 
 /* Runtime exception with formatted error message. Takes ownership of the file str */
 template <typename ... A> NORETURN void m_asset_error_ex (char* file, s32_t line, char const* fmt, A ... args) {
-  throw mod::Exception { .file = file, .line = line, .message = mod::str_fmt(fmt, args...) };
+  throw mod::Exception { file, line, -1, mod::str_fmt(fmt, args...) };
 }
 
 /* Runtime exception with formatted error message. Takes ownership of the file str */
 template <typename ... A> NORETURN void m_asset_error_ex (char* file, char const* fmt, A ... args) {
-  throw mod::Exception { .file = file, .message = mod::str_fmt(fmt, args...) };
+  throw mod::Exception { file, -1, -1, mod::str_fmt(fmt, args...) };
 }
 
 /* Runtime exception with formatted error message */
 template <typename ... A> NORETURN void m_asset_error (s32_t line, s32_t column, char const* fmt, A ... args) {
-  throw mod::Exception { .line = line, .column = column, .message = mod::str_fmt(fmt, args...) };
+  throw mod::Exception { NULL, line, column, mod::str_fmt(fmt, args...) };
 }
 
 /* Runtime exception with formatted error message */
 template <typename ... A> NORETURN void m_asset_error (s32_t line, char const* fmt, A ... args) {
-  throw mod::Exception { .line = line, .message = mod::str_fmt(fmt, args...) };
+  throw mod::Exception { NULL, line, -1, mod::str_fmt(fmt, args...) };
 }
 
 /* Runtime exception with formatted error message */
 template <typename ... A> NORETURN void m_asset_error (char const* fmt, A ... args) {
-  throw mod::Exception { .message = mod::str_fmt(fmt, args...) };
+  throw mod::Exception { NULL, -1, -1, mod::str_fmt(fmt, args...) };
 }
 
 /* Runtime assertion with exception using formatted error message if the boolean condition is not true */

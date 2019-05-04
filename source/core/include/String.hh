@@ -19,7 +19,7 @@ namespace mod {
 
     /* Create a new String with a specific capacity */
     String (size_t new_capacity)
-    : value((char*) malloc(new_capacity))
+    : value(static_cast<char*>(malloc(new_capacity)))
     , length(0)
     , capacity(new_capacity)
     {

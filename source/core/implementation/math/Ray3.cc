@@ -27,7 +27,7 @@ namespace mod {
     f32_t a01 = -direction.dot(seg_dir);
     f32_t b0 = diff.dot(direction);
     f32_t b1 = -diff.dot(seg_dir);
-    f32_t c = diff.length_sq();
+    // f32_t c = diff.length_sq();
     f32_t det = num::abs(1.0f - a01 * a01);
     f32_t s0, s1, det_ext;
 

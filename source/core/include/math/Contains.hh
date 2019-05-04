@@ -82,7 +82,7 @@ namespace mod {
     ENGINE_API bool polygon_circle (Vector2f const* vertices, size_t vertex_count, Circle const& circle);
 
     /* Determine if a polygon fully contains an axis-aligned bounding box */
-    ENGINE_API bool polygon_aabb2 (Vector2f const* vertices, size_t vertex_count, AABB2 const* aabb);
+    ENGINE_API bool polygon_aabb2 (Vector2f const* vertices, size_t vertex_count, AABB2 const& aabb);
   }
 }
 

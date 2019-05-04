@@ -20,7 +20,7 @@ namespace mod {
 
       total_wrap_count,
 
-      Invalid = (u8_t) -1
+      Invalid = -1
     };
 
     static constexpr char const* names [total_wrap_count] = {
@@ -94,7 +94,7 @@ namespace mod {
 
       total_filter_count,
 
-      Invalid = (u8_t) -1,
+      Invalid = -1,
     };
 
     static constexpr char const* names [total_filter_count] = {
@@ -192,7 +192,7 @@ namespace mod {
 
     /* Create a new Texture from a FreeImage bitmap and optionally initialize its wrap and filter parameters (Defaults to TextureWrap::Repeat for both wrap axis and TextureFilter::Nearest for both filters) */
     ENGINE_API Texture (
-      char const* origin,
+      char const* in_origin,
       FIBITMAP* image,
       u8_t h_wrap = TextureWrap::Repeat,
       u8_t v_wrap = TextureWrap::Repeat,
@@ -353,16 +353,16 @@ namespace mod {
     /* Get the wrap parameters for a Texture */
     pair_t<u8_t> get_wrap () const {
       return {
-        (u8_t) TextureWrap::from_gl(get_parameter<s32_t>(GL_TEXTURE_WRAP_S)),
-        (u8_t) TextureWrap::from_gl(get_parameter<s32_t>(GL_TEXTURE_WRAP_T))
+        static_cast<u8_t>(TextureWrap::from_gl(get_parameter<s32_t>(GL_TEXTURE_WRAP_S))),
+        static_cast<u8_t>(TextureWrap::from_gl(get_parameter<s32_t>(GL_TEXTURE_WRAP_T)))
       };
     }
     
     /* Get the filter parameters for a Texture */
     pair_t<u8_t> get_filter () const {
       return {
-        (u8_t) TextureFilter::from_gl(get_parameter<s32_t>(GL_TEXTURE_MIN_FILTER)),
-        (u8_t) TextureFilter::from_gl(get_parameter<s32_t>(GL_TEXTURE_MAG_FILTER))
+        static_cast<u8_t>(TextureFilter::from_gl(get_parameter<s32_t>(GL_TEXTURE_MIN_FILTER))),
+        static_cast<u8_t>(TextureFilter::from_gl(get_parameter<s32_t>(GL_TEXTURE_MAG_FILTER)))
       };
     }
 

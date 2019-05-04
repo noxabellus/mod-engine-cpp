@@ -4,7 +4,7 @@ Version game_version = { 0, 0, 1 };
 
 #define LIB_PATH ".\\mods\\mod"
 
-s32_t main (s32_t argc, char** args) {
+s32_t main (s32_t, char**) {
   try {
     printf(
       "ModEngine\n"
@@ -22,7 +22,7 @@ s32_t main (s32_t argc, char** args) {
 
     mod::SharedLib lib { LIB_PATH };
 
-    auto module_init = (void (*) ()) lib.get_address("module_init");
+    auto module_init = reinterpret_cast<void (*) ()>(lib.get_address("module_init"));
 
     m_asset_assert(module_init != NULL, lib.origin, "Failed to get module_init function");
 

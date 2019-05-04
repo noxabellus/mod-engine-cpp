@@ -159,7 +159,7 @@ namespace mod {
 
       total_key_count,
 
-      Invalid = (u8_t) -1
+      Invalid = -1
     };
 
     static constexpr char const* valid_values = (
@@ -679,7 +679,7 @@ namespace mod {
 
       total_lock_count,
 
-      Invalid = (u8_t) -1
+      Invalid = -1
     };
 
     static constexpr char const* valid_values = (
@@ -754,7 +754,7 @@ namespace mod {
 
       total_modifier_count,
 
-      Invalid = (u8_t) -1
+      Invalid = -1
     };
 
     static constexpr char const* valid_values = (
@@ -830,7 +830,7 @@ namespace mod {
 
       total_button_count,
       
-      Invalid = (u8_t) -1
+      Invalid = -1
     };
 
     static constexpr char const* valid_values = (

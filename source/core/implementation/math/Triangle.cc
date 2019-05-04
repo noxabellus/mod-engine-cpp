@@ -7,10 +7,10 @@ namespace mod {
     return (c - a).cross(b - a).normalize();
   }
 
-  Vector3f Triangle::get_barycentric_coordinate (Vector3f const& v) const {
+  Vector3f Triangle::get_barycentric_coordinate (Vector3f const& vec) const {
     Vector3f c_delta = c - a;
     Vector3f b_delta = b - a;
-    Vector3f v_delta = v - a;
+    Vector3f v_delta = vec - a;
 
     f32_t dot00 = c_delta.dot(c_delta);
     f32_t dot01 = c_delta.dot(b_delta);

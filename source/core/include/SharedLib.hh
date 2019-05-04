@@ -2,7 +2,7 @@
 #define SHAREDLIB_H
 
 #include "cstd.hh"
-
+#include "Exception.hh"
 
 namespace mod {
   struct SharedLib {

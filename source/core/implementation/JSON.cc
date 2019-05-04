@@ -146,7 +146,7 @@ namespace mod {
           char const* base = str + *offset;
           char const* end = NULL;
 
-          double number = strtod(base, (char**) &end);
+          double number = strtod(base, const_cast<char**>(&end));
 
           item.asset_assert(end != NULL && end > base, "Failed to parse number");
 
@@ -234,17 +234,16 @@ namespace mod {
 
   void JSONItem::destroy () const {
     switch (type) {
-      case JSONType::String: free((void*) string.value); break;
+      case JSONType::String: free(static_cast<void*>(string.value)); break;
       case JSONType::Array: {
         for (auto [ i, item ] : array) item.destroy();
-
-        free((void*) array.elements);
+        free(static_cast<void*>(array.elements));
       } break;
       case JSONType::Object: {
-        for (auto [ i, key ] : object.keys) free((void*) key.value);
-        free((void*) object.keys.elements);
+        for (auto [ i, key ] : object.keys) free(static_cast<void*>(key.value));
+        free(static_cast<void*>(object.keys.elements));
         for (auto [ i, item ] : object.items) item.destroy();
-        free((void*) object.items.elements);
+        free(static_cast<void*>(object.items.elements));
       } break;
       default: break;
     }
@@ -311,20 +310,20 @@ namespace mod {
 
 
 
-  String JSON::unescape_string_from_source (char const* source, size_t* offset) const {
-    while (char_is_whitespace(source[*offset])) ++ *offset;
+  String JSON::unescape_string_from_source (char const* str, size_t* offset) const {
+    while (char_is_whitespace(str[*offset])) ++ *offset;
 
-    asset_assert(source[*offset] == '"', *offset, "Expected a '\"' designating the start of a String, not '%c'", source[*offset]);
+    asset_assert(str[*offset] == '"', *offset, "Expected a '\"' designating the start of a String, not '%c'", str[*offset]);
     ++ *offset;
 
     String new_string;
 
     try {
-      while (source[*offset] != '"' && source[*offset] != '\0') {
-        if (source[*offset] == '\\') {
+      while (str[*offset] != '"' && str[*offset] != '\0') {
+        if (str[*offset] == '\\') {
           ++ *offset;
 
-          switch (source[*offset]) {
+          switch (str[*offset]) {
             case 'n': new_string.append("\n"); break;
             case 'f': new_string.append("\f"); break;
             case 'r': new_string.append("\r"); break;
@@ -334,16 +333,16 @@ namespace mod {
             case '/': new_string.append("/"); break;
             case '"': new_string.append("\""); break;
             case 'u': asset_error(*offset, "Error parsing String: Unicode escapes are not yet supported", *offset); break;
-            default: asset_error(*offset, "Invalid escape character '%c' in String ", source[*offset]);
+            default: asset_error(*offset, "Invalid escape character '%c' in String ", str[*offset]);
           }
         } else {
-          new_string.append(source + *offset, 1);
+          new_string.append(str + *offset, 1);
         }
         
         ++ *offset;
       }
       
-      asset_assert(source[*offset] == '\"', *offset, "Unexpected end of input, expected '\"' to close String");
+      asset_assert(str[*offset] == '\"', *offset, "Unexpected end of input, expected '\"' to close String");
 
       ++ *offset;
     } catch (Exception& exception) {
@@ -414,7 +413,7 @@ namespace mod {
     
     m_asset_assert(data != NULL, path, "Failed to load source file");
 
-    return from_str_ex(path, (char*) data);
+    return from_str_ex(path, static_cast<char*>(data));
   }
 
 

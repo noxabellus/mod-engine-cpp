@@ -48,7 +48,7 @@ namespace mod {
     /* Create a new Array from a parameter pack list of elements */
     template <typename ... A> static Array from_elements (A ... args) {
       static constexpr size_t arg_count = sizeof...(args);
-      T arg_arr [arg_count] = { ((T) args)... };
+      T arg_arr [arg_count] = { static_cast<T>(args)... };
       return { arg_arr, arg_count };
     }
 
@@ -58,7 +58,7 @@ namespace mod {
 
       while (new_capacity < new_count) new_capacity *= 2;
 
-      elements = (T*) malloc(new_capacity * sizeof(T));
+      elements = static_cast<T*>(malloc(new_capacity * sizeof(T)));
 
       m_assert(elements != NULL, "Out of memory or other null pointer error while allocating Array elements with capacity %zu", new_capacity);
 
@@ -75,7 +75,7 @@ namespace mod {
 
       while (capacity < count) capacity *= 2;
 
-      elements = (T*) realloc(elements, capacity * sizeof(T));
+      elements = static_cast<T*>(realloc(elements, capacity * sizeof(T)));
 
       m_assert(elements != NULL, "Out of memory or other null pointer error while reallocating elements for Array from_ex with capacity %zu", capacity);
 
@@ -142,6 +142,21 @@ namespace mod {
 
     /* Get an iterator representing the end of an Array */
     ArrayIterator<T> end () const { return { elements, count }; }
+
+
+    /* Get the last element in an Array.
+     * Panics if there are no elements */
+    T& last () const {
+      m_assert(count > 0, "Cannot get last element of empty Array");
+      return elements[count - 1];
+    }
+
+    /* Get the first element in an Array.
+     * Panics if there are no elements */
+    T& first () const {
+      m_assert(count > 0, "Cannot get last element of empty Array");
+      return elements[0];
+    }
     
 
     /* Iterate over an Array and call a callback closure for each element,
@@ -221,7 +236,7 @@ namespace mod {
 
       if (new_capacity != capacity) {
         size_t byte_size = new_capacity * sizeof(T);
-        elements = (T*) (elements != NULL? realloc(elements, byte_size) : malloc(byte_size));
+        elements = static_cast<T*>(elements != NULL? realloc(elements, byte_size) : malloc(byte_size));
 
         m_assert(elements != NULL, "Out of memory or other null pointer error while reallocating Array for capacity %zu", new_capacity);
 
@@ -239,7 +254,7 @@ namespace mod {
     /* Get a pointer to a specific element of an Array.
      * Returns NULL if the index is out of range */
     T* get_element (size_t index) const {
-      if (index < count) return (T*) elements + index;
+      if (index < count) return const_cast<T*>(elements + index);
       else return NULL;
     }
 
@@ -273,7 +288,7 @@ namespace mod {
     /* Get the index of an Array element by doing pointer arithmetic.
      * Returns -1 if the given value is not an element in the array */
     s64_t get_index (T const* value) {
-      if (value >= elements && value < elements + count) return pointer_to_index<T>(elements, value);
+      if (value >= elements && value < elements + count) return static_cast<s64_t>(pointer_to_index<T>(elements, value));
       else return -1;
     }
 

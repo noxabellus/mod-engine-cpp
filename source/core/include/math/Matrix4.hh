@@ -46,6 +46,24 @@ namespace mod {
     constexpr operator tri_t<Vector3f, Quaternion, Vector3f> () const {
       return { position, rotation, scale };
     }
+
+    /* Linear interpolate between two Transforms */
+    Transform3D lerp (f32_t alpha, Transform3D const& other) const {
+      return {
+        position.lerp(alpha, other.position),
+        rotation.lerp(alpha, other.rotation),
+        scale.lerp(alpha, other.scale)
+      };
+    }
+
+    /* Linear interpolate between two Transforms, using spherical linear interpolation for the Quaternion components */
+    Transform3D slerp (f32_t alpha, Transform3D const& other) const {
+      return {
+        position.lerp(alpha, other.position),
+        rotation.slerp(alpha, other.rotation),
+        scale.lerp(alpha, other.scale)
+      };
+    }
   };
 
 
@@ -112,6 +130,14 @@ namespace mod {
         e8,  e9,  e10, e11,
         e12, e13, e14, e15
       };
+    }
+
+    ArrayIterator<f32_t> begin () const {
+      return { const_cast<f32_t*>(&elements[0]), 0 };
+    }
+
+    ArrayIterator<f32_t> end () const {
+      return { const_cast<f32_t*>(&elements[0]), 16 };
     }
 
 
@@ -238,7 +264,7 @@ namespace mod {
     /* Get an element of a Matrix4 by index.
      * For efficiency, the index is not bounds checked */
     f32_t& operator [] (size_t index) const {
-      return (f32_t&) elements[index];
+      return const_cast<f32_t&>(elements[index]);
     }
 
 
@@ -337,6 +363,18 @@ namespace mod {
 
     /* Get the determinant of a matrix */
     ENGINE_API f32_t determinant () const;
+
+
+    /* Determine if two matrices are essentially equivalent.
+     * Wrapper for num::almost_equal, see it for details.
+     * Warning: This is an expensive operation! */
+    bool almost_equal (Matrix4 const& r, s32_t ulp = 2) const {
+      for (auto [ i, e ] : *this) {
+        if (!num::almost_equal(e, r[i], ulp)) return false;
+      }
+
+      return true;
+    }
 
 
     /* Determine if two matrices are identical */

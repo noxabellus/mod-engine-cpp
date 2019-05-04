@@ -71,6 +71,14 @@ namespace mod {
     ENGINE_API Vector3f clamp (Vector3f const& v) const;
 
 
+    /* Determine if two Triangles are essentially equivalent.
+     * Wrapper for num::almost_equal, see it for details */
+    bool almost_equal (Triangle const& r, s32_t ulp = 2) const {
+      return a.almost_equal(r.a, ulp)
+          && b.almost_equal(r.b, ulp)
+          && c.almost_equal(r.c, ulp);
+    }
+
     /* Determine if two Triangles are identical */
     bool equal (Triangle const& r) const {
       return a == r.a

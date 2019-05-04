@@ -5,123 +5,123 @@
 
 namespace mod {
   Uniform Uniform::from_json_item (ShaderProgram const& program, JSONItem& item) {
-    static const auto extract_value = [] (u8_t type, JSONItem& item, void* out) -> void {
-      switch (type) {
+    static const auto extract_value = [] (u8_t value_type, JSONItem& value_item, void* out) -> void {
+      switch (value_type) {
         case UniformType::Bool: {
-          *(bool*) out = item.get_boolean();
+          *reinterpret_cast<bool*>(out) = value_item.get_boolean();
         } break;
 
         case UniformType::F32: {
-          *(f32_t*) out = item.get_number();
+          *reinterpret_cast<f32_t*>(out) = value_item.get_number();
         } break;
 
         case UniformType::F64: {
-          *(f64_t*) out = item.get_number();
-        }
+          *reinterpret_cast<f64_t*>(out) = value_item.get_number();
+        } break;
 
         case UniformType::S32: {
-          *(s32_t*) out = item.get_number();
+          *reinterpret_cast<s32_t*>(out) = value_item.get_number();
         } break;
 
         case UniformType::U32: {
-          *(u32_t*) out = item.get_number();
+          *reinterpret_cast<u32_t*>(out) = value_item.get_number();
         } break;
 
 
         case UniformType::Vector2f: {
           for (size_t i = 0; i < 2; i ++) {
-            ((::mod::Vector2f*) out)->elements[i] = item.get_array_number(i);
+            reinterpret_cast<::mod::Vector2f*>(out)->elements[i] = value_item.get_array_number(i);
           }
         } break;
         
         case UniformType::Vector2d: {
           for (size_t i = 0; i < 2; i ++) {
-            ((::mod::Vector2d*) out)->elements[i] = item.get_array_number(i);
+            reinterpret_cast<::mod::Vector2d*>(out)->elements[i] = value_item.get_array_number(i);
           }
         } break;
 
         case UniformType::Vector2s: {
           for (size_t i = 0; i < 2; i ++) {
-            ((::mod::Vector2s*) out)->elements[i] = item.get_array_number(i);
+            reinterpret_cast<::mod::Vector2s*>(out)->elements[i] = value_item.get_array_number(i);
           }
         } break;
 
         case UniformType::Vector2u: {
           for (size_t i = 0; i < 2; i ++) {
-            ((::mod::Vector2u*) out)->elements[i] = item.get_array_number(i);
+            reinterpret_cast<::mod::Vector2u*>(out)->elements[i] = value_item.get_array_number(i);
           }
         } break;
 
 
         case UniformType::Vector3f: {
           for (size_t i = 0; i < 3; i ++) {
-            ((::mod::Vector3f*) out)->elements[i] = item.get_array_number(i);
+            reinterpret_cast<::mod::Vector3f*>(out)->elements[i] = value_item.get_array_number(i);
           }
         } break;
         
         case UniformType::Vector3d: {
           for (size_t i = 0; i < 3; i ++) {
-            ((::mod::Vector3d*) out)->elements[i] = item.get_array_number(i);
+            reinterpret_cast<::mod::Vector3d*>(out)->elements[i] = value_item.get_array_number(i);
           }
         } break;
 
         case UniformType::Vector3s: {
           for (size_t i = 0; i < 3; i ++) {
-            ((::mod::Vector3s*) out)->elements[i] = item.get_array_number(i);
+            reinterpret_cast<::mod::Vector3s*>(out)->elements[i] = value_item.get_array_number(i);
           }
         } break;
 
         case UniformType::Vector3u: {
           for (size_t i = 0; i < 3; i ++) {
-            ((::mod::Vector3u*) out)->elements[i] = item.get_array_number(i);
+            reinterpret_cast<::mod::Vector3u*>(out)->elements[i] = value_item.get_array_number(i);
           }
         } break;
 
 
         case UniformType::Vector4f: {
           for (size_t i = 0; i < 4; i ++) {
-            ((::mod::Vector4f*) out)->elements[i] = item.get_array_number(i);
+            reinterpret_cast<::mod::Vector4f*>(out)->elements[i] = value_item.get_array_number(i);
           }
         } break;
         
         case UniformType::Vector4d: {
           for (size_t i = 0; i < 4; i ++) {
-            ((::mod::Vector4d*) out)->elements[i] = item.get_array_number(i);
+            reinterpret_cast<::mod::Vector4d*>(out)->elements[i] = value_item.get_array_number(i);
           }
         } break;
 
         case UniformType::Vector4s: {
           for (size_t i = 0; i < 4; i ++) {
-            ((::mod::Vector4s*) out)->elements[i] = item.get_array_number(i);
+            reinterpret_cast<::mod::Vector4s*>(out)->elements[i] = value_item.get_array_number(i);
           }
         } break;
 
         case UniformType::Vector4u: {
           for (size_t i = 0; i < 4; i ++) {
-            ((::mod::Vector4u*) out)->elements[i] = item.get_array_number(i);
+            reinterpret_cast<::mod::Vector4u*>(out)->elements[i] = value_item.get_array_number(i);
           }
         } break;
         
 
         case UniformType::Matrix3: {
           for (size_t i = 0; i < 9; i ++) {
-            ((::mod::Matrix3*) out)->elements[i] = item.get_array_number(i);
+            reinterpret_cast<::mod::Matrix3*>(out)->elements[i] = value_item.get_array_number(i);
           }
         } break;
 
         case UniformType::Matrix4: {
           for (size_t i = 0; i < 16; i ++) {
-            ((::mod::Matrix4*) out)->elements[i] = item.get_array_number(i);
+            reinterpret_cast<::mod::Matrix4*>(out)->elements[i] = value_item.get_array_number(i);
           }
         } break;
 
 
         case UniformType::Texture: {
-          *(TextureSlot*) out = item.get_number();
+          *reinterpret_cast<TextureSlot*>(out) = value_item.get_number();
         } break;
 
 
-        default: item.asset_error("Expected a single value UniformType not %s", UniformType::name(type));
+        default: value_item.asset_error("Expected a single value UniformType not %s", UniformType::name(value_type));
       }
     };
     
@@ -180,27 +180,27 @@ namespace mod {
       }
 
       switch (type) {
-        case UniformType::BoolArray: return Uniform::from_ex(location, Array<bool> { (bool*) data.elements, data.count / element_size, data.capacity / element_size });
-        case UniformType::F32Array:  return Uniform::from_ex(location, Array<f32_t> { (f32_t*) data.elements, data.count / element_size, data.capacity / element_size });
-        case UniformType::F64Array:  return Uniform::from_ex(location, Array<f64_t> { (f64_t*) data.elements, data.count / element_size, data.capacity / element_size });
-        case UniformType::S32Array:  return Uniform::from_ex(location, Array<s32_t> { (s32_t*) data.elements, data.count / element_size, data.capacity / element_size });
-        case UniformType::U32Array:  return Uniform::from_ex(location, Array<u32_t> { (u32_t*) data.elements, data.count / element_size, data.capacity / element_size });
+        case UniformType::BoolArray: return Uniform::from_ex(location, Array<bool>  { reinterpret_cast<bool*>(data.elements), data.count / element_size, data.capacity / element_size });
+        case UniformType::F32Array:  return Uniform::from_ex(location, Array<f32_t> { reinterpret_cast<f32_t*>(data.elements), data.count / element_size, data.capacity / element_size });
+        case UniformType::F64Array:  return Uniform::from_ex(location, Array<f64_t> { reinterpret_cast<f64_t*>(data.elements), data.count / element_size, data.capacity / element_size });
+        case UniformType::S32Array:  return Uniform::from_ex(location, Array<s32_t> { reinterpret_cast<s32_t*>(data.elements), data.count / element_size, data.capacity / element_size });
+        case UniformType::U32Array:  return Uniform::from_ex(location, Array<u32_t> { reinterpret_cast<u32_t*>(data.elements), data.count / element_size, data.capacity / element_size });
 
-        case UniformType::Vector2fArray: return Uniform::from_ex(location, Array<::mod::Vector2f> { (::mod::Vector2f*) data.elements, data.count / element_size, data.capacity / element_size });
-        case UniformType::Vector2dArray: return Uniform::from_ex(location, Array<::mod::Vector2d> { (::mod::Vector2d*) data.elements, data.count / element_size, data.capacity / element_size });
-        case UniformType::Vector2sArray: return Uniform::from_ex(location, Array<::mod::Vector2s> { (::mod::Vector2s*) data.elements, data.count / element_size, data.capacity / element_size });
-        case UniformType::Vector2uArray: return Uniform::from_ex(location, Array<::mod::Vector2u> { (::mod::Vector2u*) data.elements, data.count / element_size, data.capacity / element_size });
-        case UniformType::Vector3fArray: return Uniform::from_ex(location, Array<::mod::Vector3f> { (::mod::Vector3f*) data.elements, data.count / element_size, data.capacity / element_size });
-        case UniformType::Vector3dArray: return Uniform::from_ex(location, Array<::mod::Vector3d> { (::mod::Vector3d*) data.elements, data.count / element_size, data.capacity / element_size });
-        case UniformType::Vector3sArray: return Uniform::from_ex(location, Array<::mod::Vector3s> { (::mod::Vector3s*) data.elements, data.count / element_size, data.capacity / element_size });
-        case UniformType::Vector3uArray: return Uniform::from_ex(location, Array<::mod::Vector3u> { (::mod::Vector3u*) data.elements, data.count / element_size, data.capacity / element_size });
-        case UniformType::Vector4fArray: return Uniform::from_ex(location, Array<::mod::Vector4f> { (::mod::Vector4f*) data.elements, data.count / element_size, data.capacity / element_size });
-        case UniformType::Vector4dArray: return Uniform::from_ex(location, Array<::mod::Vector4d> { (::mod::Vector4d*) data.elements, data.count / element_size, data.capacity / element_size });
-        case UniformType::Vector4sArray: return Uniform::from_ex(location, Array<::mod::Vector4s> { (::mod::Vector4s*) data.elements, data.count / element_size, data.capacity / element_size });
-        case UniformType::Vector4uArray: return Uniform::from_ex(location, Array<::mod::Vector4u> { (::mod::Vector4u*) data.elements, data.count / element_size, data.capacity / element_size });
+        case UniformType::Vector2fArray: return Uniform::from_ex(location, Array<::mod::Vector2f> { reinterpret_cast<::mod::Vector2f*>(data.elements), data.count / element_size, data.capacity / element_size });
+        case UniformType::Vector2dArray: return Uniform::from_ex(location, Array<::mod::Vector2d> { reinterpret_cast<::mod::Vector2d*>(data.elements), data.count / element_size, data.capacity / element_size });
+        case UniformType::Vector2sArray: return Uniform::from_ex(location, Array<::mod::Vector2s> { reinterpret_cast<::mod::Vector2s*>(data.elements), data.count / element_size, data.capacity / element_size });
+        case UniformType::Vector2uArray: return Uniform::from_ex(location, Array<::mod::Vector2u> { reinterpret_cast<::mod::Vector2u*>(data.elements), data.count / element_size, data.capacity / element_size });
+        case UniformType::Vector3fArray: return Uniform::from_ex(location, Array<::mod::Vector3f> { reinterpret_cast<::mod::Vector3f*>(data.elements), data.count / element_size, data.capacity / element_size });
+        case UniformType::Vector3dArray: return Uniform::from_ex(location, Array<::mod::Vector3d> { reinterpret_cast<::mod::Vector3d*>(data.elements), data.count / element_size, data.capacity / element_size });
+        case UniformType::Vector3sArray: return Uniform::from_ex(location, Array<::mod::Vector3s> { reinterpret_cast<::mod::Vector3s*>(data.elements), data.count / element_size, data.capacity / element_size });
+        case UniformType::Vector3uArray: return Uniform::from_ex(location, Array<::mod::Vector3u> { reinterpret_cast<::mod::Vector3u*>(data.elements), data.count / element_size, data.capacity / element_size });
+        case UniformType::Vector4fArray: return Uniform::from_ex(location, Array<::mod::Vector4f> { reinterpret_cast<::mod::Vector4f*>(data.elements), data.count / element_size, data.capacity / element_size });
+        case UniformType::Vector4dArray: return Uniform::from_ex(location, Array<::mod::Vector4d> { reinterpret_cast<::mod::Vector4d*>(data.elements), data.count / element_size, data.capacity / element_size });
+        case UniformType::Vector4sArray: return Uniform::from_ex(location, Array<::mod::Vector4s> { reinterpret_cast<::mod::Vector4s*>(data.elements), data.count / element_size, data.capacity / element_size });
+        case UniformType::Vector4uArray: return Uniform::from_ex(location, Array<::mod::Vector4u> { reinterpret_cast<::mod::Vector4u*>(data.elements), data.count / element_size, data.capacity / element_size });
 
-        case UniformType::Matrix3Array: return Uniform::from_ex(location, Array<::mod::Matrix3> { (::mod::Matrix3*) data.elements, data.count / element_size, data.capacity / element_size });
-        case UniformType::Matrix4Array: return Uniform::from_ex(location, Array<::mod::Matrix4> { (::mod::Matrix4*) data.elements, data.count / element_size, data.capacity / element_size });
+        case UniformType::Matrix3Array: return Uniform::from_ex(location, Array<::mod::Matrix3> { reinterpret_cast<::mod::Matrix3*>(data.elements), data.count / element_size, data.capacity / element_size });
+        case UniformType::Matrix4Array: return Uniform::from_ex(location, Array<::mod::Matrix4> { reinterpret_cast<::mod::Matrix4*>(data.elements), data.count / element_size, data.capacity / element_size });
 
         default: {
           data.destroy();
@@ -211,29 +211,29 @@ namespace mod {
       extract_value(type, *value_item, element_value);
 
       switch (type) {
-        case UniformType::Bool: return Uniform { location, *(bool*) element_value };
-        case UniformType::F32:  return Uniform { location, *(f32_t*) element_value };
-        case UniformType::F64:  return Uniform { location, *(f64_t*) element_value };
-        case UniformType::S32:  return Uniform { location, *(s32_t*) element_value };
-        case UniformType::U32:  return Uniform { location, *(u32_t*) element_value };
+        case UniformType::Bool: return Uniform { location, *reinterpret_cast<bool*>(element_value) };
+        case UniformType::F32:  return Uniform { location, *reinterpret_cast<f32_t*>(element_value) };
+        case UniformType::F64:  return Uniform { location, *reinterpret_cast<f64_t*>(element_value) };
+        case UniformType::S32:  return Uniform { location, *reinterpret_cast<s32_t*>(element_value) };
+        case UniformType::U32:  return Uniform { location, *reinterpret_cast<u32_t*>(element_value) };
 
-        case UniformType::Vector2f: return Uniform { location, *(::mod::Vector2f*) element_value };
-        case UniformType::Vector2d: return Uniform { location, *(::mod::Vector2d*) element_value };
-        case UniformType::Vector2s: return Uniform { location, *(::mod::Vector2s*) element_value };
-        case UniformType::Vector2u: return Uniform { location, *(::mod::Vector2u*) element_value };
-        case UniformType::Vector3f: return Uniform { location, *(::mod::Vector3f*) element_value };
-        case UniformType::Vector3d: return Uniform { location, *(::mod::Vector3d*) element_value };
-        case UniformType::Vector3s: return Uniform { location, *(::mod::Vector3s*) element_value };
-        case UniformType::Vector3u: return Uniform { location, *(::mod::Vector3u*) element_value };
-        case UniformType::Vector4f: return Uniform { location, *(::mod::Vector4f*) element_value };
-        case UniformType::Vector4d: return Uniform { location, *(::mod::Vector4d*) element_value };
-        case UniformType::Vector4s: return Uniform { location, *(::mod::Vector4s*) element_value };
-        case UniformType::Vector4u: return Uniform { location, *(::mod::Vector4u*) element_value };
+        case UniformType::Vector2f: return Uniform { location, *reinterpret_cast<::mod::Vector2f*>(element_value) };
+        case UniformType::Vector2d: return Uniform { location, *reinterpret_cast<::mod::Vector2d*>(element_value) };
+        case UniformType::Vector2s: return Uniform { location, *reinterpret_cast<::mod::Vector2s*>(element_value) };
+        case UniformType::Vector2u: return Uniform { location, *reinterpret_cast<::mod::Vector2u*>(element_value) };
+        case UniformType::Vector3f: return Uniform { location, *reinterpret_cast<::mod::Vector3f*>(element_value) };
+        case UniformType::Vector3d: return Uniform { location, *reinterpret_cast<::mod::Vector3d*>(element_value) };
+        case UniformType::Vector3s: return Uniform { location, *reinterpret_cast<::mod::Vector3s*>(element_value) };
+        case UniformType::Vector3u: return Uniform { location, *reinterpret_cast<::mod::Vector3u*>(element_value) };
+        case UniformType::Vector4f: return Uniform { location, *reinterpret_cast<::mod::Vector4f*>(element_value) };
+        case UniformType::Vector4d: return Uniform { location, *reinterpret_cast<::mod::Vector4d*>(element_value) };
+        case UniformType::Vector4s: return Uniform { location, *reinterpret_cast<::mod::Vector4s*>(element_value) };
+        case UniformType::Vector4u: return Uniform { location, *reinterpret_cast<::mod::Vector4u*>(element_value) };
 
-        case UniformType::Matrix3: return Uniform { location, *(::mod::Matrix3*) element_value };
-        case UniformType::Matrix4: return Uniform { location, *(::mod::Matrix4*) element_value };
+        case UniformType::Matrix3: return Uniform { location, *reinterpret_cast<::mod::Matrix3*>(element_value) };
+        case UniformType::Matrix4: return Uniform { location, *reinterpret_cast<::mod::Matrix4*>(element_value) };
 
-        case UniformType::Texture: return Uniform { location, *(TextureSlot*) element_value };
+        case UniformType::Texture: return Uniform { location, *reinterpret_cast<TextureSlot*>(element_value) };
 
         default: value_item->asset_error("Unknown error occurred with element type");
       }
@@ -508,7 +508,7 @@ namespace mod {
     Material material;
 
     try {
-      material = from_str(origin, (char*) source);
+      material = from_str(origin, static_cast<char*>(source));
     } catch (Exception& exception) {
       free(source);
       throw exception;

@@ -4,8 +4,9 @@
 
 #include "DAE.cc"
 
+MODULE_API void module_init ();
 
-MODULE_API void module_init () {
+void module_init () {
   using namespace mod;
   using namespace ImGui;
 
@@ -27,7 +28,7 @@ MODULE_API void module_init () {
   RenderMesh3D dae_mesh = dae.load_mesh(Matrix4::compose({ 0, Constants::Quaternion::identity, 25 }));
 
   dae.destroy();
-   
+
 
 
   struct BasicInput {
@@ -92,8 +93,8 @@ MODULE_API void module_init () {
   };
 
 
-  ecs.create_system("MovementInput", true, { ecs.get_component_type_by_instance_type<BasicInput>().id, ecs.get_component_type_by_instance_type<Transform3D>().id }, [&] (ECS* ecs, uint32_t index) {
-    BasicInput& input = ecs->get_component<BasicInput>(index);
+  ecs.create_system("MovementInput", true, { ecs.get_component_type_by_instance_type<BasicInput>().id, ecs.get_component_type_by_instance_type<Transform3D>().id }, [&] (ECS*, uint32_t index) {
+    BasicInput& input = ecs.get_component<BasicInput>(index);
     if (input.enabled) {
       Vector3f movement = { 0, 0, 0 };
 
@@ -108,7 +109,7 @@ MODULE_API void module_init () {
 
       movement = movement.normalize() * (input.movement_rate / Application.frame_delta);
 
-      ecs->get_component<Transform3D>(index).position += movement;
+      ecs.get_component<Transform3D>(index).position += movement;
     }
   });
 
@@ -148,7 +149,7 @@ MODULE_API void module_init () {
   Matrix4 camera_matrix;
   
 
-  ecs.create_system("Render", [&] (ECS* ecs) {
+  ecs.create_system("Render", [&] (ECS*) {
     if (light_orbit) {
       light_orbit_time += light_orbit_speed / Application.frame_delta;
       Transform3D& light_tran = light.get_component<Transform3D>();
@@ -224,13 +225,13 @@ MODULE_API void module_init () {
     camera_matrix = projection_matrix * view_matrix;
 
     ComponentMask mask = ComponentMask {
-      ecs->get_component_type_by_instance_type<Transform3D>().id,
-      ecs->get_component_type_by_instance_type<MaterialHandle>().id,
-      ecs->get_component_type_by_instance_type<RenderMesh3DHandle>().id
+      ecs.get_component_type_by_instance_type<Transform3D>().id,
+      ecs.get_component_type_by_instance_type<MaterialHandle>().id,
+      ecs.get_component_type_by_instance_type<RenderMesh3DHandle>().id
     };
 
-    for (u32_t i = 0; i < ecs->entity_count; i ++) {
-      EntityHandle entity = ecs->get_handle(i);
+    for (u32_t i = 0; i < ecs.entity_count; i ++) {
+      EntityHandle entity = ecs.get_handle(i);
 
       if (entity->enabled_components.match_subset(mask)) {
         Transform3D& transform = entity.get_component<Transform3D>();
@@ -257,14 +258,14 @@ MODULE_API void module_init () {
   });
 
 
-  ecs.create_system("Face Normal Debugger", [&] (ECS* ecs) {
+  ecs.create_system("Face Normal Debugger", [&] (ECS*) {
     ComponentMask mask = ComponentMask {
-      ecs->get_component_type_by_instance_type<Transform3D>().id,
-      ecs->get_component_type_by_instance_type<RenderMesh3DHandle>().id
+      ecs.get_component_type_by_instance_type<Transform3D>().id,
+      ecs.get_component_type_by_instance_type<RenderMesh3DHandle>().id
     };
 
-    for (u32_t i = 0; i < ecs->entity_count; i ++) {
-      EntityHandle entity = ecs->get_handle(i);
+    for (u32_t i = 0; i < ecs.entity_count; i ++) {
+      EntityHandle entity = ecs.get_handle(i);
 
       if (entity->enabled_components.match_subset(mask)) {
         Transform3D& transform = entity.get_component<Transform3D>();
@@ -285,15 +286,15 @@ MODULE_API void module_init () {
     }
   });
 
-  ecs.create_system("Vertex Normal Debugger", [&] (ECS* ecs) {
+  ecs.create_system("Vertex Normal Debugger", [&] (ECS*) {
     ComponentMask mask = ComponentMask {
-      ecs->get_component_type_by_instance_type<Transform3D>().id,
-      ecs->get_component_type_by_instance_type<RenderMesh3DHandle>().id
+      ecs.get_component_type_by_instance_type<Transform3D>().id,
+      ecs.get_component_type_by_instance_type<RenderMesh3DHandle>().id
     };
 
 
-    for (u32_t i = 0; i < ecs->entity_count; i ++) {
-      EntityHandle entity = ecs->get_handle(i);
+    for (u32_t i = 0; i < ecs.entity_count; i ++) {
+      EntityHandle entity = ecs.get_handle(i);
 
       if (entity->enabled_components.match_subset(mask)) {
         Transform3D& transform = entity.get_component<Transform3D>();
@@ -311,14 +312,14 @@ MODULE_API void module_init () {
     }
   });
 
-  ecs.create_system("Face Edge Debugger", [&] (ECS* ecs) {
+  ecs.create_system("Face Edge Debugger", [&] (ECS*) {
     ComponentMask mask = ComponentMask {
-      ecs->get_component_type_by_instance_type<Transform3D>().id,
-      ecs->get_component_type_by_instance_type<RenderMesh3DHandle>().id
+      ecs.get_component_type_by_instance_type<Transform3D>().id,
+      ecs.get_component_type_by_instance_type<RenderMesh3DHandle>().id
     };
 
-    for (u32_t i = 0; i < ecs->entity_count; i ++) {
-      EntityHandle entity = ecs->get_handle(i);
+    for (u32_t i = 0; i < ecs.entity_count; i ++) {
+      EntityHandle entity = ecs.get_handle(i);
 
       if (entity->enabled_components.match_subset(mask)) {
         Transform3D& transform = entity.get_component<Transform3D>();
@@ -346,10 +347,10 @@ MODULE_API void module_init () {
 
   Array<Hit> hits;
 
-  ecs.create_system("Object Picker", [&] (ECS* ecs) {
+  ecs.create_system("Object Picker", [&] (ECS*) {
     ComponentMask mask = ComponentMask {
-      ecs->get_component_type_by_instance_type<Transform3D>().id,
-      ecs->get_component_type_by_instance_type<RenderMesh3DHandle>().id
+      ecs.get_component_type_by_instance_type<Transform3D>().id,
+      ecs.get_component_type_by_instance_type<RenderMesh3DHandle>().id
     };
 
     Vector3f origin_n = { Input.mouse_position_unit.x, Input.mouse_position_unit.y, -.99 };
@@ -366,8 +367,8 @@ MODULE_API void module_init () {
 
     hits.clear();
 
-    for (u32_t i = 0; i < ecs->entity_count; i ++) {
-      EntityHandle entity = ecs->get_handle(i);
+    for (u32_t i = 0; i < ecs.entity_count; i ++) {
+      EntityHandle entity = ecs.get_handle(i);
       if (entity->enabled_components.match_subset(mask)) {
         Transform3D& tran = entity.get_component<Transform3D>();
         RenderMesh3D& mesh = *entity.get_component<RenderMesh3DHandle>();
@@ -495,7 +496,6 @@ MODULE_API void module_init () {
 
     Application.end_frame();
   }
-  
 
   update_reports.destroy();
   ecs.destroy();

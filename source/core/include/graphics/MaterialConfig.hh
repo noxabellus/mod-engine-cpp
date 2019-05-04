@@ -51,11 +51,13 @@ namespace mod {
     static MaterialConfig empty_multi () {
       MaterialConfig config;
       config.multi_material = true;
+      config.materials = { };
       return config;
     }
 
     static MaterialConfig from_ex (Array<MaterialInfo> const& in_materials) {
-      MaterialConfig config = empty_multi();
+      MaterialConfig config;
+      config.multi_material = true;
       config.materials = in_materials;
       return config;
     }
@@ -75,7 +77,7 @@ namespace mod {
         }
 
         material_config = {
-          (size_t) item.get_object_number("material_index"),
+          static_cast<size_t>(item.get_object_number("material_index")),
           cast_shadow
         };
       } else if (item.type == JSONType::Array) {
@@ -100,9 +102,9 @@ namespace mod {
           material_element_item.asset_assert(length_item != NULL, "Expected a number 'length'");
 
           MaterialInfo info = {
-            (size_t) material_element_item.get_object_number("material_index"),
-            (size_t) start_index_item->get_number(),
-            (size_t) length_item->get_number(),
+            static_cast<size_t>(material_element_item.get_object_number("material_index")),
+            static_cast<size_t>(start_index_item->get_number()),
+            static_cast<size_t>(length_item->get_number()),
             cast_shadow
           };
 

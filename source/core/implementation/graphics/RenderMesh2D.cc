@@ -19,17 +19,17 @@ namespace mod {
 
     // Setup positions buffer & attrib, copy any data to gl, enable
     glBindBuffer(GL_ARRAY_BUFFER, mesh->gl_vbos[Position]);
-    glVertexAttribPointer(Position, 2, GL_FLOAT, GL_FALSE, sizeof(Vector2f), (void*) 0);
+    glVertexAttribPointer(Position, 2, GL_FLOAT, GL_FALSE, sizeof(Vector2f), reinterpret_cast<void*>(0));
     glBufferData(GL_ARRAY_BUFFER, mesh->positions.count * sizeof(Vector2f), mesh->positions.elements, draw_arg);
     glEnableVertexAttribArray(Position);
 
     // Setup UVs attrib, do not copy data or enable (not sure binding is needed)
     glBindBuffer(GL_ARRAY_BUFFER, mesh->gl_vbos[UV]);
-    glVertexAttribPointer(UV, 2, GL_FLOAT, GL_FALSE, sizeof(Vector2f), (void*) 0);
+    glVertexAttribPointer(UV, 2, GL_FLOAT, GL_FALSE, sizeof(Vector2f), reinterpret_cast<void*>(0));
 
     // Setup colors attrib, do not copy data or enable
     glBindBuffer(GL_ARRAY_BUFFER, mesh->gl_vbos[Color]);
-    glVertexAttribPointer(Color, 3, GL_FLOAT, GL_FALSE, sizeof(Vector3f), (void*) 0);
+    glVertexAttribPointer(Color, 3, GL_FLOAT, GL_FALSE, sizeof(Vector3f), reinterpret_cast<void*>(0));
 
     // Setup faces and copy data
     glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, mesh->gl_vbos[Face]);
@@ -352,12 +352,12 @@ namespace mod {
       dynamic,
 
       positions.count / 2,
-      (Vector2f*) positions.elements,
-      (Vector2f*) uvs.elements,
-      (Vector3f*) colors.elements,
+      reinterpret_cast<Vector2f*>(positions.elements),
+      reinterpret_cast<Vector2f*>(uvs.elements),
+      reinterpret_cast<Vector3f*>(colors.elements),
 
       faces.count / 3,
-      (Vector3u*) faces.elements,
+      reinterpret_cast<Vector3u*>(faces.elements),
 
       material_config
     );
@@ -392,7 +392,7 @@ namespace mod {
     RenderMesh2D mesh;
 
     try {
-      mesh = from_str(origin, (char*) source);
+      mesh = from_str(origin, static_cast<char*>(source));
     } catch (Exception& exception) {
       free(source);
       throw exception;
@@ -511,7 +511,7 @@ namespace mod {
   void RenderMesh2D::draw_with_active_shader () {
     use();
     
-    glDrawElements(GL_TRIANGLES, faces.count * 3, GL_UNSIGNED_INT, (void*) 0);
+    glDrawElements(GL_TRIANGLES, faces.count * 3, GL_UNSIGNED_INT, reinterpret_cast<void*>(0));
   }
 
   void RenderMesh2D::draw_section_with_active_shader (size_t section_index) {
@@ -519,7 +519,7 @@ namespace mod {
 
     MaterialInfo const& info = material_config[section_index];
 
-    glDrawElements(GL_TRIANGLES, info.length * 3, GL_UNSIGNED_INT, (void*) (info.start_index * 3 * sizeof(uint32_t)));
+    glDrawElements(GL_TRIANGLES, info.length * 3, GL_UNSIGNED_INT, reinterpret_cast<void*>(info.start_index * 3 * sizeof(uint32_t)));
   }
 
   void RenderMesh2D::draw_with_material (MaterialHandle const& material) {
@@ -543,12 +543,12 @@ namespace mod {
       for (auto [ i, info ] : material_config.materials) {
         ref[info.material_index]->use();
         
-        glDrawElements(GL_TRIANGLES, info.length * 3, GL_UNSIGNED_INT, (void*) (info.start_index * 3 * sizeof(uint32_t)));
+        glDrawElements(GL_TRIANGLES, info.length * 3, GL_UNSIGNED_INT, reinterpret_cast<void*>(info.start_index * 3 * sizeof(uint32_t)));
       }
     } else {
       ref[material_config.material_index]->use();
     
-      glDrawElements(GL_TRIANGLES, faces.count * 3, GL_UNSIGNED_INT, (void*) 0);
+      glDrawElements(GL_TRIANGLES, faces.count * 3, GL_UNSIGNED_INT, reinterpret_cast<void*>(0));
     }
   }
 

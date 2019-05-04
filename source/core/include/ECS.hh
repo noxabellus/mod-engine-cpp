@@ -2,6 +2,7 @@
 #define ECS_H
 
 #include "cstd.hh"
+#include "util.hh"
 #include "Bitmask.hh"
 #include "ThreadPool.hh"
 
@@ -18,7 +19,7 @@ namespace mod {
   struct EntityHandle;
   struct ComponentType;
   struct System;
-  struct SystemIteratorArg;
+  class SystemIteratorArg;
   struct ECS;
   
 
@@ -29,7 +30,7 @@ namespace mod {
     ComponentMask enabled_components;
 
 
-    Entity () { };
+    Entity () { }
 
 
     private: friend ECS;
@@ -52,12 +53,14 @@ namespace mod {
 
     static constexpr size_t max_component_types = ComponentMask::bit_count;
     
+    using Destroyer = void (*) (void*);
 
     ID id;
     char* name;
     void* instances;
     size_t instance_size;
     size_t hash_code;
+    Destroyer destroyer;
 
 
     ComponentType () { }
@@ -66,11 +69,11 @@ namespace mod {
     template <typename T> T& get_instance (u32_t index) const {
       m_assert(typeid(T).hash_code() == hash_code, "Cannot get ComponentType %s instance as type %s, the type hash codes do not match", name, typeid(T).name());
 
-      return ((T*) instances)[index];
+      return static_cast<T*>(instances)[index];
     }
 
     void* get_instance_by_id (u32_t index) const {
-      return ((u8_t*) instances) + (index * instance_size);
+      return static_cast<u8_t*>(instances) + (index * instance_size);
     }
 
 
@@ -80,12 +83,13 @@ namespace mod {
 
 
     private: friend ECS;
-      ComponentType (u32_t capacity, ID in_id, char const* in_name, size_t in_instance_size, size_t in_hash_code)
+      ComponentType (u32_t capacity, ID in_id, char const* in_name, size_t in_instance_size, size_t in_hash_code, Destroyer in_destroyer)
       : id(in_id)
       , name(str_clone(in_name))
       , instances(malloc(capacity * in_instance_size))
       , instance_size(in_instance_size)
       , hash_code(in_hash_code)
+      , destroyer(in_destroyer)
       { }
 
 
@@ -94,11 +98,14 @@ namespace mod {
 
         m_assert(
           instances != NULL,
-          "Out of memory or other null pointer error while attempting to reallocate ComponentType %s instances with capacity %" PRIu64,
-          name, (u64_t) new_capacity
+          "Out of memory or other null pointer error while attempting to reallocate ComponentType %s instances with capacity %" PRIu32,
+          name, new_capacity
         );
       }
 
+      void destroy_instance (u32_t index) {
+        if (destroyer != NULL) destroyer(get_instance_by_id(index));
+      }
 
       void destroy () {
         free(name);
@@ -243,7 +250,7 @@ namespace mod {
     }
 
 
-    ENGINE_API void destroy ();
+    ENGINE_API void destroy_entity ();
 
 
     ENGINE_API bool update ();
@@ -327,7 +334,7 @@ namespace mod {
 
 
 
-    ENGINE_API ECS (u32_t entity_capacity = default_entity_capacity, u32_t entity_thread_threshold = default_entity_thread_threshold, uint8_t max_threads = 8, uint8_t thread_iterator_ratio = 1);
+    ENGINE_API ECS (u32_t in_entity_capacity = default_entity_capacity, u32_t in_entity_thread_threshold = default_entity_thread_threshold, uint8_t in_max_threads = 8, uint8_t thread_iterator_ratio = 1);
     
 
 
@@ -345,8 +352,8 @@ namespace mod {
     ENGINE_API EntityHandle create_entity ();
 
     EntityHandle get_handle (u32_t index) const {
-      m_assert(index < entity_count, "Out of range ECS access for Entity at index %" PRIu64 ", (count is %" PRIu64 ")", (u64_t) index, (u64_t) entity_count);
-      return { (ECS*) this, index, entities[index].id };
+      m_assert(index < entity_count, "Out of range ECS access for Entity at index %" PRIu32 ", (count is %" PRIu32 ")", index, entity_count);
+      return { const_cast<ECS*>(this), index, entities[index].id };
     }
 
 
@@ -355,8 +362,8 @@ namespace mod {
     }
 
     Entity& get_entity (u32_t index) const {
-      m_assert(index < entity_count, "Out of range ECS access for Entity at index %" PRIu64 ", (count is %" PRIu64 ")", (u64_t) index, (u64_t) entity_count);
-      return (Entity&) entities[index];
+      m_assert(index < entity_count, "Out of range ECS access for Entity at index %" PRIu32 ", (count is %" PRIu32 ")", index, entity_count);
+      return const_cast<Entity&>(entities[index]);
     }
     
 
@@ -365,7 +372,7 @@ namespace mod {
     ENGINE_API void destroy_entity (EntityHandle& handle);
 
 
-    template <typename T> ComponentType::ID create_component_type (char const* name = NULL) {
+    template <typename T> ComponentType::ID create_component_type (char const* name = NULL, ComponentType::Destroyer destroyer = NULL) {
       ComponentType::ID type_id = component_type_count;
       
       type_info const& t_info = typeid(T);
@@ -374,19 +381,25 @@ namespace mod {
 
       m_assert(
         type_id < ComponentType::max_component_types,
-        "Cannot create new ComponentType for the current ECS, the maximum number of ComponentTypes (%" PRIu64 " have already been created for this ECS",
-        (u64_t) ComponentType::max_component_types
+        "Cannot create new ComponentType for the current ECS, the maximum number of ComponentTypes (%zu) have already been created for this ECS",
+        ComponentType::max_component_types
       );
 
       for (ComponentType::ID i = 0; i < component_type_count; i ++) {
         m_assert(
           component_types[i].hash_code != hash_code,
           "Cannot create ComponentType wrapping type %s because a ComponentType has already been registered for this type with id %" PRIu64,
-          name, (u64_t) i
+          name, static_cast<u64_t>(i)
         );
       }
 
-      component_types[type_id] = ComponentType(entity_capacity, type_id, name, sizeof(T), hash_code);
+      if constexpr (Internal::has_destroy<T>::value) {
+        static const ComponentType::Destroyer std_destroyer = [] (void* instance) { reinterpret_cast<T*>(instance)->destroy(); };
+
+        if (destroyer == NULL) destroyer = std_destroyer;
+      }
+
+      component_types[type_id] = ComponentType(entity_capacity, type_id, name, sizeof(T), hash_code, destroyer);
 
       ++ component_type_count;
 
@@ -400,7 +413,7 @@ namespace mod {
       size_t hash_code = typeid(T).hash_code();
 
       for (ComponentType::ID i = 0; i < component_type_count; i ++) {
-        if (component_types[i].hash_code == hash_code) return (ComponentType&) component_types[i];
+        if (component_types[i].hash_code == hash_code) return const_cast<ComponentType&>(component_types[i]);
       }
 
       String types;
@@ -427,8 +440,8 @@ namespace mod {
 
       m_assert(
         !entity.enabled_components.match_index(type.id),
-        "Cannot create Component of type %s on Entity with ID %" PRIu64 " because a Component of this type already exists",
-        type.name, (u64_t) entity.id
+        "Cannot create Component of type %s on Entity with ID %" PRIu32 " because a Component of this type already exists",
+        type.name, entity.id
       );
 
       entity.enabled_components.set(type_id);
@@ -446,8 +459,8 @@ namespace mod {
 
       m_assert(
         !entity.enabled_components.match_index(type.id),
-        "Cannot create Component of type %s on Entity with ID %" PRIu64 " because a Component of this type already exists",
-        type.name, (u64_t) entity.id
+        "Cannot create Component of type %s on Entity with ID %" PRIu32 " because a Component of this type already exists",
+        type.name, entity.id
       );
 
       entity.enabled_components.set(type.id);
@@ -497,13 +510,13 @@ namespace mod {
 
       m_assert(
         !entity.enabled_components.match_index(type.id),
-        "Cannot add Component of type %s on Entity with ID %" PRIu64 " because a Component of this type already exists",
-        type.name, (u64_t) entity.id
+        "Cannot add Component of type %s on Entity with ID %" PRIu32 " because a Component of this type already exists",
+        type.name, entity.id
       );
 
       entity.enabled_components.set(type.id);
 
-      auto new_instance = (T*) type.get_instance_by_id(handle.index);
+      auto new_instance = static_cast<T*>(type.get_instance_by_id(handle.index));
 
       new (new_instance) T { data };
 
@@ -529,8 +542,8 @@ namespace mod {
 
       m_assert(
         entity.enabled_components.match_index(type.id),
-        "Cannot get Component of type %s on Entity with ID %" PRIu64 " because a Component of this type does not exist for the given Entity",
-        type.name, (u64_t) entity.id
+        "Cannot get Component of type %s on Entity with ID %" PRIu32 " because a Component of this type does not exist for the given Entity",
+        type.name, entity.id
       );
 
       return type.get_instance<T>(index);
@@ -542,21 +555,17 @@ namespace mod {
 
       m_assert(
         entity.enabled_components.match_index(type.id),
-        "Cannot get Component of type %s on Entity with ID %" PRIu64 " because a Component of this type does not exist for the given Entity",
-        type.name, (u64_t) entity.id
+        "Cannot get Component of type %s on Entity with ID %" PRIu32 " because a Component of this type does not exist for the given Entity",
+        type.name, entity.id
       );
 
       return type.get_instance<T>(handle.index);
     }
 
 
-    void destroy_component_by_id (u32_t index, ComponentType::ID type_id) {
-      get_entity(index).enabled_components.unset(type_id);
-    }
+    ENGINE_API void destroy_component_by_id (u32_t index, ComponentType::ID type_id);
 
-    void destroy_component_by_id (EntityHandle& handle, ComponentType::ID type_id) {
-      handle->enabled_components.unset(type_id);
-    }
+    ENGINE_API void destroy_component_by_id (EntityHandle& handle, ComponentType::ID type_id);
 
     void destroy_component_by_name (u32_t index, char const* name) {
       destroy_component_by_id(index, get_component_type_by_name(name).id);
@@ -617,8 +626,8 @@ namespace mod {
       void validate_system_count () const {
         m_assert(
           system_id_counter < System::max_systems,
-          "Cannot create new System because the maximmum number of Systems (%" PRIu64 ") have already been created for this ECS",
-          (u64_t) System::max_systems
+          "Cannot create new System because the maximmum number of Systems (%zu) have already been created for this ECS",
+          System::max_systems
         );
       }
 

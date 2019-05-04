@@ -27,7 +27,7 @@ namespace mod {
 
       total_type_count,
 
-      Invalid = (u8_t) -1
+      Invalid = -1
     };
 
     static constexpr char const* names [total_type_count] = {
@@ -69,6 +69,7 @@ namespace mod {
       else if constexpr (std::is_same<T, ::mod::MaterialSet>::value) return MaterialSet;
       else if constexpr (std::is_same<T, ::mod::RenderMesh2D>::value) return RenderMesh2D;
       else if constexpr (std::is_same<T, ::mod::RenderMesh3D>::value) return RenderMesh3D;
+      else if constexpr (std::is_same<T, void>::value) return total_type_count;
       else return Invalid;
     }
   }
@@ -175,9 +176,16 @@ namespace mod {
       return *this;
     }
 
-    s32_t get_id () const {
+    u32_t get_id () const {
       if (valid && managed) return asset_id;
       else return 0;
+    }
+
+    char const* get_name () const {
+      if (valid) {
+        if (managed) return AssetManager.get_name_from_id<T>(asset_id);
+        else return direct->origin;
+      } else return NULL;
     }
 
     T* get_ptr () const {
@@ -203,13 +211,38 @@ namespace mod {
       return &dereference();
     }
 
+
+    bool equal (AssetHandle const& other) const {
+      return valid
+          && valid == other.valid
+          && managed == other.managed
+          && (managed? asset_id == other.asset_id : direct == other.direct);
+    }
+
+    bool operator == (AssetHandle const& other) const {
+      return equal(other);
+    }
+
+    
+    bool not_equal (AssetHandle const& other) const {
+      return !valid
+          || valid != other.valid
+          || managed != other.manged
+          || (managed? asset_id != other.asset_id : direct != other.direct);
+    }
+
+    bool operator != (AssetHandle const& other) const {
+      return not_equal(other);
+    }
+
+
     void clear () {
       valid = false;
       managed = false;
       direct = NULL;
     }
 
-    void destroy () {
+    void destroy_asset () {
       if (!valid) return;
 
       if (managed) {

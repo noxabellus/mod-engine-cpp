@@ -20,7 +20,7 @@ namespace mod {
 
 
     /* Create a new uninitialized ThreadPool */
-    ThreadPool () { };
+    ThreadPool () { }
 
     /* Create a new initialized ThreadPool with the given number of threads */
     ENGINE_API ThreadPool (size_t num_threads);

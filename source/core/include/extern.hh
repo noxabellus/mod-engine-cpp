@@ -8,6 +8,18 @@
 #endif
 
 
+#pragma clang diagnostic push
+#pragma clang diagnostic ignored "-Wold-style-cast"
+#pragma clang diagnostic ignored "-Wmissing-noreturn"
+#pragma clang diagnostic ignored "-Wmissing-variable-declarations"
+#pragma clang diagnostic ignored "-Wreserved-id-macro"
+#pragma clang diagnostic ignored "-Wnonportable-system-include-path"
+#pragma clang diagnostic ignored "-Wlanguage-extension-token"
+#pragma clang diagnostic ignored "-Wdocumentation"
+#pragma clang diagnostic ignored "-Wundef"
+#pragma clang diagnostic ignored "-Wimplicit-fallthrough"
+#pragma clang diagnostic ignored "-Wpragma-pack"
+
 
 #include <extern/tinycthread/tinycthread.h>
 
@@ -63,5 +75,7 @@ namespace ImGui {
 
 
 #include <extern/ImGuiColorTextEdit/TextEditor.h>
+
+#pragma clang diagnostic pop
 
 #endif

@@ -20,7 +20,7 @@ namespace mod {
 
       total_type_count,
 
-      Invalid = (u8_t) -1,
+      Invalid = -1,
     };
 
     static constexpr char const* names [total_type_count] = {
@@ -76,7 +76,7 @@ namespace mod {
 
 
     /* Create a new zero-initialized JSONObject */
-    JSONObject () { };
+    JSONObject () { }
 
     /* Destroy a JSONObject and clean up its arrays */
     ENGINE_API void destroy ();
@@ -326,35 +326,35 @@ namespace mod {
      * Throws if the item is not actually a boolean */
     bool& get_boolean () const {
       asset_assert(type == JSONType::Boolean, "Expected a Boolean, not %s", JSONType::name(type));
-      return (bool&) boolean;
+      return const_cast<bool&>(boolean);
     }
 
     /* Assume a JSONItem is a Number and get a reference to its value.
      * Throws if the item is not actually a number */
     f64_t& get_number () const{
       asset_assert(type == JSONType::Number, "Expected a Number, not %s", JSONType::name(type));
-      return (f64_t&) number;
+      return const_cast<f64_t&>(number);
     }
 
     /* Assume a JSONItem is a String and get a reference to its value.
      * Throws if the item is not actually a string */
     String& get_string () const{
       asset_assert(type == JSONType::String, "Expected a String, not %s", JSONType::name(type));
-      return (String&) string;
+      return const_cast<String&>(string);
     }
 
     /* Assume a JSONItem is an Array and get a reference to its value.
      * Throws if the item is not actually an array */
     JSONArray& get_array () const{
       asset_assert(type == JSONType::Array, "Expected an Array, not %s", JSONType::name(type));
-      return (JSONArray&) array;
+      return const_cast<JSONArray&>(array);
     }
 
     /* Assume a JSONItem is an Object and get a reference to its value.
      * Throws if the item is not actually an object */
     JSONObject& get_object () const{
       asset_assert(type == JSONType::Object, "Expected an Object, not %s", JSONType::name(type));
-      return (JSONObject&) object;
+      return const_cast<JSONObject&>(object);
     }
 
 
@@ -392,19 +392,19 @@ namespace mod {
       );
 
       if constexpr (std::is_same<T, bool>::value) {
-        asset_assert(item != NULL, "Expected a Boolean at key %.*s",  (s32_t) key_length == 0? strlen(key_value) : key_length, key_value);
+        asset_assert(item != NULL, "Expected a Boolean at key %.*s",  static_cast<s32_t>(key_length == 0? strlen(key_value) : key_length), key_value);
         return item->get_boolean();
       } else if constexpr (std::is_same<T, f64_t>::value) {
-        asset_assert(item != NULL, "Expected a Number at key %.*s",  (s32_t) key_length == 0? strlen(key_value) : key_length, key_value);
+        asset_assert(item != NULL, "Expected a Number at key %.*s",  static_cast<s32_t>(key_length == 0? strlen(key_value) : key_length), key_value);
         return item->get_number();
       } else if constexpr (std::is_same<T, String>::value) {
-        asset_assert(item != NULL, "Expected a String at key %.*s",  (s32_t) key_length == 0? strlen(key_value) : key_length, key_value);
+        asset_assert(item != NULL, "Expected a String at key %.*s",  static_cast<s32_t>(key_length == 0? strlen(key_value) : key_length), key_value);
         return item->get_string();
       } else if constexpr (std::is_same<T, JSONArray>::value) {
-        asset_assert(item != NULL, "Expected an Array at key %.*s",  (s32_t) key_length == 0? strlen(key_value) : key_length, key_value);
+        asset_assert(item != NULL, "Expected an Array at key %.*s",  static_cast<s32_t>(key_length == 0? strlen(key_value) : key_length), key_value);
         return item->get_array();
       } else if constexpr (std::is_same<T, JSONObject>::value) {
-        asset_assert(item != NULL, "Expected an Object at key %.*s",  (s32_t) key_length == 0? strlen(key_value) : key_length, key_value);
+        asset_assert(item != NULL, "Expected an Object at key %.*s",  static_cast<s32_t>(key_length == 0? strlen(key_value) : key_length), key_value);
         return item->get_object();
       }
     }
@@ -490,7 +490,7 @@ namespace mod {
     void set_object_item_unique (JSONItem const* item, char const* key_value, size_t key_length = 0) {
       try {
         if (key_length != 0) {
-          asset_assert(get_object().set_unique(item, key_value, key_length) != -1, "Item with key '%.*s' already exists", (s32_t) key_length, key_value);
+          asset_assert(get_object().set_unique(item, key_value, key_length) != -1, "Item with key '%.*s' already exists", static_cast<s32_t>(key_length), key_value);
         } else {
           asset_assert(get_object().set_unique(item, key_value, key_length) != -1, "Item with key '%s' already exists", key_value);
         }
@@ -779,7 +779,7 @@ namespace mod {
 
     /* Decode a String from an offset within a textual JSON representation.
      * Unescape any JSON-safe multiple-character representations of symbols such as \n, \\, etc to their single character representations */
-    ENGINE_API String unescape_string_from_source (char const* source, size_t* offset) const;
+    ENGINE_API String unescape_string_from_source (char const* str, size_t* offset) const;
 
     /* Encode a textual representation of a String into another String.
      * Escape any symbols like \n, \\, etc to JSON-safe multiple-character representations */
@@ -918,21 +918,6 @@ namespace mod {
 
 
 
-    /* Overwrite a JSONItem's value with a Boolean, changing its type and destroying the old value where necessary */
-    void set (bool value) {
-      data.asset_error("Cannot set JSON root to type Boolean, it must be either Array or Object");
-    }
-
-    /* Overwrite a JSONItem's value with a Number, changing its type and destroying the old value where necessary */
-    void set (f64_t value) {
-      data.asset_error("Cannot set JSON root to type Number, it must be either Array or Object");      
-    }
-
-    /* Overwrite a JSONItem's value with a String, changing its type and destroying the old value where necessary */
-    void set (String value) {
-      data.asset_error("Cannot set JSON root to type String, it must be either Array or Object");      
-    }
-
     /* Overwrite a JSONItem's value with an Array, changing its type and destroying the old value where necessary */
     void set (JSONArray value) {
       if (data.type != JSONType::Array) data.destroy();
@@ -952,14 +937,14 @@ namespace mod {
      * Throws if the item is not actually an array */
     JSONArray& get_array () const {
       data.asset_assert(data.type == JSONType::Array, "Expected an Array, not %s", JSONType::name(data.type));
-      return (JSONArray&) data.array;
+      return const_cast<JSONArray&>(data.array);
     }
 
     /* Assume a JSONItem is an Object and get a reference to its value.
      * Throws if the item is not actually an object */
     JSONObject& get_object () const {
       data.asset_assert(data.type == JSONType::Object, "Expected an Object, not %s", JSONType::name(data.type));
-      return (JSONObject&) data.object;
+      return const_cast<JSONObject&>(data.object);
     }
 
 

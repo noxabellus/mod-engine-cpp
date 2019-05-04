@@ -9,7 +9,7 @@ namespace mod {
     have_lock = false;
     watch_list.shutdown = false;
     mtx_init_safe(&watch_list.mtx, mtx_plain);
-    thrd_create_safe(&watch_list.thrd, (thrd_start_t) AssetManager_t::watch_files, NULL);
+    thrd_create_safe(&watch_list.thrd, static_cast<thrd_start_t>(AssetManager_t::watch_files), NULL);
     return *this;
   }
 
@@ -28,14 +28,14 @@ namespace mod {
 
     shader.destroy();
     shader_program.destroy();
-    // texture.destroy();
-    // material.destroy();
-    // material_set.destroy();
-    // render_mesh_2d.destroy();
-    // render_mesh_3d.destroy();
+    texture.destroy();
+    material.destroy();
+    material_set.destroy();
+    render_mesh_2d.destroy();
+    render_mesh_3d.destroy();
   }
 
-  s32_t AssetManager_t::watch_files (void* _) {
+  s32_t AssetManager_t::watch_files (void*) {
     while (true) {
       mtx_lock_safe(&AssetManager.watch_list.mtx);
 
@@ -88,7 +88,7 @@ namespace mod {
       if (update_reports_output != NULL) {
         report_error_intermediate.clear();
 
-        report = { path, false };
+        report = { path, false, { } };
       }
 
       try {
@@ -461,8 +461,8 @@ namespace mod {
         }
       }
     }
-  }
-
+          }
+          
   void AssetManager_t::load_database_from_str (char const* origin, char const* source, String* err_msg_output, bool watch_sub) {
     JSON json = JSON::from_str(origin, source);
 
@@ -486,7 +486,8 @@ namespace mod {
     );
 
     try {
-      load_database_from_str(origin, (char*) source, err_msg_output, watch_sub);
+      load_database_from_str(origin, static_cast<char*>(source), err_msg_output, watch_sub);
+      if (watch) add_watched_file<void>(origin);
     } catch (Exception& exception) {
       free(source);
       throw exception;

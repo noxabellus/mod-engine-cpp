@@ -4,7 +4,7 @@
 
 
 
-void vendor_ex (bool ig_demo = false) {
+static void vendor_ex (bool ig_demo = false) {
   static bool init = false;
 
   if (!init) {

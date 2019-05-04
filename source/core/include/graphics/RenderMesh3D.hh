@@ -31,7 +31,7 @@ namespace mod {
 
       total_attribute_count,
 
-      Invalid = (u8_t) -1
+      Invalid = -1
     };
 
     static constexpr char const* names [total_attribute_count] = {

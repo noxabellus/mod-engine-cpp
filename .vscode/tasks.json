@@ -8,7 +8,12 @@
       "type": "shell",
       "group": "build",
       "command": ".\\build.bat engine_debug",
-      "problemMatcher": []
+      "problemMatcher": [],
+      "presentation": {
+        "panel": "shared",
+        "showReuseMessage": false,
+        "clear": true
+      }
     },
 
     {
@@ -16,7 +21,12 @@
       "type": "shell",
       "group": "build",
       "command": ".\\build.bat engine_release",
-      "problemMatcher": []
+      "problemMatcher": [],
+      "presentation": {
+        "panel": "shared",
+        "showReuseMessage": false,
+        "clear": true
+      }
     },
 
     {
@@ -24,7 +34,12 @@
       "type": "shell",
       "group": "build",
       "command": ".\\build.bat include",
-      "problemMatcher": []
+      "problemMatcher": [],
+      "presentation": {
+        "panel": "shared",
+        "showReuseMessage": false,
+        "clear": true
+      }
     },
     
     {
@@ -32,7 +47,12 @@
       "type": "shell",
       "group": "build",
       "command": ".\\build.bat test_game_debug",
-      "problemMatcher": []
+      "problemMatcher": [],
+      "presentation": {
+        "panel": "shared",
+        "showReuseMessage": false,
+        "clear": true
+      }
     },
     
     {
@@ -40,7 +60,12 @@
       "type": "shell",
       "group": "build",
       "command": ".\\build.bat test_game_release",
-      "problemMatcher": []
+      "problemMatcher": [],
+      "presentation": {
+        "panel": "shared",
+        "showReuseMessage": false,
+        "clear": true
+      }
     },
     
     {
@@ -48,7 +73,12 @@
       "type": "shell",
       "group": "build",
       "command": ".\\build.bat test_mod_debug",
-      "problemMatcher": []
+      "problemMatcher": [],
+      "presentation": {
+        "panel": "shared",
+        "showReuseMessage": false,
+        "clear": true
+      }
     },
     
     {
@@ -56,7 +86,12 @@
       "type": "shell",
       "group": "build",
       "command": ".\\build.bat test_mod_release",
-      "problemMatcher": []
+      "problemMatcher": [],
+      "presentation": {
+        "panel": "shared",
+        "showReuseMessage": false,
+        "clear": true
+      }
     },
     
 
@@ -65,7 +100,12 @@
       "type": "shell",
       "group": "build",
       "command": ".\\build.bat clear debug",
-      "problemMatcher": []
+      "problemMatcher": [],
+      "presentation": {
+        "panel": "shared",
+        "showReuseMessage": false,
+        "clear": true
+      }
     },
 
     {
@@ -73,7 +113,12 @@
       "type": "shell",
       "group": "build",
       "command": ".\\build.bat clear release",
-      "problemMatcher": []
+      "problemMatcher": [],
+      "presentation": {
+        "panel": "shared",
+        "showReuseMessage": false,
+        "clear": true
+      }
     },
 
     {
@@ -81,7 +126,12 @@
       "type": "shell",
       "group": "build",
       "command": ".\\build.bat clear include",
-      "problemMatcher": []
+      "problemMatcher": [],
+      "presentation": {
+        "panel": "shared",
+        "showReuseMessage": false,
+        "clear": true
+      }
     },
 
     {
@@ -89,7 +139,12 @@
       "type": "shell",
       "group": "build",
       "command": ".\\build.bat clear test\\debug",
-      "problemMatcher": []
+      "problemMatcher": [],
+      "presentation": {
+        "panel": "shared",
+        "showReuseMessage": false,
+        "clear": true
+      }
     },
 
     {
@@ -97,7 +152,12 @@
       "type": "shell",
       "group": "build",
       "command": ".\\build.bat clear test\\release",
-      "problemMatcher": []
+      "problemMatcher": [],
+      "presentation": {
+        "panel": "shared",
+        "showReuseMessage": false,
+        "clear": true
+      }
     },
 
     {
@@ -105,7 +165,12 @@
       "type": "shell",
       "group": "build",
       "command": ".\\build.bat clear test\\debug\\mods",
-      "problemMatcher": []
+      "problemMatcher": [],
+      "presentation": {
+        "panel": "shared",
+        "showReuseMessage": false,
+        "clear": true
+      }
     },
 
     {
@@ -113,7 +178,12 @@
       "type": "shell",
       "group": "build",
       "command": ".\\build.bat clear test\\release\\mods",
-      "problemMatcher": []
+      "problemMatcher": [],
+      "presentation": {
+        "panel": "shared",
+        "showReuseMessage": false,
+        "clear": true
+      }
     },
 
     {
@@ -121,7 +191,12 @@
       "type": "shell",
       "group": "build",
       "command": ".\\build.bat clear",
-      "problemMatcher": []
+      "problemMatcher": [],
+      "presentation": {
+        "panel": "shared",
+        "showReuseMessage": false,
+        "clear": true
+      }
     },
 
 
@@ -130,7 +205,12 @@
       "type": "shell",
       "group": "build",
       "command": ".\\build\\test\\debug\\main",
-      "problemMatcher": []
+      "problemMatcher": [],
+      "presentation": {
+        "panel": "shared",
+        "showReuseMessage": false,
+        "clear": true
+      }
     },
     
 
@@ -139,7 +219,12 @@
       "type": "shell",
       "group": "build",
       "command": ".\\build.bat test_mod_debug run_debug",
-      "problemMatcher": []
+      "problemMatcher": [],
+      "presentation": {
+        "panel": "shared",
+        "showReuseMessage": false,
+        "clear": true
+      }
     },
 
 
@@ -148,7 +233,26 @@
       "type": "shell",
       "group": "build",
       "command": ".\\build.bat engine_debug include test_game_debug test_mod_debug run_debug",
-      "problemMatcher": []
+      "problemMatcher": [],
+      "presentation": {
+        "panel": "shared",
+        "showReuseMessage": false,
+        "clear": true
+      }
+    },
+
+
+    {
+      "label": "Rebuild Full Release Test and Run (Windows)",
+      "type": "shell",
+      "group": "build",
+      "command": ".\\build.bat engine_release include test_game_release test_mod_release run_release",
+      "problemMatcher": [],
+      "presentation": {
+        "panel": "shared",
+        "showReuseMessage": false,
+        "clear": true
+      }
     },
 
 
@@ -157,7 +261,12 @@
       "type": "shell",
       "group": "build",
       "command": ".\\package.bat",
-      "problemMatcher": []
+      "problemMatcher": [],
+      "presentation": {
+        "panel": "shared",
+        "showReuseMessage": false,
+        "clear": true
+      }
     }
   ]
 }

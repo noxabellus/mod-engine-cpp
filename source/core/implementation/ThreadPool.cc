@@ -36,7 +36,7 @@ namespace mod {
 
     for (size_t i = 0; i < num_threads; i ++) {
       thrd_t thrd;
-      thrd_create(&thrd, (thrd_start_t) ThreadPool::thread, this);
+      thrd_create(&thrd, reinterpret_cast<thrd_start_t>(ThreadPool::thread), this);
       threads.append(thrd);
     }
   }

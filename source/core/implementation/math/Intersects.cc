@@ -179,7 +179,7 @@ namespace mod::Intersects {
       return { true, line.a };
     }
 
-    f32_t min_dist_sq;
+    f32_t min_dist_sq = 0.0f;
     pair_t<bool, Vector2f> intersect = { false, Constants::Vector2f::zero };
 
     for (size_t i = 0; i < vertex_count ; i ++) {
@@ -198,7 +198,7 @@ namespace mod::Intersects {
 
 
   pair_t<bool, Vector2f> line2_polygon_exit (Line2 const& line, Vector2f const* vertices, size_t vertex_count) {
-    f32_t max_dist_sq;
+    f32_t max_dist_sq = 0.0f;
     pair_t<bool, Vector2f> intersect = { false, Constants::Vector2f::zero };
 
     if (!polygon_vector(vertices, vertex_count, line.b)) {
@@ -331,7 +331,7 @@ namespace mod::Intersects {
       return { true, ray.origin };
     }
 
-    f32_t min_dist_sq;
+    f32_t min_dist_sq = 0.0f;
     pair_t<bool, Vector2f> intersect = { false, Constants::Vector2f::zero };
 
     for (size_t i = 0; i < vertex_count ; i ++) {
@@ -350,7 +350,7 @@ namespace mod::Intersects {
 
 
   pair_t<bool, Vector2f> ray2_polygon_exit (Ray2 const& ray, Vector2f const* vertices, size_t vertex_count) {
-    f32_t max_dist_sq;
+    f32_t max_dist_sq = 0.0f;
     pair_t<bool, Vector2f> intersect = { false, Constants::Vector2f::zero };
 
     for (size_t i = 0; i < vertex_count ; i ++) {
@@ -574,7 +574,7 @@ namespace mod::Intersects {
   pair_t<bool, f32_t> ray3_plane (Ray3 const& ray, Plane const& plane) {
     f32_t t = ray.distance(plane);
 
-    if (t == INFINITY) return v3_intersect_none;
+    if (num::flt_equal(t, INFINITY)) return v3_intersect_none;
     else return { true, t };
   }
 
@@ -817,7 +817,7 @@ namespace mod::Intersects {
 
 
 
-  bool Interesct_frustum_vector (Frustum const& frustum, Vector3f const& vector) {
+  bool frustum_vector (Frustum const& frustum, Vector3f const& vector) {
     for (size_t i = 0; i < 6; i ++) {
       f32_t d = frustum.planes[i].distance(vector);
 

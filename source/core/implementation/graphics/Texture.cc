@@ -4,14 +4,14 @@
 
 namespace mod {
   Texture::Texture (
-    char const* origin,
+    char const* in_origin,
     FIBITMAP* image,
     u8_t h_wrap,
     u8_t v_wrap,
     u8_t min_filter,
     u8_t mag_filter
   )
-  : origin(str_clone(origin))
+  : origin(str_clone(in_origin))
   {
     glGenTextures(1, &gl_id);
     glBindTexture(GL_TEXTURE_2D, gl_id);
@@ -249,7 +249,7 @@ namespace mod {
     Texture texture;
 
     try {
-      texture = from_str(origin, (char*) source);
+      texture = from_str(origin, static_cast<char*>(source));
     } catch (Exception& exception) {
       free(source);
       throw exception;

@@ -7,12 +7,12 @@
 
 
 
-TextEditor editor;
+static TextEditor editor;
 
 static const char* fileToEdit = "./assets/shaders/minimal2d.frag";
 
 
-void text_editor_demo_init ()
+static void text_editor_demo_init ()
 {
 	auto lang = TextEditor::LanguageDefinition::GLSL();
 
@@ -92,7 +92,7 @@ void text_editor_demo_init ()
 
 
 
-void text_editor_demo_loop ()
+static void text_editor_demo_loop ()
 {
 	auto cpos = editor.GetCursorPosition();
 	ImGui::Begin("Text Editor Demo", nullptr, ImGuiWindowFlags_HorizontalScrollbar | ImGuiWindowFlags_MenuBar);

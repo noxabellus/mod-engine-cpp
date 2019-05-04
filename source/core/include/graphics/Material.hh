@@ -78,7 +78,7 @@ namespace mod {
 
       total_type_count,
 
-      Invalid = (u8_t) -1
+      Invalid = -1
     };
 
 
@@ -264,7 +264,7 @@ namespace mod {
     }
 
     /* Get a UniformType from a real type */
-    template <typename T> static constexpr s8_t from_type () {
+    template <typename T> static constexpr u8_t from_type () {
       if constexpr (std::is_same<T, bool>::value) return Bool;
       else if constexpr (std::is_same<T, f32_t>::value) return F32;
       else if constexpr (std::is_same<T, f64_t>::value) return F64;
@@ -323,7 +323,7 @@ namespace mod {
 
       total_side_count,
 
-      Invalid = (u8_t) -1
+      Invalid = -1
     };
 
     static constexpr char const* names [total_side_count] = {
@@ -384,7 +384,7 @@ namespace mod {
 
       total_wind_count,
 
-      Invalid = (u8_t) -1
+      Invalid = -1
     };
 
     static constexpr char const* names [total_wind_count] = {
@@ -458,7 +458,7 @@ namespace mod {
 
       total_blend_count,
 
-      Invalid = (u8_t) -1
+      Invalid = -1
     };
 
     static constexpr char const* names [total_blend_count] = {
@@ -504,7 +504,7 @@ namespace mod {
     );
 
     /* Get an AlphaBlend from its name in str form */
-    static s8_t from_name (char const* name, size_t max_length = SIZE_MAX) {
+    static u8_t from_name (char const* name, size_t max_length = SIZE_MAX) {
       for (u8_t blend = 0; blend < total_blend_count; blend ++) {
         if ((max_length == SIZE_MAX || strlen(names[blend]) == max_length) && str_cmp_caseless(name, names[blend], max_length) == 0) return blend;
       }
@@ -566,7 +566,7 @@ namespace mod {
 
       total_factor_count,
 
-      Invalid = (u8_t) -1
+      Invalid = -1
     };
 
     static constexpr char const* names [total_factor_count] = {
@@ -710,7 +710,7 @@ namespace mod {
     template <typename T> Uniform (s32_t in_location, T const& value)
     : location(in_location)
     {
-      static constexpr s8_t t_type = UniformType::from_type<T>();
+      static constexpr u8_t t_type = UniformType::from_type<T>();
 
       static_assert(UniformType::validate(t_type), "Cannot use Uniform functions with invalid types");
 
@@ -723,12 +723,13 @@ namespace mod {
     /* Create a new Uniform and initialize its location and value
      * If the value is an array, takes ownership */
     template <typename T> static Uniform from_ex (s32_t in_location, Array<T> value) {
-      static constexpr s8_t t_type = UniformType::from_type<T>();
+      static constexpr u8_t t_type = UniformType::from_type<T>();
 
       Uniform uniform;
 
       static_assert(UniformType::validate(t_type), "Cannot use Uniform functions with invalid types");
 
+      uniform.location = in_location;
       uniform.type = t_type;
       
       uniform.get_array<T>() = value;
@@ -741,7 +742,7 @@ namespace mod {
 
     /* Get the value of a value Uniform */
     template <typename T> T& get () const {
-      static constexpr s8_t t_type = UniformType::from_type<T>();
+      static constexpr u8_t t_type = UniformType::from_type<T>();
 
       static_assert(UniformType::validate(t_type), "Cannot use Uniform functions with invalid types");
 
@@ -753,31 +754,30 @@ namespace mod {
         UniformType::name(type), UniformType::name(t_type)
       );
 
-      if constexpr (t_type == UniformType::Bool) return (T&) Bool;
-      else if constexpr (t_type == UniformType::F32) return (T&) F32;
-      else if constexpr (t_type == UniformType::F64) return (T&) F64;
-      else if constexpr (t_type == UniformType::S32) return (T&) S32;
-      else if constexpr (t_type == UniformType::U32) return (T&) U32;
+      if constexpr (t_type == UniformType::Bool) return const_cast<T&>(Bool);
+      else if constexpr (t_type == UniformType::F32) return const_cast<T&>(F32);
+      else if constexpr (t_type == UniformType::F64) return const_cast<T&>(F64);
+      else if constexpr (t_type == UniformType::S32) return const_cast<T&>(S32);
+      else if constexpr (t_type == UniformType::U32) return const_cast<T&>(U32);
 
-      else if constexpr (t_type == UniformType::Vector2f) return (T&) Vector2f;
-      else if constexpr (t_type == UniformType::Vector2d) return (T&) Vector2d;
-      else if constexpr (t_type == UniformType::Vector2s) return (T&) Vector2s;
-      else if constexpr (t_type == UniformType::Vector2u) return (T&) Vector2u;
-      else if constexpr (t_type == UniformType::Vector3f) return (T&) Vector3f;
-      else if constexpr (t_type == UniformType::Vector3d) return (T&) Vector3d;
-      else if constexpr (t_type == UniformType::Vector3s) return (T&) Vector3s;
-      else if constexpr (t_type == UniformType::Vector3u) return (T&) Vector3u;
-      else if constexpr (t_type == UniformType::Vector4f) return (T&) Vector4f;
-      else if constexpr (t_type == UniformType::Vector4d) return (T&) Vector4d;
-      else if constexpr (t_type == UniformType::Vector4s) return (T&) Vector4s;
-      else if constexpr (t_type == UniformType::Vector4u) return (T&) Vector4u;
+      else if constexpr (t_type == UniformType::Vector2f) return const_cast<T&>(Vector2f);
+      else if constexpr (t_type == UniformType::Vector2d) return const_cast<T&>(Vector2d);
+      else if constexpr (t_type == UniformType::Vector2s) return const_cast<T&>(Vector2s);
+      else if constexpr (t_type == UniformType::Vector2u) return const_cast<T&>(Vector2u);
+      else if constexpr (t_type == UniformType::Vector3f) return const_cast<T&>(Vector3f);
+      else if constexpr (t_type == UniformType::Vector3d) return const_cast<T&>(Vector3d);
+      else if constexpr (t_type == UniformType::Vector3s) return const_cast<T&>(Vector3s);
+      else if constexpr (t_type == UniformType::Vector3u) return const_cast<T&>(Vector3u);
+      else if constexpr (t_type == UniformType::Vector4f) return const_cast<T&>(Vector4f);
+      else if constexpr (t_type == UniformType::Vector4d) return const_cast<T&>(Vector4d);
+      else if constexpr (t_type == UniformType::Vector4s) return const_cast<T&>(Vector4s);
+      else if constexpr (t_type == UniformType::Vector4u) return const_cast<T&>(Vector4u);
 
-      else if constexpr (t_type == UniformType::Matrix3) return (T&) Matrix3;
-      else if constexpr (t_type == UniformType::Matrix4) return (T&) Matrix4;
+      else if constexpr (t_type == UniformType::Matrix3) return const_cast<T&>(Matrix3);
+      else if constexpr (t_type == UniformType::Matrix4) return const_cast<T&>(Matrix4);
 
-      else if constexpr (t_type == UniformType::Texture) return (T&) Texture;
-      
-      else m_error("Unexpected type %s for Uniform::get (If this is an Array UniformType use get_element / get_array)", UniformType::name(t_type));
+      else if constexpr (t_type == UniformType::Texture) return const_cast<T&>(Texture);
+      else m_error("Unknown error occurred");
     }
 
     /* Clean up a Uniform's heap allocation if it has one */
@@ -793,13 +793,13 @@ namespace mod {
 
     /* Get the array of an array Uniform */
     template <typename T> Array<T>& get_array () const {
-      static constexpr s8_t t_type = UniformType::from_type<T>();
+      static constexpr u8_t t_type = UniformType::from_type<T>();
 
       static_assert(UniformType::validate(t_type), "Cannot use Uniform functions with invalid types");
 
       m_assert(UniformType::validate_array(type), "Cannot use get_element on non-array UniformType %s", UniformType::name(type));
 
-      s8_t element_type = UniformType::element_type(type);
+      u8_t element_type = UniformType::element_type(type);
 
       m_assert(
         t_type == element_type,
@@ -807,29 +807,28 @@ namespace mod {
         UniformType::name(element_type), UniformType::name(t_type)
       );
 
-      if constexpr (t_type == UniformType::BoolArray) return BoolArray;
-      else if constexpr (t_type == UniformType::F32Array) return F32Array;
-      else if constexpr (t_type == UniformType::F64Array) return F64Array;
-      else if constexpr (t_type == UniformType::S32Array) return S32Array;
-      else if constexpr (t_type == UniformType::U32Array) return U32Array;
+      if constexpr (t_type == UniformType::BoolArray) return const_cast<Array<T>&>(BoolArray);
+      else if constexpr (t_type == UniformType::F32Array) return const_cast<Array<T>&>(F32Array);
+      else if constexpr (t_type == UniformType::F64Array) return const_cast<Array<T>&>(F64Array);
+      else if constexpr (t_type == UniformType::S32Array) return const_cast<Array<T>&>(S32Array);
+      else if constexpr (t_type == UniformType::U32Array) return const_cast<Array<T>&>(U32Array);
 
-      else if constexpr (t_type == UniformType::Vector2fArray) return Vector2fArray;
-      else if constexpr (t_type == UniformType::Vector2dArray) return Vector2dArray;
-      else if constexpr (t_type == UniformType::Vector2sArray) return Vector2sArray;
-      else if constexpr (t_type == UniformType::Vector2uArray) return Vector2uArray;
-      else if constexpr (t_type == UniformType::Vector3fArray) return Vector3fArray;
-      else if constexpr (t_type == UniformType::Vector3dArray) return Vector3dArray;
-      else if constexpr (t_type == UniformType::Vector3sArray) return Vector3sArray;
-      else if constexpr (t_type == UniformType::Vector3uArray) return Vector3uArray;
-      else if constexpr (t_type == UniformType::Vector4fArray) return Vector4fArray;
-      else if constexpr (t_type == UniformType::Vector4dArray) return Vector4dArray;
-      else if constexpr (t_type == UniformType::Vector4sArray) return Vector4sArray;
-      else if constexpr (t_type == UniformType::Vector4uArray) return Vector4uArray;
+      else if constexpr (t_type == UniformType::Vector2fArray) return const_cast<Array<T>&>(Vector2fArray);
+      else if constexpr (t_type == UniformType::Vector2dArray) return const_cast<Array<T>&>(Vector2dArray);
+      else if constexpr (t_type == UniformType::Vector2sArray) return const_cast<Array<T>&>(Vector2sArray);
+      else if constexpr (t_type == UniformType::Vector2uArray) return const_cast<Array<T>&>(Vector2uArray);
+      else if constexpr (t_type == UniformType::Vector3fArray) return const_cast<Array<T>&>(Vector3fArray);
+      else if constexpr (t_type == UniformType::Vector3dArray) return const_cast<Array<T>&>(Vector3dArray);
+      else if constexpr (t_type == UniformType::Vector3sArray) return const_cast<Array<T>&>(Vector3sArray);
+      else if constexpr (t_type == UniformType::Vector3uArray) return const_cast<Array<T>&>(Vector3uArray);
+      else if constexpr (t_type == UniformType::Vector4fArray) return const_cast<Array<T>&>(Vector4fArray);
+      else if constexpr (t_type == UniformType::Vector4dArray) return const_cast<Array<T>&>(Vector4dArray);
+      else if constexpr (t_type == UniformType::Vector4sArray) return const_cast<Array<T>&>(Vector4sArray);
+      else if constexpr (t_type == UniformType::Vector4uArray) return const_cast<Array<T>&>(Vector4uArray);
 
-      else if constexpr (t_type == UniformType::Matrix3Array) return Matrix3Array;
-      else if constexpr (t_type == UniformType::Matrix4Array) return Matrix4Array;
-
-      else m_error("Unexpected type for Uniform::get_element (If this is a value UniformType use get)");
+      else if constexpr (t_type == UniformType::Matrix3Array) return const_cast<Array<T>&>(Matrix3Array);
+      else if constexpr (t_type == UniformType::Matrix4Array) return const_cast<Array<T>&>(Matrix4Array);
+      else m_error("Unknown error occurred");
     }
 
     /* Copy the elements of some array into an array Uniform, overwriting the existing elements */

@@ -59,7 +59,7 @@ namespace mod {
     MaterialSet material_set;
 
     try {
-      material_set = from_str(origin, (char*) source);
+      material_set = from_str(origin, static_cast<char*>(source));
     } catch (Exception& exception) {
       free(source);
       throw exception;

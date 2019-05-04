@@ -449,7 +449,7 @@ namespace mod {
           e.angles.y = atan2f(-e2, e0);
           e.angles.z = 0.0f;
         }
-      }
+      } break;
       
       case EulerOrder::ZXY: {
         e.angles.x = asinf(num::clamp(e6, -1.0f, 1.0f));
@@ -461,7 +461,7 @@ namespace mod {
           e.angles.y = 0.0f;
           e.angles.z = atan2f(e1, e0);
         }
-      }
+      } break;
       
       case EulerOrder::ZYX: {
         e.angles.y = asinf(-num::clamp(e2, -1.0f, 1.0f));
@@ -473,7 +473,7 @@ namespace mod {
           e.angles.x = 0.0f;
           e.angles.z = atan2f(-e4, e5);
         }
-      }
+      } break;
       
       case EulerOrder::YZX: {
         e.angles.z = asinf(num::clamp(e1, -1.0f, 1.0f));
@@ -485,7 +485,7 @@ namespace mod {
           e.angles.x = 0.0f;
           e.angles.y = atan2f(e8, e10);
         }
-      }
+      } break;
       
       case EulerOrder::XZY: {
         e.angles.z = asinf(-num::clamp(e4, -1.0f, 1.0f));
@@ -497,7 +497,7 @@ namespace mod {
           e.angles.x = atan2f(-e9, e10);
           e.angles.y = 0.0f;
         }
-      }
+      } break;
 
       default: m_error("Cannot create Euler from Matrix4 with invalid order %" PRIu8, order);
     }

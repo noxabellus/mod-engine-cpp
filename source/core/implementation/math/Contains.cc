@@ -61,7 +61,7 @@ namespace mod::Contains {
   }
 
 
-  bool contains_circle (Circle const& l, Circle const& r) {
+  bool circle (Circle const& l, Circle const& r) {
     return l.radius >= r.radius
         && powf(l.radius - r.radius, 2.0f) >= l.position.distance_sq(r.position);
   }
@@ -72,7 +72,7 @@ namespace mod::Contains {
   }
 
   bool circle_aabb2 (Circle const& circle, AABB2 const& aabb) {
-    f32_t t_d_sq;
+    f32_t t_d_sq = 0.0f;
 
     for (size_t i = 0; i < 2; i ++) {
       f32_t a = num::abs(circle.position.elements[i] - aabb.min.elements[i]);
@@ -102,7 +102,7 @@ namespace mod::Contains {
   }
 
   bool sphere_aabb3 (Sphere const& sphere, AABB3 const& aabb) {
-    f32_t t_d_sq;
+    f32_t t_d_sq = 0.0f;
 
     for (size_t i = 0; i < 3; i ++) {
       f32_t a = num::abs(sphere.position.elements[i] - aabb.min.elements[i]);
@@ -170,6 +170,6 @@ namespace mod::Contains {
   bool polygon_aabb2 (Vector2f const* vertices, size_t vertex_count, AABB2 const& aabb) {
     quad_t<Vector2f> aabb_poly = aabb.to_polygon();
 
-    return polygon(vertices, vertex_count, &aabb_poly.a, (size_t) 4);
+    return polygon(vertices, vertex_count, &aabb_poly.a, 4);
   }
 }

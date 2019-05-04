@@ -174,6 +174,14 @@ namespace mod {
     }
 
 
+    /* Determine if two axis-aligned bounding boxes are essentially equivalent.
+     * Wrapper for num::almost_equal, see it for details */
+    bool almost_equal (AABB3 const& r, s32_t ulp = 2) const {
+      return min.almost_equal(r.min, ulp)
+          && max.almost_equal(r.max, ulp);
+    }
+
+
     /* Determine if two axis-aligned bounding boxes are identical */
     bool equal (AABB3 const& r) const {
       return min == r.min

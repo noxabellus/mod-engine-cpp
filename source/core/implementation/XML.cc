@@ -33,14 +33,14 @@ namespace mod {
 
 
   void XMLItem::destroy () const {
-    free((void*) name.value);
+    free(static_cast<void*>(name.value));
 
     for (auto [ i, attribute ] : attributes) {
-      free((void*) attribute.name.value);
-      free((void*) attribute.value.value);
+      free(static_cast<void*>(attribute.name.value));
+      free(static_cast<void*>(attribute.value.value));
     }
 
-    free((void*) attributes.elements);
+    free(static_cast<void*>(attributes.elements));
     
     switch (type) {
       case XMLType::Comment:
@@ -51,8 +51,8 @@ namespace mod {
       case XMLType::Text: free(text.value); break;
 
       case XMLType::Array: {
-        for (auto [ i, element ] : array) ((XMLItem const&) element).destroy();
-        free((void*) array.elements);
+        for (auto [ i, element ] : array) const_cast<XMLItem const&>(element).destroy();
+        free(static_cast<void*>(array.elements));
         break;
       }
     }
@@ -167,15 +167,15 @@ namespace mod {
       ++ *offset;
       return 1;
     } else if (str[*offset] == '/') {
-      item.root->asset_assert(item.type != XMLType::ProcessingInstruction, *offset, "Expected processing instruction terminator '?' for element '%s'", item.name);
+      item.root->asset_assert(item.type != XMLType::ProcessingInstruction, *offset, "Expected processing instruction terminator '?' for element '%s'", item.name.value);
       ++ *offset;
-      item.root->asset_assert(str[*offset] == '>', *offset, "Expected '>' to follow empty-tag terminator '/' for element '%s' but found '%c'", item.name, str[*offset]);
+      item.root->asset_assert(str[*offset] == '>', *offset, "Expected '>' to follow empty-tag terminator '/' for element '%s' but found '%c'", item.name.value, str[*offset]);
       ++ *offset;
       return 2;
     } else if (str[*offset] == '?') {
-      item.root->asset_assert(item.type == XMLType::ProcessingInstruction, *offset, "Unexpected processing instruction terminator '?' for element '%s'", item.name);
+      item.root->asset_assert(item.type == XMLType::ProcessingInstruction, *offset, "Unexpected processing instruction terminator '?' for element '%s'", item.name.value);
       ++ *offset;
-      item.root->asset_assert(str[*offset] == '>', *offset, "Expected '> to follow processing instruction terminator '?' for element '%s' but found '%c'", item.name, str[*offset]);
+      item.root->asset_assert(str[*offset] == '>', *offset, "Expected '> to follow processing instruction terminator '?' for element '%s' but found '%c'", item.name.value, str[*offset]);
       ++ *offset;
       return 2;
     } else return 0;
@@ -380,71 +380,71 @@ namespace mod {
 
 
 
-  XMLAttribute* XMLItem::get_attribute_pointer (char const* name, size_t name_length) const {
+  XMLAttribute* XMLItem::get_attribute_pointer (char const* attr_name, size_t attr_name_length) const {
     if (XMLType::validate_attribute_support(type)) {
-      if (name_length == 0) name_length = strlen(name);
+      if (attr_name_length == 0) attr_name_length = strlen(attr_name);
 
       for (auto [ i, attribute ] : attributes) {
-        if (name_length == attribute.name.length && strncmp(name, attribute.name.value, name_length) == 0) return &attribute;
+        if (attr_name_length == attribute.name.length && strncmp(attr_name, attribute.name.value, attr_name_length) == 0) return &attribute;
       }
     }
 
     return NULL;
   }
 
-  XMLAttribute& XMLItem::get_attribute (char const* name, size_t name_length) const {
-    if (name_length == 0) name_length = strlen(name);
+  XMLAttribute& XMLItem::get_attribute (char const* attr_name, size_t attr_name_length) const {
+    if (attr_name_length == 0) attr_name_length = strlen(attr_name);
 
-    XMLAttribute* attribute = get_attribute_pointer(name, name_length);
+    XMLAttribute* attribute = get_attribute_pointer(attr_name, attr_name_length);
     
-    asset_assert(attribute != NULL, "Expected an attribute named '%.*s'", (s32_t) name_length, name);
+    asset_assert(attribute != NULL, "Expected an attribute named '%.*s'", static_cast<s32_t>(attr_name_length), attr_name);
 
     return *attribute;
   }
 
 
-  void XMLItem::set_attribute (String value, char const* name, size_t name_length) {
-    if (name_length == 0) name_length = strlen(name);
+  void XMLItem::set_attribute (String value, char const* attr_name, size_t attr_name_length) {
+    if (attr_name_length == 0) attr_name_length = strlen(attr_name);
 
     if (!XMLType::validate_attribute_support(type)) {
       value.destroy();
-      asset_error("Cannot create attribute '%.*s' for XMLItem of type %s", (s32_t) name_length, name, XMLType::name(type));
+      asset_error("Cannot create attribute '%.*s' for XMLItem of type %s", static_cast<s32_t>(attr_name_length), attr_name, XMLType::name(type));
     }
 
-    XMLAttribute* existing_attribute = get_attribute_pointer(name, name_length);
+    XMLAttribute* existing_attribute = get_attribute_pointer(attr_name, attr_name_length);
 
     if (existing_attribute != NULL) {
       existing_attribute->value.destroy();
       existing_attribute->value = value;
     } else {
-      attributes.append({ { name, name_length }, value });
+      attributes.append({ { attr_name, attr_name_length }, value });
     }
   }
 
-  void XMLItem::set_attribute_unique (String value, char const* name, size_t name_length) {
-    if (name_length == 0) name_length = strlen(name);
+  void XMLItem::set_attribute_unique (String value, char const* attr_name, size_t attr_name_length) {
+    if (attr_name_length == 0) attr_name_length = strlen(attr_name);
 
     if (!XMLType::validate_attribute_support(type)) {
       value.destroy();
-      asset_error("Cannot create attribute '%.*s' for XMLItem of type %s", (s32_t) name_length, name, XMLType::name(type));
+      asset_error("Cannot create attribute '%.*s' for XMLItem of type %s", static_cast<s32_t>(attr_name_length), attr_name, XMLType::name(type));
     }
 
-    XMLAttribute* existing_attribute = get_attribute_pointer(name, name_length);
+    XMLAttribute* existing_attribute = get_attribute_pointer(attr_name, attr_name_length);
 
     if (existing_attribute != NULL) {
       value.destroy();
-      asset_error("Attribute with name '%.*s' already exists", (s32_t) name_length, name);
+      asset_error("Attribute with name '%.*s' already exists", static_cast<s32_t>(attr_name_length), attr_name);
     }
 
-    attributes.append({{ name, name_length }, value });
+    attributes.append({{ attr_name, attr_name_length }, value });
   }
 
-  void XMLItem::unset_attribute (char const* name, size_t name_length) {
+  void XMLItem::unset_attribute (char const* attr_name, size_t attr_name_length) {
     if (XMLType::validate_attribute_support(type)) {
-      if (name_length == 0) name_length = strlen(name);
+      if (attr_name_length == 0) attr_name_length = strlen(attr_name);
 
       for (auto [ i, attribute ] : attributes) {
-        if (name_length == attribute.name.length && strncmp(name, attribute.name.value, name_length) == 0) {
+        if (attr_name_length == attribute.name.length && strncmp(attr_name, attribute.name.value, attr_name_length) == 0) {
           attribute.destroy();
           attributes.remove(i);
           break;
@@ -457,22 +457,22 @@ namespace mod {
 
   XMLArray& XMLItem::get_array () const {
     asset_assert(type == XMLType::Array, "Expected an Array, not %s", XMLType::name(type));
-    return (XMLArray&) array;
+    return const_cast<XMLArray&>(array);
   }
   
   String& XMLItem::get_text () const {
     asset_assert(type == XMLType::Text, "Expected Text, not %s", XMLType::name(type));
-    return (String&) text;
+    return const_cast<String&>(text);
   }
   
   String& XMLItem::get_cdata () const {
     asset_assert(type == XMLType::CDATA, "Expected CDATA, not %s", XMLType::name(type));
-    return (String&) text;
+    return const_cast<String&>(text);
   }
   
   String& XMLItem::get_doctype () const {
     asset_assert(type == XMLType::DocumentType, "Expected DOCTYPE, not %s", XMLType::name(type));
-    return (String&) text;
+    return const_cast<String&>(text);
   }
   
 
@@ -508,14 +508,14 @@ namespace mod {
   }
 
 
-  XMLItem* XMLItem::nth_named_pointer (size_t n, char const* name, size_t name_length) const {
+  XMLItem* XMLItem::nth_named_pointer (size_t n, char const* item_name, size_t item_name_length) const {
     if (type == XMLType::Array) {
       size_t x = 0;
 
-      if (name_length == 0) name_length = strlen(name);
+      if (item_name_length == 0) item_name_length = strlen(item_name);
 
       for (auto [ i, item ] : array) {
-        if (name_length == item.name.length && strncmp(name, item.name.value, name_length) == 0) {
+        if (item_name_length == item.name.length && strncmp(item_name, item.name.value, item_name_length) == 0) {
           if (x == n) return &item;
           else ++ x;
         }
@@ -525,18 +525,18 @@ namespace mod {
     } else asset_error("Expected an Array, not %s", XMLType::name(type));
   }
 
-  XMLItem* XMLItem::first_named_pointer (char const* name, size_t name_length) const {
-    return nth_named_pointer(0, name, name_length);
+  XMLItem* XMLItem::first_named_pointer (char const* item_name, size_t item_name_length) const {
+    return nth_named_pointer(0, item_name, item_name_length);
   }
 
-  XMLItem* XMLItem::last_named_pointer (char const* name, size_t name_length) const {
+  XMLItem* XMLItem::last_named_pointer (char const* item_name, size_t item_name_length) const {
     if (type == XMLType::Array) {
-      if (name_length == 0) name_length = strlen(name);
+      if (item_name_length == 0) item_name_length = strlen(item_name);
 
       XMLItem* last = NULL;
 
       for (auto [ i, item ] : array) {
-        if (name_length == item.name.length && strncmp(name, item.name.value, name_length) == 0) {
+        if (item_name_length == item.name.length && strncmp(item_name, item.name.value, item_name_length) == 0) {
           last = &item;
         }
       }
@@ -545,15 +545,15 @@ namespace mod {
     } else asset_error("Expected an Array, not %s", XMLType::name(type));
   }
 
-  size_t XMLItem::count_of_name (char const* name, size_t name_length) const {
+  size_t XMLItem::count_of_name (char const* item_name, size_t item_name_length) const {
     asset_assert(type == XMLType::Array, "Expected an Array");
 
-    if (name_length == 0) name_length = strlen(name);
+    if (item_name_length == 0) item_name_length = strlen(item_name);
 
     size_t count = 0;
     
     for (auto [ i, item ] : array) {
-      if (name_length == item.name.length && strncmp(item.name.value, name, name_length) == 0) ++ count;
+      if (item_name_length == item.name.length && strncmp(item.name.value, item_name, item_name_length) == 0) ++ count;
     }
 
     return count;
@@ -577,7 +577,7 @@ namespace mod {
   }
 
   XMLItem* XMLItem::first_of_type_pointer (u8_t seek_type) const {
-    return nth_of_type_pointer(0, type);
+    return nth_of_type_pointer(0, seek_type);
   }
 
   XMLItem* XMLItem::last_of_type_pointer (u8_t seek_type) const {
@@ -616,24 +616,24 @@ namespace mod {
   }
 
 
-  XMLItem& XMLItem::nth_named (size_t n, char const* name, size_t name_length) const {
-    if (name_length == 0) name_length = strlen(name);
-    XMLItem* ptr = nth_named_pointer(n, name, name_length);
-    asset_assert(ptr != NULL, "Expected at least %zu items named %.*s", n, (s32_t) name_length, name);
+  XMLItem& XMLItem::nth_named (size_t n, char const* item_name, size_t item_name_length) const {
+    if (item_name_length == 0) item_name_length = strlen(item_name);
+    XMLItem* ptr = nth_named_pointer(n, item_name, item_name_length);
+    asset_assert(ptr != NULL, "Expected at least %zu items named %.*s", n, static_cast<s32_t>(item_name_length), item_name);
     return *ptr;
   }
 
-  XMLItem& XMLItem::first_named (char const* name, size_t name_length) const {
-    if (name_length == 0) name_length = strlen(name);
-    XMLItem* ptr = first_named_pointer(name, name_length);
-    asset_assert(ptr != NULL, "Expected an item named %.*s", (s32_t) name_length, name);
+  XMLItem& XMLItem::first_named (char const* item_name, size_t item_name_length) const {
+    if (item_name_length == 0) item_name_length = strlen(item_name);
+    XMLItem* ptr = first_named_pointer(item_name, item_name_length);
+    asset_assert(ptr != NULL, "Expected an item named %.*s", static_cast<s32_t>(item_name_length), item_name);
     return *ptr;
   }
 
-  XMLItem& XMLItem::last_named (char const* name, size_t name_length) const {
-    if (name_length == 0) name_length = strlen(name);
-    XMLItem* ptr = last_named_pointer(name, name_length);
-    asset_assert(ptr != NULL, "Expected an item named %.*s", (s32_t) name_length, name);
+  XMLItem& XMLItem::last_named (char const* item_name, size_t item_name_length) const {
+    if (item_name_length == 0) item_name_length = strlen(item_name);
+    XMLItem* ptr = last_named_pointer(item_name, item_name_length);
+    asset_assert(ptr != NULL, "Expected an item named %.*s", static_cast<s32_t>(item_name_length), item_name);
     return *ptr;
   }
 
@@ -740,6 +740,7 @@ namespace mod {
       }
     } catch (Exception& exception) {
       value.destroy();
+      throw exception;
     }
 
     if (!is_attribute) opening_symbol = '<';
@@ -825,7 +826,7 @@ namespace mod {
 
     m_asset_assert(data != NULL, origin, "Failed to load source file");
 
-    return from_str_ex(origin, (char*) data);
+    return from_str_ex(origin, static_cast<char*>(data));
   }
 
 
@@ -969,21 +970,21 @@ namespace mod {
   XMLItem& XML::nth_named (size_t n, char const* name, size_t name_length) const {
     if (name_length == 0) name_length = strlen(name);
     XMLItem* ptr = nth_named_pointer(n, name, name_length);
-    asset_assert(ptr != NULL, "Expected at least %zu items named %.*s", n, (s32_t) name_length, name);
+    asset_assert(ptr != NULL, "Expected at least %zu items named %.*s", n, static_cast<s32_t>(name_length), name);
     return *ptr;
   }
 
   XMLItem& XML::first_named (char const* name, size_t name_length) const {
     if (name_length == 0) name_length = strlen(name);
     XMLItem* ptr = first_named_pointer(name, name_length);
-    asset_assert(ptr != NULL, "Expected an item named %.*s", (s32_t) name_length, name);
+    asset_assert(ptr != NULL, "Expected an item named %.*s", static_cast<s32_t>(name_length), name);
     return *ptr;
   }
 
   XMLItem& XML::last_named (char const* name, size_t name_length) const {
     if (name_length == 0) name_length = strlen(name);
     XMLItem* ptr = last_named_pointer(name, name_length);
-    asset_assert(ptr != NULL, "Expected an item named %.*s", (s32_t) name_length, name);
+    asset_assert(ptr != NULL, "Expected an item named %.*s", static_cast<s32_t>(name_length), name);
     return *ptr;
   }
 

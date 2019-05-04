@@ -8,7 +8,7 @@ namespace mod {
     return m.get_rotation_euler(order);
   }
 
-  Euler Euler::reorder (Euler const& e, u8_t order) const {
+  Euler Euler::reorder (Euler const& e, u8_t order) {
     if (order == e.order) return e;
 
     Quaternion q = Quaternion::from_euler(e);

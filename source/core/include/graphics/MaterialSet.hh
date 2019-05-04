@@ -34,7 +34,7 @@ namespace mod {
     : origin(str_clone(in_origin))
     { for (size_t i = 0; i < material_count; i ++) materials.append(in_materials[i]); }
 
-    /* Create a new MaterialSet and initialize its material array by copying from an array of material pointers */
+    /* Create a new MaterialSet and initialize its material array by copying from an array of material handles */
     MaterialSet (char const* in_origin, Array<MaterialHandle> const& in_materials)
     : MaterialSet(in_origin, in_materials.elements, in_materials.count)
     { }

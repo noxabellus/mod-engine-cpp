@@ -21,7 +21,7 @@ namespace mod {
 
       total_type_count,
 
-      Invalid = (u8_t) -1,
+      Invalid = -1,
     };
 
     static constexpr char const* names [total_type_count] = {

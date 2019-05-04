@@ -27,7 +27,7 @@ namespace mod {
     ecs->destroy_component_by_name(*this, name);
   }
 
-  void EntityHandle::destroy () {
+  void EntityHandle::destroy_entity () {
     ecs->destroy_entity(*this);
     id = 0;
   }
@@ -55,7 +55,7 @@ namespace mod {
 
 
   EntityHandle& EntityHandle::verified () {
-    m_assert(update(), "Failed to verify EntityHandle: the Handle's ID (%" PRIu64 ") was invalid", (u64_t) id);
+    m_assert(update(), "Failed to verify EntityHandle: the Handle's ID (%" PRIu64 ") was invalid", static_cast<u64_t>(id));
     return *this;
   }
 
@@ -66,7 +66,7 @@ namespace mod {
 
   Entity* EntityHandle::get_verified_pointer () {
     Entity* ptr = get_pointer();
-    m_assert(ptr != NULL, "Could not get verified pointer from EntityHandle: the Handle's ID (%" PRIu64 ") was invalid", (u64_t) id);
+    m_assert(ptr != NULL, "Could not get verified pointer from EntityHandle: the Handle's ID (%" PRIu64 ") was invalid", static_cast<u64_t>(id));
     return ptr;
   }
 
@@ -107,11 +107,11 @@ namespace mod {
 
       SystemIteratorArg& arg = ecs->system_iterator_args[i];
 
-      arg.sys = (System*) this;
+      arg.sys = const_cast<System*>(this);
       arg.range_base = arg_base;
       arg.range_ext = arg_ext;
 
-      ecs->thread_pool->queue((Job::Callback) System::iterator_execution_instance, &arg);
+      ecs->thread_pool->queue(reinterpret_cast<Job::Callback>(System::iterator_execution_instance), &arg);
 
       arg_base = arg_ext;
     }
@@ -121,7 +121,7 @@ namespace mod {
 
   void System::execute_sequential (ECS* ecs) const {
     SystemIteratorArg arg = {
-      ecs, (System*) this,
+      ecs, const_cast<System*>(this),
       0, ecs->entity_count
     };
     
@@ -143,18 +143,18 @@ namespace mod {
   }
 
 
-  ECS::ECS (u32_t entity_capacity, u32_t entity_thread_threshold, uint8_t max_threads, uint8_t thread_iterator_ratio)
-  : entities((Entity*) malloc(sizeof(Entity) * entity_capacity))
+  ECS::ECS (u32_t in_entity_capacity, u32_t in_entity_thread_threshold, uint8_t in_max_threads, uint8_t thread_iterator_ratio)
+  : entities(static_cast<Entity*>(malloc(sizeof(Entity) * in_entity_capacity)))
   , entity_count(0)
-  , entity_capacity(entity_capacity)
+  , entity_capacity(in_entity_capacity)
   , entity_id_counter(1)
   , component_type_count(0)
   , system_count(0)
   , system_id_counter(1)
   , system_iterator_args(NULL)
-  , max_threads(max_threads)
-  , max_iterators(thread_iterator_ratio * max_threads)
-  , entity_thread_threshold(entity_thread_threshold)
+  , max_threads(in_max_threads)
+  , max_iterators(thread_iterator_ratio * in_max_threads)
+  , entity_thread_threshold(in_entity_thread_threshold)
   , thread_pool(NULL)
   {
     memset(systems, 0, sizeof(System) * System::max_systems);
@@ -164,7 +164,7 @@ namespace mod {
 
   void ECS::enable_thread_pool () {
     if (thread_pool == NULL) {
-      system_iterator_args = (SystemIteratorArg*) malloc(sizeof(SystemIteratorArg) * max_iterators);
+      system_iterator_args = static_cast<SystemIteratorArg*>(malloc(sizeof(SystemIteratorArg) * max_iterators));
 
       for (u32_t i = 0; i < max_iterators; i ++) {
         system_iterator_args[i].ecs = this;
@@ -187,11 +187,15 @@ namespace mod {
   void ECS::destroy () {
     disable_thread_pool();
 
-    free(entities);
-
     for (ComponentType::ID i = 0; i < component_type_count; i ++) {
+      for (size_t j = 0; j < entity_count; j ++) {
+        if (entities[j].enabled_components[i]) component_types[i].destroy_instance(j);
+      }
+
       component_types[i].destroy();
     }
+
+    free(entities);
 
     for (System::ID i = 0; i < system_count; i ++) {
       systems[i].destroy();
@@ -208,7 +212,7 @@ namespace mod {
     while (new_capacity < new_count) new_capacity *= 2;
 
     if (new_capacity > entity_capacity) {
-      entities = (Entity*) realloc(entities, new_capacity * sizeof(Entity));
+      entities = static_cast<Entity*>(realloc(entities, new_capacity * sizeof(Entity)));
 
       m_assert(entities != NULL, "Out of memory or other null pointer error while reallocating ECS entities for capacity %" PRIu32, new_capacity);
 
@@ -269,6 +273,7 @@ namespace mod {
 
       for (ComponentType::ID i = 0; i < ComponentType::max_component_types; i ++) {
         if (last_entity->enabled_components.match_index(i)) {
+          component_types[i].destroy_instance(handle.index);
           component_types[i].swap_instances(handle.index, last_index);
         }
       }
@@ -282,7 +287,7 @@ namespace mod {
 
   ComponentType& ECS::get_component_type_by_name (char const* name) const {
     for (ComponentType::ID i = 0; i < component_type_count; i ++) {
-      if (str_cmp_caseless(component_types[i].name, name) == 0) return (ComponentType&) component_types[i];
+      if (str_cmp_caseless(component_types[i].name, name) == 0) return const_cast<ComponentType&>(component_types[i]);
     }
     
     String types;
@@ -292,7 +297,7 @@ namespace mod {
 
 
   void* ECS::create_component_by_id (u32_t index, ComponentType::ID type_id) {
-    m_assert(type_id < component_type_count, "Cannot get out of range ComponentType with id %" PRIu64, (u64_t) type_id);
+    m_assert(type_id < component_type_count, "Cannot get out of range ComponentType with id %" PRIu64, static_cast<u64_t>(type_id));
 
     Entity& entity = get_entity(index);
     ComponentType& type = component_types[type_id];
@@ -300,7 +305,7 @@ namespace mod {
     m_assert(
       !entity.enabled_components.match_index(type_id),
       "Cannot create Component of type %s on Entity with ID %" PRIu64 " because a Component of this type already exists",
-      type.name, (u64_t) entity.id
+      type.name, static_cast<u64_t>(entity.id)
     );
 
     entity.enabled_components.set(type_id);
@@ -313,7 +318,7 @@ namespace mod {
   }
 
   void* ECS::create_component_by_id (EntityHandle& handle, ComponentType::ID type_id) {
-    m_assert(type_id < component_type_count, "Cannot get out of range ComponentType with id %" PRIu64, (u64_t) type_id);
+    m_assert(type_id < component_type_count, "Cannot get out of range ComponentType with id %" PRIu64, static_cast<u64_t>(type_id));
 
     Entity& entity = *handle;
     ComponentType& type = component_types[type_id];
@@ -321,7 +326,7 @@ namespace mod {
     m_assert(
       !entity.enabled_components.match_index(type_id),
       "Cannot create Component of type %s on Entity with ID %" PRIu64 " because a Component of this type already exists",
-      type.name, (u64_t) entity.id
+      type.name, static_cast<u64_t>(entity.id)
     );
 
     entity.enabled_components.set(type_id);
@@ -334,7 +339,7 @@ namespace mod {
   }
 
   void* ECS::add_component_by_id (u32_t index, ComponentType::ID type_id, void const* data) {
-    m_assert(type_id < component_type_count, "Cannot get out of range ComponentType with id %" PRIu64, (u64_t) type_id);
+    m_assert(type_id < component_type_count, "Cannot get out of range ComponentType with id %" PRIu64, static_cast<u64_t>(type_id));
 
     Entity& entity = get_entity(index);
     ComponentType& type = component_types[type_id];
@@ -342,7 +347,7 @@ namespace mod {
     m_assert(
       !entity.enabled_components.match_index(type_id),
       "Cannot add Component of type %s on Entity with ID %" PRIu64 " because a Component of this type already exists",
-      type.name, (u64_t) entity.id
+      type.name, static_cast<u64_t>(entity.id)
     );
 
     entity.enabled_components.set(type_id);
@@ -355,7 +360,7 @@ namespace mod {
   }
 
   void* ECS::add_component_by_id (EntityHandle& handle, ComponentType::ID type_id, void const* data) {
-    m_assert(type_id < component_type_count, "Cannot get out of range ComponentType with id %" PRIu64, (u64_t) type_id);
+    m_assert(type_id < component_type_count, "Cannot get out of range ComponentType with id %" PRIu64, static_cast<u64_t>(type_id));
 
     Entity& entity = *handle;
     ComponentType& type = component_types[type_id];
@@ -363,7 +368,7 @@ namespace mod {
     m_assert(
       !entity.enabled_components.match_index(type_id),
       "Cannot add Component of type %s on Entity with ID %" PRIu64 " because a Component of this type already exists",
-      type.name, (u64_t) entity.id
+      type.name, static_cast<u64_t>(entity.id)
     );
 
     entity.enabled_components.set(type_id);
@@ -377,7 +382,7 @@ namespace mod {
 
 
   void* ECS::get_component_by_id (u32_t index, ComponentType::ID type_id) const {
-    m_assert(type_id < component_type_count, "Cannot get out of range ComponentType with id %" PRIu64, (u64_t) type_id);
+    m_assert(type_id < component_type_count, "Cannot get out of range ComponentType with id %" PRIu64, static_cast<u64_t>(type_id));
 
     Entity& entity = get_entity(index);
     ComponentType const& type = component_types[type_id];
@@ -385,14 +390,14 @@ namespace mod {
     m_assert(
       entity.enabled_components.match_index(type_id),
       "Cannot get Component of type %s on Entity with ID %" PRIu64 " because a Component of this type does not exist for the given Entity",
-      type.name, (u64_t) entity.id
+      type.name, static_cast<u64_t>(entity.id)
     );
 
     return type.get_instance_by_id(index);
   }
 
   void* ECS::get_component_by_id (EntityHandle& handle, ComponentType::ID type_id) const {
-    m_assert(type_id < component_type_count, "Cannot get out of range ComponentType with id %" PRIu64, (u64_t) type_id);
+    m_assert(type_id < component_type_count, "Cannot get out of range ComponentType with id %" PRIu64, static_cast<u64_t>(type_id));
 
     Entity& entity = *handle;
     ComponentType const& type = component_types[type_id];
@@ -400,11 +405,29 @@ namespace mod {
     m_assert(
       entity.enabled_components.match_index(type_id),
       "Cannot get Component of type %s on Entity with ID %" PRIu64 " because a Component of this type does not exist for the given Entity",
-      type.name, (u64_t) entity.id
+      type.name, static_cast<u64_t>(entity.id)
     );
 
     return type.get_instance_by_id(handle.index);
-  }  
+  }
+
+  void ECS::destroy_component_by_id (u32_t index, ComponentType::ID type_id) {
+    Entity& ent = get_entity(index);
+
+    if (ent.enabled_components.match_index(type_id)) {
+      ent.enabled_components.unset(type_id);
+      component_types[type_id].destroy_instance(index);
+    }
+  }
+
+  void ECS::destroy_component_by_id (EntityHandle& handle, ComponentType::ID type_id) {
+    Entity& ent = *handle;
+
+    if (ent.enabled_components.match_index(type_id)) {
+      ent.enabled_components.unset(type_id);
+      component_types[type_id].destroy_instance(handle.index);
+    }
+  }
 
 
   s32_t ECS::get_system_index_by_id (System::ID id) const {
@@ -425,15 +448,15 @@ namespace mod {
 
   System& ECS::get_system_by_id (System::ID id) const {
     for (System::ID i = 0; i < system_count; i ++) {
-      if (systems[i].id == id) return (System&) systems[i];
+      if (systems[i].id == id) return const_cast<System&>(systems[i]);
     }
 
-    m_error("Could not find System with id %" PRIu64, (u64_t) id);
+    m_error("Could not find System with id %" PRIu64, static_cast<u64_t>(id));
   }
 
   System& ECS::get_system_by_name (char const* name) const {
     for (System::ID i = 0; i < system_count; i ++) {
-      if (str_cmp_caseless(systems[i].name, name) == 0) return (System&) systems[i];
+      if (str_cmp_caseless(systems[i].name, name) == 0) return const_cast<System&>(systems[i]);
     }
 
     m_error("Could not find System with name %s", name);
@@ -451,7 +474,7 @@ namespace mod {
 
     s32_t index = get_system_index_by_id(before_target);
     
-    m_assert(index != -1, "Cannot find System with id %" PRIu64 " in order to add new System %s before it", (u64_t) before_target, name);
+    m_assert(index != -1, "Cannot find System with id %" PRIu64 " in order to add new System %s before it", static_cast<u64_t>(before_target), name);
 
     shift_systems(index);
 
@@ -475,7 +498,7 @@ namespace mod {
     
     s32_t index = get_system_index_by_id(after_target);
     
-    m_assert(index != -1, "Cannot find System with id %" PRIu64 " in order to add new System %s after it", (u64_t) after_target, name);
+    m_assert(index != -1, "Cannot find System with id %" PRIu64 " in order to add new System %s after it", static_cast<u64_t>(after_target), name);
 
     ++ index;
 
@@ -510,7 +533,7 @@ namespace mod {
 
     s32_t index = get_system_index_by_id(before_target);
     
-    m_assert(index != -1, "Cannot find System with id %" PRIu64 " in order to add new System %s before it", (u64_t) before_target, name);
+    m_assert(index != -1, "Cannot find System with id %" PRIu64 " in order to add new System %s before it", static_cast<u64_t>(before_target), name);
 
     shift_systems(index);
 
@@ -534,7 +557,7 @@ namespace mod {
 
     s32_t index = get_system_index_by_id(after_target);
     
-    m_assert(index != -1, "Cannot find System with id %" PRIu64 " in order to add new System %s after it", (u64_t) after_target, name);
+    m_assert(index != -1, "Cannot find System with id %" PRIu64 " in order to add new System %s after it", static_cast<u64_t>(after_target), name);
 
     ++ index;
 

@@ -23,11 +23,11 @@ namespace mod {
     char value [max_length] = { 0 };
 
     AssetName ();
-    AssetName (char const* in_value, size_t max_length = 0)
+    AssetName (char const* in_value, size_t value_max_length = 0)
     {
-      if (max_length == 0) max_length = strlen(in_value);
-      memcpy(value, in_value, max_length);
-      value[max_length] = '\0';
+      if (value_max_length == 0) value_max_length = strlen(in_value);
+      memcpy(value, in_value, value_max_length);
+      value[value_max_length] = '\0';
     }
   };
 
@@ -82,7 +82,7 @@ namespace mod {
 
       if (asset_i >= base_i && asset_i < end_i) return (asset_i - base_i) / sizeof(T);
       else return -1;
-    };
+    }
 
     s64_t get_index_from_id (u32_t id) const {
       for (auto [ i, asset ] : assets) {
@@ -247,7 +247,7 @@ namespace mod {
 
 
   struct AssetManager_t {
-    static constexpr u8_t database_type = AssetType::RenderMesh3D + 1;
+    static constexpr u8_t database_type = AssetType::total_type_count;
 
     AssetList<Shader> shader;
     AssetList<ShaderProgram> shader_program;
@@ -266,7 +266,7 @@ namespace mod {
 
     ENGINE_API void destroy ();
 
-    ENGINE_API static s32_t watch_files (void* _);
+    ENGINE_API static s32_t watch_files (void* unused_thread_parameter);
 
     ENGINE_API void update_watched_files (Array<WatchedFileReport>* update_reports_output = NULL);
 
@@ -282,13 +282,11 @@ namespace mod {
 
 
     template <typename T> void add_watched_file (char const* path, u32_t asset_id = 0) {
-      u8_t asset_type = AssetType::from_type<T>();
+      static constexpr u8_t asset_type = AssetType::from_type<T>();
 
-      m_asset_assert(
+      static_assert(
         AssetType::validate(asset_type) || asset_type == database_type,
-        path,
-        "Cannot watch invalid Asset type %s",
-        typeid(T).name()
+        "Cannot watch invalid Asset type"
       );
 
 
@@ -302,7 +300,7 @@ namespace mod {
       );
 
       
-      if (asset_type != database_type) {
+      if constexpr (asset_type != database_type) {
         m_asset_assert(
           get_pointer_from_id<T>(asset_id) != NULL,
           path,
@@ -359,13 +357,14 @@ namespace mod {
         "Invalid type for get_list"
       );
 
-      if constexpr (std::is_same<T, Shader>::value) return (AssetList<T>&) shader;
-      else if constexpr (std::is_same<T, ShaderProgram>::value) return (AssetList<T>&) shader_program;
-      else if constexpr (std::is_same<T, Texture>::value) return (AssetList<T>&) texture;
-      else if constexpr (std::is_same<T, Material>::value) return (AssetList<T>&) material;
-      else if constexpr (std::is_same<T, MaterialSet>::value) return (AssetList<T>&) material_set;
-      else if constexpr (std::is_same<T, RenderMesh2D>::value) return (AssetList<T>&) render_mesh_2d;
-      else if constexpr (std::is_same<T, RenderMesh3D>::value) return (AssetList<T>&) render_mesh_3d;
+      if constexpr (std::is_same<T, Shader>::value) return const_cast<AssetList<T>&>(shader);
+      else if constexpr (std::is_same<T, ShaderProgram>::value) return const_cast<AssetList<T>&>(shader_program);
+      else if constexpr (std::is_same<T, Texture>::value) return const_cast<AssetList<T>&>(texture);
+      else if constexpr (std::is_same<T, Material>::value) return const_cast<AssetList<T>&>(material);
+      else if constexpr (std::is_same<T, MaterialSet>::value) return const_cast<AssetList<T>&>(material_set);
+      else if constexpr (std::is_same<T, RenderMesh2D>::value) return const_cast<AssetList<T>&>(render_mesh_2d);
+      else if constexpr (std::is_same<T, RenderMesh3D>::value) return const_cast<AssetList<T>&>(render_mesh_3d);
+      else m_error("Unknown error occurred");
     }
 
 
@@ -519,7 +518,7 @@ namespace mod {
         try {
           add_watched_file<T>(origin, handle.get_id());
         } catch (Exception& exception) {
-          handle.destroy();
+          handle.destroy_asset();
           throw exception;
         }
       }

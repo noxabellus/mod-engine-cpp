@@ -67,9 +67,9 @@ namespace mod {
     f32_t s = sinf(h);
 
     return {
-      ((f32_t) axis.x) * s,
-      ((f32_t) axis.y) * s,
-      ((f32_t) axis.z) * s,
+      axis.x * s,
+      axis.y * s,
+      axis.z * s,
       cosf(h)
     };
   }

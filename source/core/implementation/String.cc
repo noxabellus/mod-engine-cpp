@@ -11,7 +11,7 @@ namespace mod {
 
     while (new_capacity < new_length + 1) new_capacity *= 2;
 
-    value = (char*) malloc(new_capacity);
+    value = static_cast<char*>(malloc(new_capacity));
 
     m_assert(value != NULL, "Out of memory or other null pointer error while allocating String value with capacity %zu", new_capacity);
 
@@ -29,7 +29,7 @@ namespace mod {
 
     while (capacity < length + 1) capacity *= 2;
 
-    value = (char*) realloc(value, capacity);
+    value = static_cast<char*>(realloc(value, capacity));
 
     m_assert(value != NULL, "Out of memory or other null pointer error while reallocating value for String from_ex with capacity %zu", capacity);
 
@@ -41,7 +41,7 @@ namespace mod {
   String String::from_file (char const* path) {
     auto [ value, length ] = load_file(path);
     m_asset_assert(value != NULL, path, "Failed to load String from file");
-    return from_ex((char*) value, length);
+    return from_ex(static_cast<char*>(value), length);
   }
 
 
@@ -55,7 +55,7 @@ namespace mod {
     }
 
     if (new_capacity != capacity) {
-      value = (char*) (value != NULL? realloc(value, new_capacity) : malloc(new_capacity));
+      value = static_cast<char*>(value != NULL? realloc(value, new_capacity) : malloc(new_capacity));
 
       m_assert(value != NULL, "Out of memory or other null pointer error while reallocating String for capacity %zu", new_capacity);
 
@@ -114,7 +114,7 @@ namespace mod {
 
     va_copy(args_copy, args);
 
-    size_t new_length = vsnprintf(NULL, 0, fmt, args_copy);
+    size_t new_length = vsnprintf_nonliteral(NULL, 0, fmt, args_copy);
 
     va_end(args_copy);
 
@@ -122,7 +122,7 @@ namespace mod {
       grow_allocation(new_length - length);
     }
     
-    vsnprintf(value, new_length + 1, fmt, args);
+    vsnprintf_nonliteral(value, new_length + 1, fmt, args);
 
     length = new_length;
   }
@@ -140,13 +140,13 @@ namespace mod {
 
     va_copy(args_copy, args);
 
-    size_t new_value_length = vsnprintf(NULL, 0, fmt, args_copy);
+    size_t new_value_length = vsnprintf_nonliteral(NULL, 0, fmt, args_copy);
 
     va_end(args_copy);
 
     grow_allocation(new_value_length);
 
-    vsnprintf(value + length, new_value_length + 1, fmt, args);
+    vsnprintf_nonliteral(value + length, new_value_length + 1, fmt, args);
 
     length += new_value_length;
   }
@@ -166,7 +166,7 @@ namespace mod {
 
     va_copy(args_copy, args);
 
-    size_t new_value_length = vsnprintf(NULL, 0, fmt, args_copy);
+    size_t new_value_length = vsnprintf_nonliteral(NULL, 0, fmt, args_copy);
 
     va_end(args_copy);
 
@@ -179,7 +179,7 @@ namespace mod {
 
     char c = *end; // store char overwritten by vsnprintf null terminator
 
-    vsnprintf(start, new_value_length + 1, fmt, args);
+    vsnprintf_nonliteral(start, new_value_length + 1, fmt, args);
 
     *end = c; // restore overwitten char
 

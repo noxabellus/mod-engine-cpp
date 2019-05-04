@@ -43,6 +43,15 @@ namespace mod {
     constexpr operator tri_t<Vector2f, f32_t, Vector2f> () const {
       return { position, rotation, scale };
     }
+
+    /* Linear interpolate between two Transforms */
+    Transform2D lerp (f32_t alpha, Transform2D const& other) const {
+      return {
+        position.lerp(alpha, other.position),
+        num::lerp(alpha, rotation, other.rotation),
+        scale.lerp(alpha, other.scale)
+      };
+    }
   };
 
 
@@ -102,6 +111,14 @@ namespace mod {
         e3, e4, e5,
         e6, e7, e8
       };
+    }
+
+    ArrayIterator<f32_t> begin () const {
+      return { const_cast<f32_t*>(&elements[0]), 0 };
+    }
+
+    ArrayIterator<f32_t> end () const {
+      return { const_cast<f32_t*>(&elements[0]), 9 };
     }
 
     /* Create a Matrix3 from the upper left portion of a Matrix4 */
@@ -166,7 +183,7 @@ namespace mod {
     /* Get an element of a Matrix3 by index.
      * For efficiency, the index is not bounds checked */
     f32_t& operator [] (size_t index) const {
-      return (f32_t&) elements[index];
+      return const_cast<f32_t&>(elements[index]);
     }
 
 
@@ -240,6 +257,18 @@ namespace mod {
 
     /* Get the determinant of a matrix */
     ENGINE_API f32_t determinant () const;
+
+
+    /* Determine if two matrices are essentially equivalent.
+     * Wrapper for num::almost_equal, see it for details.
+     * Warning: This is an expensive operation! */
+    bool almost_equal (Matrix3 const& r, s32_t ulp = 2) const {
+      for (auto [ i, e ] : *this) {
+        if (!num::almost_equal(e, r[i], ulp)) return false;
+      }
+      
+      return true;
+    }
 
 
     /* Determine if two matrices are identical */

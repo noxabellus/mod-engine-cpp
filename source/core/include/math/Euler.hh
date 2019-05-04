@@ -23,7 +23,7 @@ namespace mod {
 
       total_order_count,
 
-      Invalid = (u8_t) -1,
+      Invalid = -1,
     };
 
     static constexpr char const* names [total_order_count] = {
@@ -89,7 +89,7 @@ namespace mod {
 
     /* Create a new Euler from another Euler with a different order.
      * Note: Discards revolutions */
-    ENGINE_API Euler reorder (Euler const& e, u8_t order) const;
+    ENGINE_API static Euler reorder (Euler const& e, u8_t order);
 
 
     /* Get an element of an Euler's angles by index.
@@ -98,6 +98,14 @@ namespace mod {
       return angles[index];
     }
 
+
+    /* Determine if two Euler rotations are essentially equivalent.
+     * Wrapper for num::almost_equal, see it for details */
+    bool almost_equal (Euler const& r, s32_t ulp = 2) const {
+      return order == r.order
+          && angles.almost_equal(r.angles, ulp);
+    }
+    
 
     /* Determine if two Euler rotations are identical */
     bool equal (Euler const& r) const {

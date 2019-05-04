@@ -11,12 +11,12 @@ namespace mod {
 
   /* Get the index offset of a pointer from the base address of it's buffer */
   static size_t pointer_to_index (void const* base, void const* instance, size_t size) {
-    return ((size_t) instance - (size_t) base) / size;
+    return (reinterpret_cast<size_t>(instance) - reinterpret_cast<size_t>(base)) / size;
   }
 
   /* Get the index offset of a pointer from the base address of its buffer */
   template<typename T> size_t pointer_to_index (T const* base, T const* instance) {
-    return ((size_t) instance - (size_t) base) / sizeof(T);
+    return (reinterpret_cast<size_t>(instance) - reinterpret_cast<size_t>(base)) / sizeof(T);
   }
 
   /* Load a file from disk, returns NULL if the file could not be loaded */
@@ -196,7 +196,7 @@ namespace mod {
 
 
   /* A utility function to swap two elements */
-  template <typename T> void swap (T* a, T* b) { 
+  template <typename T> void swap (T* a, T* b) {
     T t = *a; 
     *a = *b; 
     *b = t; 
@@ -204,7 +204,7 @@ namespace mod {
 
     
   /* A generic quicksort implementation using a comparison callback */
-  template <typename T, typename FN> void quick_sort (T* buffer, s64_t low, s64_t high, FN fn) {
+  template <typename T, typename FN> void quick_sort (T* values, s64_t first, s64_t last, FN callback) {
     static const auto partition = [] (T* buffer, s64_t low, s64_t high, FN fn) -> s64_t {
       T const& pivot = buffer[high];
 
@@ -224,16 +224,16 @@ namespace mod {
       return i + 1;
     };
 
-    if (low >= high) return;
+    if (first >= last) return;
     
-    s64_t pi = partition(buffer, low, high, fn);
+    s64_t pi = partition(values, first, last, callback);
 
-    quick_sort(buffer, low, pi - 1, fn);
-    quick_sort(buffer, pi + 1, high, fn);
+    quick_sort(values, first, pi - 1, callback);
+    quick_sort(values, pi + 1, last, callback);
   }
 
   /* A generic quicksort implementation using a comparison callback with indices */
-  template <typename T, typename FN> void quick_sort_indices (T* buffer, s64_t low, s64_t high, FN fn) {
+  template <typename T, typename FN> void quick_sort_indices (T* values, s64_t first, s64_t last, FN callback) {
     static const auto partition = [] (T* buffer, s64_t low, s64_t high, FN fn) -> s64_t {
       T const& pivot = buffer[high];
 
@@ -253,12 +253,26 @@ namespace mod {
       return i + 1;
     };
 
-    if (low >= high) return;
+    if (low >= last) return;
     
-    s64_t pi = partition(buffer, low, high, fn);
+    s64_t pi = partition(values, first, last, callback);
 
-    quick_sort(buffer, low, pi - 1, fn);
-    quick_sort(buffer, pi + 1, high, fn);
+    quick_sort(values, first, pi - 1, callback);
+    quick_sort(values, pi + 1, last, callback);
+  }
+
+
+  /* Generate a SFINAE class to determine if another class has a specific member name */
+  #define m_impl_sfinae_has_member(IDENT) \
+    template <typename T> class has_ ## IDENT { \
+      template <typename C> static s8_t test( decltype(&C :: IDENT) ); \
+      template <typename C> static s16_t test(...); \
+      public: enum { value = sizeof(test<T>(0)) == sizeof(s8_t) }; \
+    }
+
+
+  namespace Internal {
+    m_impl_sfinae_has_member(destroy); // has_destroy<T>::value
   }
 }
 
@@ -294,7 +308,7 @@ ENGINE_API s64_t glFilterFromStr (char const* value);
 ENGINE_API char const* glGetErrorMsg (GLenum err);
 
 /* Catch any OpenGL errors, log their messages, and abort if any errors were caught */
-void glCatchErrors () {
+static void glCatchErrors () {
   GLenum err;
   bool ok = true;
   while ((err = glGetError()) != GL_NO_ERROR) {

@@ -52,18 +52,18 @@ namespace mod {
 
     /* Convert a Vector4 to a Quaternion */
     template <typename T> constexpr Quaternion (Vector4<T> const& v)
-    : x((f32_t) v.x)
-    , y((f32_t) v.y)
-    , z((f32_t) v.z)
-    , w((f32_t) v.w)
+    : x(static_cast<f32_t>(v.x))
+    , y(static_cast<f32_t>(v.y))
+    , z(static_cast<f32_t>(v.z))
+    , w(static_cast<f32_t>(v.w))
     { }
 
     
     /* Convert a Vector3 and a w value to a Quaternion */
     template <typename T> constexpr Quaternion (Vector3<T> const& v, f32_t w)
-    : x((f32_t) v.x)
-    , y((f32_t) v.y)
-    , z((f32_t) v.z)
+    : x(static_cast<f32_t>(v.x))
+    , y(static_cast<f32_t>(v.y))
+    , z(static_cast<f32_t>(v.z))
     , w(w)
     { }
 
@@ -78,7 +78,7 @@ namespace mod {
     /* Get an element of a Quaternion by index.
      * For efficiency, the index is not bounds checked */
     f32_t& operator [] (size_t index) const {
-      return (f32_t&) elements[index];
+      return const_cast<f32_t&>(elements[index]);
     }
 
 
@@ -118,12 +118,12 @@ namespace mod {
 
     /* Get the magnitude/length of a Quaternion vector */
     f32_t length () const {
-      return ((Vector4f const*) this)->length();
+      return reinterpret_cast<Vector4f const*>(this)->length();
     }
 
     /* Get the dot product of two Quaternion vectors */
     f32_t dot (Quaternion const& r) const {
-      return ((Vector4f const*) this)->dot(*(Vector4f const*) &r);
+      return reinterpret_cast<Vector4f const*>(this)->dot(*reinterpret_cast<Vector4f const*>(&r));
     }
 
     /* Negate each component of a Quaternion vector */
@@ -132,12 +132,22 @@ namespace mod {
     }
 
 
+    /* Determine if two Quaternions are essentialy equivalent.
+     * Wrapper for num::almost_equal, see it for details */
+    bool almost_equal (Quaternion const& r, s32_t ulp = 2) const {
+      return num::almost_equal(x, r.x, ulp)
+          && num::almost_equal(y, r.y, ulp)
+          && num::almost_equal(z, r.z, ulp)
+          && num::almost_equal(w, r.w, ulp);
+    }
+
+
     /* Determine if two Quaternions are identical */
     bool equal (Quaternion const& r) const {
-      return x == r.x
-          && y == r.y
-          && z == r.z
-          && w == r.w;
+      return num::flt_equal(x, r.x)
+          && num::flt_equal(y, r.y)
+          && num::flt_equal(z, r.z)
+          && num::flt_equal(w, r.w);
     }
 
     /* Determine if two Quaternions are identical */
@@ -147,10 +157,10 @@ namespace mod {
 
     /* Determine if two Quaternions are not identical */
     bool not_equal (Quaternion const& r) const {
-      return x != r.x
-          || y != r.y
-          || z != r.z
-          || w != r.w;
+      return num::flt_not_equal(x, r.x)
+          || num::flt_not_equal(y, r.y)
+          || num::flt_not_equal(z, r.z)
+          || num::flt_not_equal(w, r.w);
     }
 
     /* Determine if two Quaternions are not identical */

@@ -5,7 +5,7 @@
 
 namespace mod {
   ShaderProgram::ShaderProgram (
-    char const* origin,
+    char const* in_origin,
 
     ShaderHandle vertex,
     ShaderHandle fragment,
@@ -14,7 +14,7 @@ namespace mod {
     ShaderHandle geometry,
     ShaderHandle compute
   )
-  : origin(str_clone(origin))
+  : origin(str_clone(in_origin))
   {
     gl_id = glCreateProgram();
 
@@ -164,7 +164,7 @@ namespace mod {
     ShaderProgram program;
 
     try {
-      program = from_str(origin, (char*) source);
+      program = from_str(origin, static_cast<char*>(source));
     } catch (Exception& exception) {
       free(source);
       throw exception;

@@ -48,7 +48,7 @@ namespace mod {
 
     /* Create a new ShaderProgram from a set of Shaders */
     ENGINE_API ShaderProgram (
-      char const* origin,
+      char const* in_origin,
 
       ShaderHandle vertex = { },
       ShaderHandle fragment = { },
@@ -156,7 +156,7 @@ namespace mod {
         "Matrix4, or arrays of these types"
       );
 
-      if constexpr (std::is_same<T, bool>::value) return glProgramUniform1i(gl_id, location, (s32_t) value);
+      if constexpr (std::is_same<T, bool>::value) return glProgramUniform1i(gl_id, location, static_cast<s32_t>(value));
 
       else if constexpr (std::is_same<T, s32_t>::value) return glProgramUniform1i(gl_id, location, value);
       else if constexpr (std::is_same<T, u32_t>::value) return glProgramUniform1ui(gl_id, location, value);
@@ -232,7 +232,7 @@ namespace mod {
         intermediate_bool_array.clear();
         
         for (size_t i = 0; i < value_count; i ++) {
-          intermediate_bool_array.append((s32_t) values[i]);
+          intermediate_bool_array.append(static_cast<s32_t>(values[i]));
         }
 
         return set_uniform<s32_t>(location, intermediate_bool_array.elements, value_count);
@@ -243,23 +243,23 @@ namespace mod {
       else if constexpr (std::is_same<T, f32_t>::value) return glProgramUniform1fv(gl_id, location, value_count, values);
       else if constexpr (std::is_same<T, f64_t>::value) return glProgramUniform1dv(gl_id, location, value_count, values);
 
-      else if constexpr (std::is_same<T, Vector2s>::value) return glProgramUniform2iv(gl_id, location, value_count, (s32_t const*) values);
-      else if constexpr (std::is_same<T, Vector2u>::value) return glProgramUniform2uiv(gl_id, location, value_count, (u32_t const*) values);
-      else if constexpr (std::is_same<T, Vector2f>::value) return glProgramUniform2fv(gl_id, location, value_count, (f32_t const*) values);
-      else if constexpr (std::is_same<T, Vector2d>::value) return glProgramUniform2dv(gl_id, location, value_count, (f64_t const*) values);
+      else if constexpr (std::is_same<T, Vector2s>::value) return glProgramUniform2iv(gl_id, location, value_count, reinterpret_cast<s32_t const*>(values));
+      else if constexpr (std::is_same<T, Vector2u>::value) return glProgramUniform2uiv(gl_id, location, value_count, reinterpret_cast<u32_t const*>(values));
+      else if constexpr (std::is_same<T, Vector2f>::value) return glProgramUniform2fv(gl_id, location, value_count, reinterpret_cast<f32_t const*>(values));
+      else if constexpr (std::is_same<T, Vector2d>::value) return glProgramUniform2dv(gl_id, location, value_count, reinterpret_cast<f64_t const*>(values));
 
-      else if constexpr (std::is_same<T, Vector3s>::value) return glProgramUniform3iv(gl_id, location, value_count, (s32_t const*) values);
-      else if constexpr (std::is_same<T, Vector3u>::value) return glProgramUniform3uiv(gl_id, location, value_count, (u32_t const*) values);
-      else if constexpr (std::is_same<T, Vector3f>::value) return glProgramUniform3fv(gl_id, location, value_count, (f32_t const*) values);
-      else if constexpr (std::is_same<T, Vector3d>::value) return glProgramUniform3dv(gl_id, location, value_count, (f64_t const*) values);
+      else if constexpr (std::is_same<T, Vector3s>::value) return glProgramUniform3iv(gl_id, location, value_count, reinterpret_cast<s32_t const*>(values));
+      else if constexpr (std::is_same<T, Vector3u>::value) return glProgramUniform3uiv(gl_id, location, value_count, reinterpret_cast<u32_t const*>(values));
+      else if constexpr (std::is_same<T, Vector3f>::value) return glProgramUniform3fv(gl_id, location, value_count, reinterpret_cast<f32_t const*>(values));
+      else if constexpr (std::is_same<T, Vector3d>::value) return glProgramUniform3dv(gl_id, location, value_count, reinterpret_cast<f64_t const*>(values));
 
-      else if constexpr (std::is_same<T, Vector4s>::value) return glProgramUniform4iv(gl_id, location, value_count, (s32_t const*) values);
-      else if constexpr (std::is_same<T, Vector4u>::value) return glProgramUniform4uiv(gl_id, location, value_count, (u32_t const*) values);
-      else if constexpr (std::is_same<T, Vector4f>::value) return glProgramUniform4fv(gl_id, location, value_count, (f32_t const*) values);
-      else if constexpr (std::is_same<T, Vector4d>::value) return glProgramUniform4dv(gl_id, location, value_count, (f64_t const*) values);
+      else if constexpr (std::is_same<T, Vector4s>::value) return glProgramUniform4iv(gl_id, location, value_count, reinterpret_cast<s32_t const*>(values));
+      else if constexpr (std::is_same<T, Vector4u>::value) return glProgramUniform4uiv(gl_id, location, value_count, reinterpret_cast<u32_t const*>(values));
+      else if constexpr (std::is_same<T, Vector4f>::value) return glProgramUniform4fv(gl_id, location, value_count, reinterpret_cast<f32_t const*>(values));
+      else if constexpr (std::is_same<T, Vector4d>::value) return glProgramUniform4dv(gl_id, location, value_count, reinterpret_cast<f64_t const*>(values));
 
-      else if constexpr (std::is_same<T, Matrix3>::value) return glProgramUniformMatrix3fv(gl_id, location, value_count, GL_FALSE, (f32_t const*) values);
-      else if constexpr (std::is_same<T, Matrix4>::value) return glProgramUniformMatrix4fv(gl_id, location, value_count, GL_FALSE, (f32_t const*) values);
+      else if constexpr (std::is_same<T, Matrix3>::value) return glProgramUniformMatrix3fv(gl_id, location, value_count, GL_FALSE, reinterpret_cast<f32_t const*>(values));
+      else if constexpr (std::is_same<T, Matrix4>::value) return glProgramUniformMatrix4fv(gl_id, location, value_count, GL_FALSE, reinterpret_cast<f32_t const*>(values));
     }
 
     /* Set the array of a uniform inside a ShaderProgram */

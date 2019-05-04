@@ -53,6 +53,11 @@ namespace mod {
   struct DAEJointData {
     XMLItem* origin;
     Array<DAEInput> inputs;
+
+    DAEJointData () { }
+    DAEJointData (XMLItem* in_origin)
+    : origin(in_origin)
+    { }
   };
 
   struct DAEWeightData {
@@ -61,6 +66,11 @@ namespace mod {
     size_t count;
     Array<u32_t> vcount;
     Array<u32_t> indices;
+    
+    DAEWeightData () { }
+    DAEWeightData (XMLItem* in_origin)
+    : origin(in_origin)
+    { }
   };
 
   struct DAEIJoint {
@@ -71,6 +81,7 @@ namespace mod {
     u32_t weights [max_vcount + 2];
 
     DAEIJoint () { }
+
     DAEIJoint (u32_t in_count)
     : count(in_count) { }
   };
@@ -90,6 +101,16 @@ namespace mod {
     s64_t uv;
     s64_t color;
 
+    DAEIVertex (DAETriangles& in_triangles, size_t in_index)
+    : triangles(in_triangles)
+    , set(false)
+    , index(in_index)
+    , duplicate(-1)
+    , position(0)
+    , normal(0)
+    , uv(0)
+    , color(0)
+    { }
 
     void set_attributes (s64_t in_normal, s64_t in_uv, s64_t in_color) {
       normal = in_normal;
@@ -105,6 +126,9 @@ namespace mod {
           && color == test_color;
     }
   };
+
+
+
 
   
 
@@ -225,7 +249,7 @@ namespace mod {
             }
           }
           
-          size_t advance = inputs.reduce((size_t) 0, [] (size_t& acc, DAEInput const& input) {
+          size_t advance = inputs.reduce(static_cast<size_t>(0), [] (size_t& acc, DAEInput const& input) {
             acc = num::max(acc, input.offset);
           }) + 1;
 
@@ -390,19 +414,25 @@ namespace mod {
     }
 
 
-    RenderMesh3D load_mesh (Matrix4 const& transform = Constants::Matrix4::identity) {
+
+
+
+
+    RenderMesh3D load_mesh (Matrix4 const& transform = Constants::Matrix4::identity) const {
+      // needs a try catch wrapper!!
+
       Array<DAEIJoint> i_joints;
 
-      DAEInput& joint_input = get_wd_input("JOINT");
-      DAEAccessor& joint_accessor = get_accessor(joint_input.source_id);
-      DAESource& joint_source = get_source(joint_accessor.source_id);
+      // DAEInput& joint_input = get_wd_input("JOINT");
+      // DAEAccessor& joint_accessor = get_accessor(joint_input.source_id);
+      // DAESource& joint_source = get_source(joint_accessor.source_id);
 
       DAEInput& weight_input = get_wd_input("WEIGHT");
       DAEAccessor& weight_accessor = get_accessor(weight_input.source_id);
       DAESource& weight_source = get_source(weight_accessor.source_id);
 
       {
-        auto& [ wd_origin, inputs, count, vcount, indices ] = weight_data;
+        auto& [ wd_origin, inputs, count, vcount, indices ] = const_cast<DAEWeightData&>(weight_data); // Bug fix: const structures are improperly decomposed in c++17
 
         size_t j = 0;
         for (auto [ i, c ] : vcount) {
@@ -441,7 +471,7 @@ namespace mod {
 
             u32_t position = indices[j + position_input.offset];
 
-            DAEIVertex iv = { triangles, false, iv_index, -1 };
+            DAEIVertex iv = { triangles, iv_index };
             iv.position = position;
             i_vertices.append(iv);
           }
@@ -459,9 +489,9 @@ namespace mod {
             for (size_t j = 0; j < indices.count; j += triangles.advance) {
               size_t iv_index = j / triangles.advance;
 
-              s64_t normal = have_normal? (s64_t) indices[j + normal_input->offset] : -1;
-              s64_t uv = have_uv? (s64_t) indices[j + uv_input->offset] : -1;
-              s64_t color = have_color? (s64_t) indices[j + color_input->offset] : -1;
+              s64_t normal = have_normal? static_cast<s64_t>(indices[j + normal_input->offset]) : -1;
+              s64_t uv = have_uv? static_cast<s64_t>(indices[j + uv_input->offset]) : -1;
+              s64_t color = have_color? static_cast<s64_t>(indices[j + color_input->offset]) : -1;
 
               DAEIVertex* existing_vertex = &i_vertices[iv_index];
 
@@ -486,7 +516,7 @@ namespace mod {
                 if (!found_existing) {
                   size_t new_iv_index = i_vertices.count;
 
-                  DAEIVertex new_iv = { triangles, false, new_iv_index, -1 };
+                  DAEIVertex new_iv = { triangles, new_iv_index };
                   new_iv.set_attributes(normal, uv, color);
                   i_vertices.append(new_iv);
 
@@ -654,12 +684,12 @@ namespace mod {
       glGenBuffers(2, buffers);
 
       glBindBuffer(GL_ARRAY_BUFFER, buffers[0]);
-      glVertexAttribIPointer(4, 4, GL_UNSIGNED_INT, sizeof(Vector4u), (void*) 0);
+      glVertexAttribIPointer(4, 4, GL_UNSIGNED_INT, sizeof(Vector4u), reinterpret_cast<void*>(0));
       glBufferData(GL_ARRAY_BUFFER, final_joints.count * sizeof(Vector4u), final_joints.elements, GL_DYNAMIC_DRAW);
       glEnableVertexAttribArray(4);
 
       glBindBuffer(GL_ARRAY_BUFFER, buffers[1]);
-      glVertexAttribPointer(5, 4, GL_FLOAT, GL_FALSE, sizeof(Vector4f), (void*) 0);
+      glVertexAttribPointer(5, 4, GL_FLOAT, GL_FALSE, sizeof(Vector4f), reinterpret_cast<void*>(0));
       glBufferData(GL_ARRAY_BUFFER, final_weights.count * sizeof(Vector4f), final_weights.elements, GL_DYNAMIC_DRAW);
       glEnableVertexAttribArray(5);
 
@@ -679,7 +709,7 @@ namespace mod {
         if (binding.id == id.value + 1) return binding;
       }
 
-      mesh->asset_error("Could not find VertexBinding '%s'", id);
+      mesh->asset_error("Could not find VertexBinding '%s'", id.value);
     }
 
     Array<DAEInput> gather_inputs (XMLItem& origin) const {
@@ -727,9 +757,9 @@ namespace mod {
 
           char* base = float_array->get_text().value;
           char* end = NULL;
-          for (size_t i = 0; i < float_count; i ++) {
+          for (size_t j = 0; j < float_count; j ++) {
             floats.append(strtod(base, &end));
-            float_array->asset_assert(end != base, "Failed to parse float at index %zu", i);
+            float_array->asset_assert(end != base, "Failed to parse float at index %zu", j);
             base = end;
           }
 
@@ -742,11 +772,11 @@ namespace mod {
 
           char* base = name_array->get_text().value;
           char* end = NULL;
-          for (size_t i = 0; i < name_count; i ++) {
+          for (size_t j = 0; j < name_count; j ++) {
             while (char_is_whitespace(*base)) ++ base;
             end = base;
             while (!char_is_whitespace(*end)) ++ end;
-            names.append({ base, (size_t) (end - base) });
+            names.append({ base, static_cast<size_t>(end - base) });
             base = end;
           }
 

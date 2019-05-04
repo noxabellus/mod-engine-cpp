@@ -4,9 +4,24 @@ SETLOCAL EnableDelayedExpansion
 
 
 :: Flags to pass to the compiler
-set STD_FLAGS=-D_CRT_SECURE_NO_WARNINGS -D_CRT_NONSTDC_NO_WARNINGS -Wno-pragma-pack -Xclang -fexceptions -Xclang -fcxx-exceptions -std:c++17
+set WARNINGS=-Wall
+set DISALBED_WARNINGS=^
+-D_CRT_SECURE_NO_WARNINGS -D_CRT_NONSTDC_NO_WARNINGS ^
+-Wno-c++98-compat -Wno-c++98-compat-unnamed-type-template-args -Wno-c++98-compat-pedantic ^
+-Wno-newline-eof -Wno-gnu-zero-variadic-macro-arguments -Wno-zero-as-null-pointer-constant ^
+-Wno-unused-function -Wno-global-constructors -Wno-exit-time-destructors ^
+-Wno-nested-anon-types -Wno-gnu-anonymous-struct ^
+-Wno-double-promotion -Wno-sign-conversion -Wno-shorten-64-to-32 -Wno-conversion -Wno-float-conversion -Wno-sign-compare
+
+set STD_FLAGS=-Xclang -fexceptions -Xclang -fcxx-exceptions -std:c++17 %WARNINGS% %DISALBED_WARNINGS% 
 set DBG_FLAGS=-DDEBUG -Z7
-set REL_FLAGS=-DRELEASE -Ofast -Z7
+set REL_FLAGS=-DRELEASE -Ofast
+
+:: This path needs to be the build directory if you're using this script for a real game
+:: but when working on the test game its way more convenient to have it be the source directory
+:: due to lazy evaluation of templates and the resulting errors during development
+REM set ENGINE_INCLUDE_PATH=-I.\build\include\
+set ENGINE_INCLUDE_PATH=-I.\source\ -I.\source\core\include\
 
 
 
@@ -182,7 +197,7 @@ if "%1" == "" (
   :: Build test game exe
   clang-cl -DM_GAME ^
     %STD_FLAGS% %DBG_FLAGS% ^
-    -I.\build\include\ ^
+    %ENGINE_INCLUDE_PATH% ^
     .\source\test\main.cc ^
     .\build\debug\ModEngine.lib ^
     -o.\build\test\debug\main ^
@@ -241,7 +256,7 @@ if "%1" == "" (
   :: Build test game exe
   clang-cl -DM_GAME ^
     %STD_FLAGS% %REL_FLAGS% ^
-    -I.\build\include\ ^
+    %ENGINE_INCLUDE_PATH% ^
     .\source\test\main.cc ^
     .\build\release\ModEngine.lib ^
     -o.\build\test\release\main ^
@@ -297,7 +312,7 @@ if "%1" == "" (
   :: Build test modification dll
   clang-cl -DM_MODULE ^
     %STD_FLAGS% %DBG_FLAGS% -LD ^
-    -I.\build\include ^
+    %ENGINE_INCLUDE_PATH% ^
     source\test\mod\mod.cc ^
     .\build\test\debug\main.lib ^
     -o.\build\test\debug\mods\mod ^
@@ -339,7 +354,7 @@ if "%1" == "" (
   :: Build test modification dll
   clang-cl -DM_MODULE ^
     %STD_FLAGS% %REL_FLAGS% -LD ^
-    -I.\build\include ^
+    %ENGINE_INCLUDE_PATH% ^
     source\test\mod\mod.cc ^
     .\build\test\release\main.lib ^
     -o.\build\test\release\mods\mod ^
