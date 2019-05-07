@@ -15,6 +15,8 @@ namespace mod {
   }
 
   AABB2 AABB2::from_vector_list (Vector2f const* vectors, size_t vector_count) {
+    if (vector_count == 0) return Constants::AABB2::empty;
+
     AABB2 out;
     
     for (size_t i = 0; i < vector_count; i ++) {

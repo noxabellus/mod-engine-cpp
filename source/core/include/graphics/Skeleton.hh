@@ -119,6 +119,11 @@ namespace mod {
     }
 
 
+    /* Get the total number of child Bones belonging to a Bone in a Skeleton.
+     * Throws if the Bone does not belong to this Skeleton */
+    ENGINE_API size_t get_child_count (Bone const& parent_bone) const;
+
+
     /* Determine if a Bone belongs to a Skeleton */
     bool owns_bone (Bone const* bone) const {
       return bone >= bones.elements
@@ -131,9 +136,10 @@ namespace mod {
     }
 
 
-    /* Get the parent Bone of a Bone in a Skeleton.
-     * Throws if the Bone does not belong to this Skeleton, has no parent or has an invalid parent index */
-    ENGINE_API Bone& get_parent (Bone const& child_bone) const;
+    /* Get a pointer to the parent Bone of a Bone in a Skeleton.
+     * Throws if the Bone does not belong to this Skeleton, or has an invalid parent index.
+     * Returns NULL if the Bone is a root and has no parent */
+    ENGINE_API Bone* get_parent (Bone const& child_bone) const;
 
 
     /* Get the index of a Bone in a Skeleton.

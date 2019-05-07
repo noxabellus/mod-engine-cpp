@@ -25,7 +25,12 @@ void module_init () {
   /* XML TEST */
   DAE dae = DAE::from_file("./assets/meshes/thinmatrix_cowboy.dae");
 
-  RenderMesh3D dae_mesh = dae.load_mesh(Matrix4::compose({ 0, Constants::Quaternion::identity, 25 }));
+  Matrix4 dae_tran = Matrix4::compose({ 0, Constants::Quaternion::identity, 25 });
+
+  RenderMesh3D dae_mesh = dae.load_mesh(dae_tran);
+
+  Skeleton dae_skel = dae.load_skeleton(dae_tran);
+  
 
   dae.destroy();
 
@@ -55,6 +60,7 @@ void module_init () {
   ecs.create_component_type<RenderMesh3DHandle>();
   ecs.create_component_type<BasicInput>();
   ecs.create_component_type<PointLight>();
+  ecs.create_component_type<SkeletonHandle>();
 
 
   EntityHandle character; {
@@ -67,6 +73,7 @@ void module_init () {
     character.add_component(weight_check_mat);
     character.add_component(BasicInput { true, 64 });
     character.add_component(RenderMesh3DHandle { &dae_mesh });
+    character.add_component(SkeletonHandle { &dae_skel });
   }
 
   EntityHandle plane; {
@@ -90,7 +97,7 @@ void module_init () {
     light.add_component(test_cube_mesh);
     light.add_component(unlit_color_mat);
     light.add_component(PointLight { { 1, 1, 1 }, 1 });
-  };
+  }
 
 
   ecs.create_system("MovementInput", true, { ecs.get_component_type_by_instance_type<BasicInput>().id, ecs.get_component_type_by_instance_type<Transform3D>().id }, [&] (ECS*, uint32_t index) {
@@ -327,7 +334,7 @@ void module_init () {
         Matrix4 transform_matrix = Matrix4::compose(transform);
 
         RenderMesh3D& mesh = *entity.get_component<RenderMesh3DHandle>();
-
+        
         for (auto [ i, face ] : mesh.faces) {
           Triangle tri = { mesh.positions[face.x], mesh.positions[face.y], mesh.positions[face.z] };
 
@@ -337,6 +344,51 @@ void module_init () {
         }
       }
     }
+  });
+
+  ecs.create_system("Skeleton Debugger", [&] (ECS*) {
+    ComponentMask mask = ComponentMask {
+      ecs.get_component_type_by_instance_type<Transform3D>().id,
+      ecs.get_component_type_by_instance_type<SkeletonHandle>().id
+    };
+
+    Begin("Bone Transforms");
+    for (u32_t i = 0; i < ecs.entity_count; i ++) {
+      EntityHandle entity = ecs.get_handle(i);
+
+      if (entity->enabled_components.match_subset(mask)) {
+        Transform3D& transform = entity.get_component<Transform3D>();
+
+        Matrix4 transform_matrix = Matrix4::compose(transform);
+
+        Skeleton& skeleton = *entity.get_component<SkeletonHandle>();
+
+        for (auto [ i, bone ] : skeleton) {
+          Vector3f bone_pos = Vector3f{}.apply_matrix(transform_matrix * bone.bind_matrix);
+          draw_debug.cube(false, AABB3::from_center_and_size(bone_pos, 1), { 1, 0, 1 });
+
+          Bone* parent_bone = skeleton.get_parent(bone);
+          if (parent_bone != NULL) {
+            Vector3f parent_pos = Vector3f{}.apply_matrix(transform_matrix * parent_bone->bind_matrix);
+            draw_debug.line3(false, Line3 { parent_pos, bone_pos }, { 1, 1, 0 });
+          }
+        }
+
+        char entity_ident [128];
+        snprintf(entity_ident, 128, "Entity %u", entity.id);
+        if (CollapsingHeader(entity_ident)) {
+          for (auto [ i, bone ] : skeleton) {
+            Transform3D bind_tran = bone.bind_matrix.decompose();
+
+            Text("%s", bone.name.value);
+            Text("- Position: %.3f, %.3f, %.3f", bind_tran.position.x, bind_tran.position.y, bind_tran.position.z);
+            Text("- Rotation: %.3f, %.3f, %.3f, %.3f", bind_tran.rotation.x, bind_tran.rotation.y, bind_tran.rotation.z, bind_tran.rotation.w);
+            Text("- Scale: %.3f, %.3f, %.3f", bind_tran.scale.x, bind_tran.scale.y, bind_tran.scale.z);
+          }
+        }
+      }
+    }
+    End();
   });
 
   
@@ -429,6 +481,12 @@ void module_init () {
     }
     End();
   });
+
+  ecs.get_system_by_name("Face Normal Debugger").enabled = false;
+  ecs.get_system_by_name("Vertex Normal Debugger").enabled = false;
+  ecs.get_system_by_name("Face Edge Debugger").enabled = false;
+  ecs.get_system_by_name("Object Picker").enabled = false;
+  // ecs.get_system_by_name("Skeleton Debugger").enabled = false;
   
 
   Array<WatchedFileReport> update_reports;
@@ -463,6 +521,7 @@ void module_init () {
     Checkbox("Vertex Normals", &ecs.get_system_by_name("Vertex Normal Debugger").enabled);
     Checkbox("Face Edges", &ecs.get_system_by_name("Face Edge Debugger").enabled);
     Checkbox("Object Picker", &ecs.get_system_by_name("Object Picker").enabled);
+    Checkbox("Skeleton", &ecs.get_system_by_name("Skeleton Debugger").enabled);
 
     MaterialHandle material_options [] = {
       weight_check_mat,

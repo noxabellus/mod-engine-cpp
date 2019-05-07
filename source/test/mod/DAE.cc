@@ -85,6 +85,7 @@ namespace mod {
     DAEIJoint (u32_t in_count)
     : count(in_count) { }
   };
+  
 
   struct DAEIVertex {
     DAETriangles& triangles;
@@ -128,11 +129,128 @@ namespace mod {
   };
 
 
+  struct DAEIBone {
+    DAEIBone* parent = NULL;
 
+    String name = { };
+    Array<DAEIBone> children = { 256 };
+    Matrix4 base_matrix = { };
+    Matrix4 bind_matrix = { };
+    Matrix4 inverse_bind_matrix = { };
+
+
+    DAEIBone () = default;
+
+
+    void add_child (DAEIBone const& bone) {
+      size_t bone_index = children.count;
+      children.append(bone);
+      DAEIBone& new_bone = children[bone_index];
+      new_bone.parent = this;
+      for (auto [ i, child ] : new_bone.children) child.parent = &new_bone; 
+    }
+
+    void remove_child (DAEIBone& bone) {
+      children.remove(children.get_index(bone));
+    }
+
+    void calculate_bind (Matrix4 const& transform) {
+      if (parent == NULL) bind_matrix = transform * base_matrix;
+      else bind_matrix = parent->bind_matrix * base_matrix;
+
+      inverse_bind_matrix = bind_matrix.inverse();
+
+      for (auto [ i, child ] : children) child.calculate_bind(transform);
+    }
+
+    Transform3D final_transform () const {
+      if (parent != NULL) return (parent->inverse_bind_matrix * bind_matrix).decompose();
+      else return bind_matrix.decompose();
+    }
+
+    static DAEIBone traverse (XMLItem& joint) {
+      DAEIBone bone;
+
+      bone.name = joint.get_attribute("name").value.clone();
+
+      Matrix4 matrix;
+
+      XMLItem& matrix_item = joint.first_named("matrix");
+      String& matrix_text = matrix_item.get_text();
+
+      char* base = matrix_text.value;
+      char* end = NULL;
+      for (size_t j = 0; j < 16; j ++) {
+        matrix[j] = strtof(base, &end);
+        matrix_item.asset_assert(end != NULL && base != end, "Not enough elements in matrix");
+        base = end;
+      }
+      
+      bone.base_matrix = matrix.transpose();
+
+      for (size_t i = 0; i < joint.count_of_name("node"); i ++) {
+        XMLItem& child_joint = joint.nth_named(i, "node");
+        XMLAttribute* type_attribute = child_joint.get_attribute_pointer("type");
+
+        if (type_attribute != NULL && type_attribute->value == "JOINT") {
+          bone.add_child(traverse(child_joint));
+        }
+      }
+
+      return bone;
+    }
+
+    bool strip_ik (std::function<bool (DAEIBone const&)> filter) {
+      if (parent != NULL) {
+        if (filter(*this)) {
+          for (auto [ i, child ] : children) parent->add_child(child);
+          parent->remove_child(*this);
+          return true;
+        } else {
+          for (auto [ i, child ] : children) if (child.strip_ik(filter)) return true;
+        }
+      } else {
+        if (children.count > 1) {
+          for (auto [ i, child ] : children) if (child.strip_ik(filter)) return true;
+        } else if (filter(*this)) {
+          DAEIBone child = children[0];
+          name.destroy();
+          name = child.name;
+          children.destroy();
+          children = child.children;
+          for (auto [ i, new_child ] : children) new_child.parent = this;
+          bind_matrix = child.bind_matrix;
+          inverse_bind_matrix = child.inverse_bind_matrix;
+        }
+      }
+
+      return false;
+    }
+
+    void collapse (Array<Bone>& out_bones, s32_t parent_index = -1) const {
+      size_t index = out_bones.count;
+
+      out_bones.append({
+        name,
+        parent_index,
+        final_transform()
+      });
+      
+      for (auto [ i, child ] : children) child.collapse(out_bones, index);
+    }
+
+    void destroy () {
+      for (auto [ i, child ] : children) child.destroy();
+      children.destroy();
+    }
+  };
 
   
 
   struct DAE {
+    static std::function<bool (DAEIBone const&)> std_bone_filter;
+
+
     XML xml;
 
     XMLItem& root;
@@ -423,10 +541,6 @@ namespace mod {
 
       Array<DAEIJoint> i_joints;
 
-      // DAEInput& joint_input = get_wd_input("JOINT");
-      // DAEAccessor& joint_accessor = get_accessor(joint_input.source_id);
-      // DAESource& joint_source = get_source(joint_accessor.source_id);
-
       DAEInput& weight_input = get_wd_input("WEIGHT");
       DAEAccessor& weight_accessor = get_accessor(weight_input.source_id);
       DAESource& weight_source = get_source(weight_accessor.source_id);
@@ -703,6 +817,112 @@ namespace mod {
     }
 
 
+
+    Skeleton load_skeleton (Matrix4 const& transform = Constants::Matrix4::identity, bool apply_filter = true, std::function<bool (DAEIBone const&)> filter = std_bone_filter) const {
+      XMLItem& lib_vis_scenes = root.first_named("library_visual_scenes");
+
+      XMLItem& scene = lib_vis_scenes.first_named("visual_scene");
+
+      lib_vis_scenes.asset_assert(lib_vis_scenes.count_of_name("visual_scene") == 1, "Expected exactly one visual scene");
+
+      XMLItem& armature = scene.find_by_attribute_value("node", "id", "Armature");
+
+      XMLItem& root_joint = armature.find_by_attribute_value("node", "type", "JOINT");
+
+
+      DAEIBone root_ibone = DAEIBone::traverse(root_joint);
+
+      root_ibone.calculate_bind(transform);
+
+
+      if (apply_filter) {
+        bool cont;
+        do cont = root_ibone.strip_ik(filter);
+        while (cont);
+      }
+
+
+      Array<Bone> final_bones;
+
+      root_ibone.collapse(final_bones);
+      root_ibone.destroy();
+      
+
+      Skeleton skeleton = Skeleton::from_ex(
+        "collada!",
+        final_bones
+      );
+
+      /*
+        // for (auto [ i, bone ] : skeleton) {
+        //   bone.bind_matrix = transform * bone.bind_matrix;
+        //   bone.inverse_bind_matrix = bone.bind_matrix.inverse();
+        // }
+
+
+        // std::function<bool()> const remove_ik = [&] () {
+        //   for (auto [ i, bone ] : skeleton) {
+        //     if (bone.parent_index == -1) continue;
+
+        //     if (bone.name.starts_with("IK") || bone.name.starts_with("TK")) {
+        //       size_t removed_index = i;
+        //       size_t new_parent_index = bone.parent_index;
+
+        //       for (auto [ j, child_bone ] : skeleton) {
+        //         if (child_bone.parent_index == removed_index) child_bone.parent_index = new_parent_index;
+        //       }
+
+        //       for (auto [ j, other_bone ] : skeleton) {
+        //         if (other_bone.parent_index > removed_index) -- other_bone.parent_index;
+        //       }
+
+        //       skeleton.bones.remove(i);
+
+        //       return true;
+        //     }
+        //   }
+
+          return false;
+        };
+
+        bool removed;
+        do removed = remove_ik();
+        while (removed);
+
+        
+        // Bone& root_bone = skeleton.root();
+
+        // if (root_bone.name.starts_with("IK") || root_bone.name.starts_with("TK")) {
+        //   skeleton.asset_assert(skeleton.get_child_count(root_bone) == 1, "Cannot remove IK Bones from Skeleton because the root Bone is an IK Bone with more than one child Bone");
+
+        //   size_t old_root = skeleton.root_index;
+        //   size_t new_root = 0;
+
+        //   for (auto [ i, bone ] : skeleton) {
+        //     if (bone.parent_index == old_root) {
+        //       new_root = i;
+        //       bone.parent_index = -1;
+        //       break;
+        //     }
+        //   }
+
+        //   skeleton.bones.remove(old_root);
+
+        //   for (auto [ i, bone ] : skeleton) {
+        //     if (bone.parent_index > old_root) -- bone.parent_index;
+        //   }
+        // }
+      */
+
+      return skeleton;
+    }
+
+
+
+
+
+
+
   private:
     DAEVertexBinding& get_vertex_binding (String const& id) const {
       for (auto [ k, binding ] : vertex_bindings) {
@@ -798,4 +1018,6 @@ namespace mod {
       }
     }
   };
+
+  std::function<bool (DAEIBone const&)> DAE::std_bone_filter = [] (DAEIBone const& bone) { return bone.name.starts_with("IK") || bone.name.starts_with("TK"); };
 }

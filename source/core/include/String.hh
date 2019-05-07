@@ -133,6 +133,27 @@ namespace mod {
     /* Add the product of snprintf to a designated point inside a String */
     ENGINE_API void fmt_insert (size_t offset, char const* fmt, ...);
 
+    /* Compare the start of a String to a str */
+    bool starts_with (char const* other_value, size_t other_value_length = 0) const {
+      if (other_value_length == 0) other_value_length = strlen(other_value);
+      return length >= other_value_length && strncmp(value, other_value, other_value_length) == 0;
+    }
+
+    /* Compare the end of a String to a str */
+    bool ends_with (char const* other_value, size_t other_value_length = 0) const {
+      if (other_value_length == 0) other_value_length = strlen(other_value);
+      return length >= other_value_length && strncmp(value + length - other_value_length, other_value, other_value_length) == 0;
+    }
+
+    /* Compare the end of a String with another String */
+    bool starts_with (String const& other) const {
+      return starts_with(other.value, other.length);
+    }
+
+    /* Compare the end of a String with another String */
+    bool ends_with (String const& other) const {
+      return ends_with(other.value, other.length);
+    }
 
     /* Compare a String to a str */
     bool equal (char const* other_value, size_t other_value_length = 0) const {

@@ -11,10 +11,11 @@ namespace mod {
 
     primitive_prog = { "draw::primitive", &primitive_vert, &primitive_frag };
 
-    basic_mat = { "draw::line", &primitive_prog, { false }, { false }, { false }, false, false };
+    basic_mat = { "draw::basic", &primitive_prog, { false }, { false }, { false }, false, false };
   
     line_mesh = { "draw::line", true };
     line_mesh.enable_colors(NULL);
+
     rect_mesh = { "draw::rect", true };
     rect_mesh.enable_colors(NULL);
 
@@ -90,7 +91,8 @@ namespace mod {
 
     primitive_prog = { "draw::primitive", &primitive_vert, &primitive_frag };
 
-    basic_mat = { "draw::line", &primitive_prog, { false }, { false }, { true, DepthFactor::Lesser }, false, false };
+    basic_mat = { "draw::basic", &primitive_prog, { false }, { false }, { true, DepthFactor::Lesser }, false, false };
+    depthless_mat = { "draw::depthless", &primitive_prog, { false }, { false }, { false }, false, false };
   
     line_mesh = { "draw::line", true };
     line_mesh.enable_colors(NULL);
@@ -98,13 +100,22 @@ namespace mod {
     cube_mesh = { "draw::cube", true };
     cube_mesh.enable_colors(NULL);
 
+    depthless_line_mesh = { "draw::line", true };
+    depthless_line_mesh.enable_colors(NULL);
+
+    depthless_cube_mesh = { "draw::cube", true };
+    depthless_cube_mesh.enable_colors(NULL);
+
     cube_mesh_basis = RenderMesh3D::from_file(cube_basis_src);
   }
 
   void draw_debug_3d::destroy () {
     basic_mat.destroy();
+    depthless_mat.destroy();
     line_mesh.destroy();
     cube_mesh.destroy();
+    depthless_line_mesh.destroy();
+    depthless_cube_mesh.destroy();
     cube_mesh_basis.destroy();
     primitive_prog.destroy();
     primitive_frag.destroy();
@@ -112,27 +123,30 @@ namespace mod {
   }
 
 
-  void draw_debug_3d::line (Line3 const& positions, Line3 const& colors) {
-    line_mesh.append_vertex(positions.a, { 0.0f }, colors.a);
-    line_mesh.append_vertex(positions.b, { 0.0f }, colors.b);
+  void draw_debug_3d::line (bool depth, Line3 const& positions, Line3 const& colors) {
+    RenderMesh3D* lm = depth? &line_mesh : &depthless_line_mesh;
+    lm->append_vertex(positions.a, { 0.0f }, colors.a);
+    lm->append_vertex(positions.b, { 0.0f }, colors.b);
   }
 
-  void draw_debug_3d::line (Line3 const& positions, Vector3f const& color) {
-    return line(positions, { color, color });
+  void draw_debug_3d::line (bool depth, Line3 const& positions, Vector3f const& color) {
+    return line(depth, positions, { color, color });
   }
 
 
-  void draw_debug_3d::cube (AABB3 const& cube, Vector3f const& color) {
+  void draw_debug_3d::cube (bool depth, AABB3 const& cube, Vector3f const& color) {
     Matrix4 mat = Matrix4::compose_components(cube.center(), Constants::Quaternion::identity, cube.size());
+    
+    RenderMesh3D* cm = depth? &cube_mesh : &depthless_cube_mesh;
 
-    size_t p_offset = cube_mesh.positions.count;
+    size_t p_offset = cm->positions.count;
 
     for (auto [ i, position ] : cube_mesh_basis.positions) {
-      cube_mesh.append_vertex(position.apply_matrix(mat), cube_mesh_basis.normals[i], color);
+      cm->append_vertex(position.apply_matrix(mat), cube_mesh_basis.normals[i], color);
     }
 
     for (auto [ i, face ] : cube_mesh_basis.faces) {
-      cube_mesh.append_face(face + p_offset);
+      cm->append_face(face + p_offset);
     }
   }
 
@@ -140,6 +154,8 @@ namespace mod {
   void draw_debug_3d::begin_frame () {
     line_mesh.clear();
     cube_mesh.clear();
+    depthless_line_mesh.clear();
+    depthless_cube_mesh.clear();
   }
 
   void draw_debug_3d::end_frame (Matrix4 const& matrix) {
@@ -151,6 +167,14 @@ namespace mod {
     glDrawArrays(GL_LINES, 0, line_mesh.positions.count);
 
     cube_mesh.draw_with_active_shader();
+
+    depthless_mat.set_uniform("view", matrix);
+
+    depthless_mat.use();
+    depthless_line_mesh.use();
+    glDrawArrays(GL_LINES, 0, depthless_line_mesh.positions.count);
+
+    depthless_cube_mesh.draw_with_active_shader();
   }
 
   void draw_debug_3d::end_frame (Vector2f const& screen_size, Vector3f const& camera_position, Vector3f const& camera_target, Vector2f const& nf_planes) {
@@ -199,12 +223,20 @@ namespace mod {
   }
 
 
+  void draw_debug_t::line3 (bool depth, Line3 const& line, Line3 const& color) {
+    d3d.line(depth, line, color);
+  }
+
+  void draw_debug_t::line3 (bool depth, Line3 const& line, Vector3f const& color) {
+    d3d.line(depth, line, color);
+  }
+
   void draw_debug_t::line3 (Line3 const& line, Line3 const& color) {
-    d3d.line(line, color);
+    d3d.line(true, line, color);
   }
 
   void draw_debug_t::line3 (Line3 const& line, Vector3f const& color) {
-    d3d.line(line, color);
+    d3d.line(true, line, color);
   }
 
 
@@ -212,8 +244,12 @@ namespace mod {
     d2d.rect(rect, color);
   }
 
+  void draw_debug_t::cube (bool depth, AABB3 const& cube, Vector3f const& color) {
+    d3d.cube(depth, cube, color);
+  }
+
   void draw_debug_t::cube (AABB3 const& cube, Vector3f const& color) {
-    d3d.cube(cube, color);
+    d3d.cube(true, cube, color);
   }
 
 

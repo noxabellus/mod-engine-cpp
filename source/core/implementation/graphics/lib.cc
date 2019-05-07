@@ -8,3 +8,7 @@
 
 #include "RenderMesh2D.cc"
 #include "RenderMesh3D.cc"
+
+#include "Skeleton.cc"
+#include "SkeletalAnimation.cc"
+#include "SkeletonState.cc"

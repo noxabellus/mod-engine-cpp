@@ -397,6 +397,18 @@ namespace num {
       return l % r;
     }
   }
+
+
+  /* Convert radians to degrees */
+  template <typename T, typename U = std::conditional_t<std::is_floating_point_v<T>, T, f64_t>> constexpr U rad_to_deg (T rad) {
+    return U(rad) * (U(180) / U(M_PI));
+  }
+
+
+  /* Convert degrees to radians */
+  template <typename T, typename U = std::conditional_t<std::is_floating_point_v<T>, T, f64_t>> constexpr U deg_to_rad (T deg) {
+    return U(deg) * (U(M_PI) / U(180));
+  }
 }
 
 #endif

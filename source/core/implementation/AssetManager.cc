@@ -33,6 +33,8 @@ namespace mod {
     material_set.destroy();
     render_mesh_2d.destroy();
     render_mesh_3d.destroy();
+    skeleton.destroy();
+    skeletal_animation.destroy();
   }
 
   s32_t AssetManager_t::watch_files (void*) {
@@ -135,6 +137,18 @@ namespace mod {
             create_asset_from_file<RenderMesh3D>(name, path, false);
           } break;
 
+          case AssetType::Skeleton: {
+            name = skeleton.get_name_by_id(file.asset_id);
+
+            create_asset_from_file<Skeleton>(name, path, false);
+          } break;
+
+          case AssetType::SkeletalAnimation: {
+            name = skeletal_animation.get_name_by_id(file.asset_id);
+
+            create_asset_from_file<SkeletalAnimation>(name, path, false);
+          } break;
+
           case database_type: {
             if (update_reports_output != NULL) {
               load_database_from_file(path, &report_error_intermediate, false, true);
@@ -202,6 +216,8 @@ namespace mod {
     JSONItem* material_sets_item = json.get_object_item("material_sets");
     JSONItem* render_mesh_2ds_item = json.get_object_item("render_mesh_2ds");
     JSONItem* render_mesh_3ds_item = json.get_object_item("render_mesh_3ds");
+    JSONItem* skeletons_item = json.get_object_item("skeletons");
+    JSONItem* skeletal_animations_item = json.get_object_item("skeletal_animations");
 
 
     char relative_path [1024];
@@ -461,8 +477,72 @@ namespace mod {
         }
       }
     }
+
+    if (skeletons_item != NULL) {
+      JSONObject skeletons_obj = skeletons_item->get_object();
+
+      for (auto [ i, name ] : skeletons_obj.keys) {
+        JSONItem& item = skeletons_obj.items[i];
+        
+        try {
+          if (item.type == JSONType::String) {
+            create_asset_from_file<Skeleton>(
+              name.value,
+              get_file_rel_path(item),
+              watch_sub
+            );
+          } else {
+            create_asset_from_json_item<Skeleton>(
+              name.value,
+              get_sub_rel_path("skeletons", name, item),
+              item
+            );
+          }
+        } catch (Exception& exception) {
+          if (err_msg_output != NULL) {
+            exception.print(*err_msg_output);
+          } else {
+            exception.print();
           }
           
+          exception.handle();
+        }
+      }
+    }
+
+    if (skeletal_animations_item != NULL) {
+      JSONObject skeletal_animations_obj = skeletal_animations_item->get_object();
+
+      for (auto [ i, name ] : skeletal_animations_obj.keys) {
+        JSONItem& item = skeletal_animations_obj.items[i];
+        
+        try {
+          if (item.type == JSONType::String) {
+            create_asset_from_file<SkeletalAnimation>(
+              name.value,
+              get_file_rel_path(item),
+              watch_sub
+            );
+          } else {
+            create_asset_from_json_item<SkeletalAnimation>(
+              name.value,
+              get_sub_rel_path("skeletal_animations", name, item),
+              item
+            );
+          }
+        } catch (Exception& exception) {
+          if (err_msg_output != NULL) {
+            exception.print(*err_msg_output);
+          } else {
+            exception.print();
+          }
+          
+          exception.handle();
+        }
+      }
+    }
+  }
+
   void AssetManager_t::load_database_from_str (char const* origin, char const* source, String* err_msg_output, bool watch_sub) {
     JSON json = JSON::from_str(origin, source);
 

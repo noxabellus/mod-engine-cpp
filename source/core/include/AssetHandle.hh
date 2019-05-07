@@ -13,6 +13,8 @@ namespace mod {
   struct MaterialSet;
   struct RenderMesh2D;
   struct RenderMesh3D;
+  struct Skeleton;
+  struct SkeletalAnimation;
 
 
   namespace AssetType {
@@ -24,6 +26,8 @@ namespace mod {
       MaterialSet,
       RenderMesh2D,
       RenderMesh3D,
+      Skeleton,
+      SkeletalAnimation,
 
       total_type_count,
 
@@ -37,7 +41,9 @@ namespace mod {
       "Material",
       "MaterialSet",
       "RenderMesh2D",
-      "RenderMesh3D"
+      "RenderMesh3D",
+      "Skeleton",
+      "SkeletalAnimation"
     };
 
     /* Get the name of an AssetType as a str */
@@ -69,6 +75,8 @@ namespace mod {
       else if constexpr (std::is_same<T, ::mod::MaterialSet>::value) return MaterialSet;
       else if constexpr (std::is_same<T, ::mod::RenderMesh2D>::value) return RenderMesh2D;
       else if constexpr (std::is_same<T, ::mod::RenderMesh3D>::value) return RenderMesh3D;
+      else if constexpr (std::is_same<T, ::mod::Skeleton>::value) return Skeleton;
+      else if constexpr (std::is_same<T, ::mod::SkeletalAnimation>::value) return SkeletalAnimation;
       else if constexpr (std::is_same<T, void>::value) return total_type_count;
       else return Invalid;
     }

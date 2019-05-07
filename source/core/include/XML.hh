@@ -383,6 +383,17 @@ namespace mod {
     ENGINE_API XMLItem& last_of_type (u8_t type) const;
 
 
+    /* Assume an XMLItem is an array and get a pointer to the first subitem with the given name and attribute key/value pair in its list.
+     * Throws if the XMLItem is not actually an array.
+     * Returns NULL if there is no item matching the given parameters */
+    ENGINE_API XMLItem* find_pointer_by_attribute_value (char const* item_name, char const* attribute_name, char const* attribute_value) const;
+
+    /* Assume an XMLItem is an array and get a reference to the first subitem with the given name and attribute key/value pair in its list.
+     * Throws if the XMLItem is not actually an array,
+     * or if there is no item matching the given parameters */
+    ENGINE_API XMLItem& find_by_attribute_value (char const* item_name, char const* attribute_name, char const* attribute_value) const;
+
+
     /* Assume an XMLItem is an array and add a subitem to the end of its list.
      * Takes ownership of the subitem.
      * Throws if the XMLItem is not actually an array, and destroys the subitem immediately */
@@ -621,6 +632,18 @@ namespace mod {
     /* Get a reference to the last element in an XML root matching the given type.
      * Throws if no element with the given type is found */
     ENGINE_API XMLItem& last_of_type (u8_t type) const;
+
+    
+    /* Get a pointer to the first element in an XML root with the given name and attribute key/value pair in its list.
+     * Throws if the XMLItem is not actually an array.
+     * Returns NULL if there is no item matching the given parameters */
+    ENGINE_API XMLItem* find_pointer_by_attribute_value (char const* item_name, char const* attribute_name, char const* attribute_value) const;
+
+    /* Get a reference to the first element in an XML root with the given name and attribute key/value pair in its list.
+     * Throws if the XMLItem is not actually an array,
+     * or if there is no item matching the given parameters */
+    ENGINE_API XMLItem& find_by_attribute_value (char const* item_name, char const* attribute_name, char const* attribute_value) const;
+
 
 
 

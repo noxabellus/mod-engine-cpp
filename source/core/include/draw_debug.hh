@@ -41,10 +41,13 @@ namespace mod {
     Shader primitive_frag;
     ShaderProgram primitive_prog;
     Material basic_mat;
+    Material depthless_mat;
 
     RenderMesh3D line_mesh;
     RenderMesh3D cube_mesh;
-    
+    RenderMesh3D depthless_line_mesh;
+    RenderMesh3D depthless_cube_mesh;
+
     RenderMesh3D cube_mesh_basis;
     
 
@@ -52,10 +55,10 @@ namespace mod {
     ENGINE_API void destroy ();
 
 
-    ENGINE_API void line (Line3 const& line, Line3 const& color);
-    ENGINE_API void line (Line3 const& line, Vector3f const& color);
+    ENGINE_API void line (bool depth, Line3 const& line, Line3 const& color);
+    ENGINE_API void line (bool depth, Line3 const& line, Vector3f const& color);
 
-    ENGINE_API void cube (AABB3 const& cube, Vector3f const& color);
+    ENGINE_API void cube (bool depth, AABB3 const& cube, Vector3f const& color);
 
 
     ENGINE_API void begin_frame ();
@@ -84,10 +87,13 @@ namespace mod {
     ENGINE_API void line2 (Line2 const& line, Vector3f const& color = { 1.0f });
 
     ENGINE_API void line3 (Line3 const& line, Line3 const& color);
+    ENGINE_API void line3 (bool depth, Line3 const& line, Line3 const& color);
     ENGINE_API void line3 (Line3 const& line, Vector3f const& color = { 1.0f });
+    ENGINE_API void line3 (bool depth, Line3 const& line, Vector3f const& color = { 1.0f });
 
     ENGINE_API void rect (AABB2 const& rect, Vector3f const& color = { 1.0f });
     ENGINE_API void cube (AABB3 const& cube, Vector3f const& color = { 1.0f });
+    ENGINE_API void cube (bool depth, AABB3 const& cube, Vector3f const& color = { 1.0f });
 
 
     ENGINE_API void end_frame (Matrix4 const& matrix_2d, Matrix4 const& matrix_3d);

@@ -256,6 +256,8 @@ namespace mod {
     AssetList<MaterialSet> material_set;
     AssetList<RenderMesh2D> render_mesh_2d;
     AssetList<RenderMesh3D> render_mesh_3d;
+    AssetList<Skeleton> skeleton;
+    AssetList<SkeletalAnimation> skeletal_animation;
 
     WatchedFileList watch_list;
 
@@ -353,7 +355,9 @@ namespace mod {
         || std::is_same<T, Material>::value
         || std::is_same<T, MaterialSet>::value
         || std::is_same<T, RenderMesh2D>::value
-        || std::is_same<T, RenderMesh3D>::value,
+        || std::is_same<T, RenderMesh3D>::value
+        || std::is_same<T, Skeleton>::value
+        || std::is_same<T, SkeletalAnimation>::value,
         "Invalid type for get_list"
       );
 
@@ -364,6 +368,8 @@ namespace mod {
       else if constexpr (std::is_same<T, MaterialSet>::value) return const_cast<AssetList<T>&>(material_set);
       else if constexpr (std::is_same<T, RenderMesh2D>::value) return const_cast<AssetList<T>&>(render_mesh_2d);
       else if constexpr (std::is_same<T, RenderMesh3D>::value) return const_cast<AssetList<T>&>(render_mesh_3d);
+      else if constexpr (std::is_same<T, Skeleton>::value) return const_cast<AssetList<T>&>(skeleton);
+      else if constexpr (std::is_same<T, SkeletalAnimation>::value) return const_cast<AssetList<T>&>(skeletal_animation);
       else m_error("Unknown error occurred");
     }
 

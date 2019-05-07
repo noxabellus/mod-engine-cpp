@@ -14,4 +14,8 @@
 #include "RenderMesh2D.hh"
 #include "RenderMesh3D.hh"
 
+#include "Skeleton.hh"
+#include "SkeletalAnimation.hh"
+#include "SkeletonState.hh"
+
 #endif

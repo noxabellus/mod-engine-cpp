@@ -66,7 +66,8 @@ namespace mod {
     return char_is_alpha_numeric(ch)
         || ch == '-'
         || ch == '_'
-        || ch == '.';
+        || ch == '.'
+        || ch == ':';
   }
 
   inline bool check_for_comment (char const* str) {
@@ -655,6 +656,27 @@ namespace mod {
     asset_assert(ptr != NULL, "Expected an item with type %s", XMLType::name(seek_type));
     return *ptr;
   }
+
+
+  XMLItem* XMLItem::find_pointer_by_attribute_value (char const* item_name, char const* attribute_name, char const* attribute_value) const {
+    asset_assert(type == XMLType::Array, "Expected an Array");
+
+    for (auto [ i, item ] : array) {
+      if (item.name == item_name) {
+        XMLAttribute* attr = item.get_attribute_pointer(attribute_name);
+        if (attr != NULL && attr->value == attribute_value) return &item;
+      }
+    }
+
+    return NULL;
+  }
+
+
+  XMLItem& XMLItem::find_by_attribute_value (char const* item_name, char const* attribute_name, char const* attribute_value) const {
+    XMLItem* ptr = find_pointer_by_attribute_value(item_name, attribute_name, attribute_value);
+    asset_assert(ptr != NULL, "Expected at least one item with name '%s', and an attribute named '%s' with value '%s'", item_name, attribute_name, attribute_value);
+    return *ptr;
+  }
   
 
 
@@ -1004,6 +1026,27 @@ namespace mod {
   XMLItem& XML::last_of_type (u8_t type) const {
     XMLItem* ptr = last_of_type_pointer(type);
     asset_assert(ptr != NULL, "Expected an item of type %s", XMLType::name(type));
+    return *ptr;
+  }
+
+  
+
+
+  XMLItem* XML::find_pointer_by_attribute_value (char const* item_name, char const* attribute_name, char const* attribute_value) const {
+    for (auto [ i, item ] : data) {
+      if (item.name == item_name) {
+        XMLAttribute* attr = item.get_attribute_pointer(attribute_name);
+        if (attr != NULL && attr->value == attribute_value) return &item;
+      }
+    }
+
+    return NULL;
+  }
+
+
+  XMLItem& XML::find_by_attribute_value (char const* item_name, char const* attribute_name, char const* attribute_value) const {
+    XMLItem* ptr = find_pointer_by_attribute_value(item_name, attribute_name, attribute_value);
+    asset_assert(ptr != NULL, "Expected at least one item with name '%s', and an attribute named '%s' with value '%s'", item_name, attribute_name, attribute_value);
     return *ptr;
   }
 

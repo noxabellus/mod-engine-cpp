@@ -8,6 +8,8 @@ namespace mod {
   }
 
   AABB3 AABB3::from_vector_list (Vector3f const* vectors, size_t vector_count) {
+    if (vector_count == 0) return Constants::AABB3::empty;
+    
     AABB3 out = from_center_and_size(vectors[0], { 0 });
     
     for (size_t i = 1; i < vector_count; i ++) {
