@@ -22,6 +22,8 @@ namespace mod {
 
   template <typename T>
   struct Array {
+    using element_t = T;
+    
     static constexpr size_t default_capacity = 128;
 
     T* elements = NULL;
