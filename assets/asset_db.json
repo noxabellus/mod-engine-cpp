@@ -38,8 +38,7 @@
     "ModEngine Logo": "textures/modengine.json",
     "Color Calibration Test": "textures/color_test.json",
     "Color Blending Test": "textures/blending_test.json",
-    "Transparency Test": "textures/transparency_test.json",
-    "ThinMatrix Cowboy": "textures/thinmatrix_cowboy.json"
+    "Transparency Test": "textures/transparency_test.json"
   },
 
   "materials": {

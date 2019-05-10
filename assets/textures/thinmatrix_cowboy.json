@@ -1,5 +1,0 @@
-{
-  "image_path": "../images/thinmatrix_cowboy.png",
-  "wrap": [ "repeat", "repeat" ],
-  "filter": [ "nearest", "nearest" ]
-}
