@@ -3,7 +3,6 @@
         {
             "name": "Win32",
             "includePath": [
-                "${workspaceFolder}/**",
                 "${workspaceFolder}/source/**",
                 "${workspaceFolder}/source/core/**",
                 "${workspaceFolder}/source/core/include/**"
