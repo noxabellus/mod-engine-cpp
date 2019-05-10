@@ -101,6 +101,7 @@ namespace mod {
     /* Get the inverse of a Quaternion */
     ENGINE_API Quaternion inverse () const;
 
+
     /* Perform Quaternion multiplication */
     ENGINE_API Quaternion multiply (Quaternion const& r) const;
 
@@ -108,6 +109,128 @@ namespace mod {
     Quaternion operator * (Quaternion const& r) const {
       return multiply(r);
     }
+
+    /* Perform Quaternion multiplication and put the result back into the left operand */
+    Quaternion& operator *= (Quaternion const& r) {
+      *this = multiply(r);
+      return *this;
+    }
+
+
+    /* Perform Quaternion addition */
+    Quaternion add (Quaternion const& r) const {
+      return reinterpret_cast<Vector4f const*>(this)->add(*reinterpret_cast<Vector4f const*>(&r));
+    }
+
+    /* Perform Quaternion addition */
+    Quaternion operator + (Quaternion const& r) const {
+      return add(r);
+    }
+    
+    /* Perform Quaternion addition and put the result back into the left operand */
+    Quaternion& operator += (Quaternion const& r) {
+      *this = add(r);
+      return *this;
+    }
+
+    /* Perform Quaternion subtraction */
+    Quaternion sub (Quaternion const& r) const {
+      return reinterpret_cast<Vector4f const*>(this)->sub(*reinterpret_cast<Vector4f const*>(&r));
+    }
+    
+    /* Perform Quaternion subtraction */
+    Quaternion operator - (Quaternion const& r) const {
+      return sub(r);
+    }
+
+    /* Perform Quaternion subtraction and put the result back into the left operand */
+    Quaternion& operator -= (Quaternion const& r) {
+      *this = sub(r);
+      return *this;
+    }
+
+    /* Perform Quaternion division */
+    Quaternion div (Quaternion const& r) const {
+      return reinterpret_cast<Vector4f const*>(this)->div(*reinterpret_cast<Vector4f const*>(&r));
+    }
+
+    /* Perform Quaternion division */
+    Quaternion operator / (Quaternion const& r) const {
+      return div(r);
+    }
+
+    /* Perform Quaternion division and put the result back into the left operand */
+    Quaternion& operator /= (Quaternion const& r) {
+      *this = div(r);
+      return *this;
+    }
+
+
+    /* Perform Quaternion multiplication with a scalar */
+    Quaternion multiply (f32_t r) const {
+      return reinterpret_cast<Vector4f const*>(this)->mul(r);
+    }
+
+    /* Perform Quaternion multiplication with a scalar */
+    Quaternion operator * (f32_t r) const {
+      return multiply(r);
+    }
+
+    /* Perform Quaternion multiplication with a scalar and put the result back into the left operand */
+    Quaternion& operator *= (f32_t r) {
+      *this = multiply(r);
+      return *this;
+    }
+
+
+    /* Perform Quaternion addition with a scalar */
+    Quaternion add (f32_t r) const {
+      return reinterpret_cast<Vector4f const*>(this)->add(r);
+    }
+
+    /* Perform Quaternion addition with a scalar */
+    Quaternion operator + (f32_t r) const {
+      return add(r);
+    }
+
+    /* Perform Quaternion addition with a scalar and put the result back into the left operand */
+    Quaternion& operator += (f32_t r) {
+      *this = add(r);
+      return *this;
+    }
+
+    /* Perform Quaternion subtraction with a scalar */
+    Quaternion sub (f32_t r) const {
+      return reinterpret_cast<Vector4f const*>(this)->sub(r);
+    }
+    
+    /* Perform Quaternion subtraction with a scalar */
+    Quaternion operator - (f32_t r) const {
+      return sub(r);
+    }
+
+    /* Perform Quaternion subtraction with a scalar and put the result back into the left operand */
+    Quaternion& operator -= (f32_t r) {
+      *this = sub(r);
+      return *this;
+    }
+
+    /* Perform Quaternion division with a scalar */
+    Quaternion div (f32_t r) const {
+      return reinterpret_cast<Vector4f const*>(this)->div(r);
+    }
+
+    /* Perform Quaternion division with a scalar */
+    Quaternion operator / (f32_t r) const {
+      return div(r);
+    }
+
+    /* Perform Quaternion division with a scalar and put the result back into the left operand */
+    Quaternion& operator /= (f32_t r) {
+      *this = div(r);
+      return *this;
+    }
+
 
     /* Linear interpolate between two Quaternions */
     ENGINE_API Quaternion lerp (f32_t alpha, Quaternion const& finish) const;
