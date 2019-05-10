@@ -13,17 +13,25 @@
 
 
 namespace mod {
-  struct SkeletalKeyframeTransform {
+  struct SkeletalKeyframeChannel {
     u32_t target_index;
     Transform3D transform;
   };
 
   struct SkeletalKeyframe {
     f32_t time;
-    Array<SkeletalKeyframeTransform> transforms;
+    Array<SkeletalKeyframeChannel> transforms;
 
     void destroy () {
       transforms.destroy();
+    }
+
+    Transform3D* get_bone_transform (u32_t target_index) const {
+      for (auto [ i, kft ] : transforms) {
+        if (kft.target_index == target_index) return &kft.transform;
+      }
+
+      return NULL;
     }
   };
 
@@ -95,12 +103,12 @@ namespace mod {
     /* Get the spherical interpolated version of every Transform at a given time in a SkeletalAnimation,
      * and copy them into the given output array, overwriting any existing data.
      * Time is divided by the Animations `time_scale` and modulused with its `length` */
-    ENGINE_API void get_pose_slerp (f32_t offset_time, Array<SkeletalKeyframeTransform>& out_transforms) const;
+    ENGINE_API void get_pose_slerp (f32_t offset_time, Array<SkeletalKeyframeChannel>& out_transforms) const;
 
     /* Get the interpolated version of every Transform at a given time in a SkeletalAnimation,
      * and copy them into the given output array, overwriting any existing data.
      * Time is divided by the Animations `time_scale` and modulused with its `length` */
-    ENGINE_API void get_pose_lerp (f32_t offset_time, Array<SkeletalKeyframeTransform>& out_transforms) const;
+    ENGINE_API void get_pose_lerp (f32_t offset_time, Array<SkeletalKeyframeChannel>& out_transforms) const;
 
     
 

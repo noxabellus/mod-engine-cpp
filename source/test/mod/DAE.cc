@@ -1,293 +1,414 @@
+#include "DAE.hh"
 
-#include "../main.hh"
+
+
 namespace mod {
-  struct DAESource {
-    String id;
-    bool float_array;
-    union {
-      Array<f64_t> floats;
-      Array< pair_t<char*, size_t> > names;
-    };
-
-    DAESource () { }
-    DAESource (String in_id, Array<f64_t> in_floats)
-    : id(in_id)
-    , float_array(true)
-    , floats(in_floats)
-    { }
-    DAESource (String in_id, Array< pair_t<char*, size_t> > in_names)
-    : id(in_id)
-    , float_array(false)
-    , names(in_names)
-    { }
-  };
-
-  struct DAEAccessor {
-    String id;
-    String source_id;
-    size_t count;
-    size_t offset;
-    size_t stride;
-    size_t elements;
-  };
-
-  struct DAEInput {
-    String semantic;
-    String source_id;
-    size_t offset;
-    size_t set;
-  };
-
-  struct DAETriangles {
-    XMLItem* origin;
-    size_t advance;
-    Array<DAEInput> inputs;
-    Array<u32_t> indices;
-  };
-
-  struct DAEVertexBinding {
-    String id;
-    String source_id;
-  };
-
-  struct DAEJointData {
-    XMLItem* origin;
-    Array<DAEInput> inputs;
-
-    DAEJointData () { }
-    DAEJointData (XMLItem* in_origin)
-    : origin(in_origin)
-    { }
-  };
-
-  struct DAEWeightData {
-    XMLItem* origin;
-    Array<DAEInput> inputs;
-    size_t count;
-    Array<u32_t> vcount;
-    Array<u32_t> indices;
+  void DAEIVertex::set_attributes (s64_t in_normal, s64_t in_uv, s64_t in_color) {
+    normal = in_normal;
+    uv = in_uv;
+    color = in_color;
     
-    DAEWeightData () { }
-    DAEWeightData (XMLItem* in_origin)
-    : origin(in_origin)
-    { }
-  };
+    set = true;
+  }
 
-  struct DAEIJoint {
-    static constexpr size_t max_vcount = 16;
+  bool DAEIVertex::has_same_attributes (s64_t test_normal, s64_t test_uv, s64_t test_color) const {
+    return normal == test_normal
+        && uv == test_uv
+        && color == test_color;
+  }
 
-    u32_t count;
-    u32_t joints [max_vcount + 2];
-    u32_t weights [max_vcount + 2];
+  void DAEIBone::add_child (DAEIBone const& bone) {
+    children.append(bone);
+    DAEIBone& new_bone = children.last();
+    new_bone.parent = this;
+    for (auto [ i, child ] : new_bone.children) child.parent = &new_bone;
+  }
 
-    DAEIJoint () { }
+  void DAEIBone::remove_child (DAEIBone& bone) {
+    s64_t index = children.get_index(bone);
+    m_asset_assert(index != -1, name.value, "Cannot get index of child bone %s to remove it", bone.name.value);
+    children.remove(index);
+  }
 
-    DAEIJoint (u32_t in_count)
-    : count(in_count) { }
-  };
+  void DAEIBone::calculate_bind (Matrix4 const& transform) {
+    if (parent == NULL) bind_matrix = transform * base_matrix;
+    else bind_matrix = parent->bind_matrix * base_matrix;
+
+    inverse_bind_matrix = bind_matrix.inverse();
+
+    for (auto [ i, child ] : children) child.calculate_bind(transform);
+  }
+
+  Transform3D DAEIBone::final_transform () const {
+    if (parent != NULL) return (parent->inverse_bind_matrix * bind_matrix).decompose();
+    else return bind_matrix.decompose();
+  }
+
+  DAEIBone DAEIBone::process (DAE const& dae, XMLItem& joint) {
+    DAEIBone bone;
+    
+    bone.sid = joint.get_attribute("sid").value;
+    bone.id = joint.get_attribute("id").value;
+
+    s64_t origin_index = dae.get_bone_index(bone.sid);
+    
+    joint.asset_assert(origin_index != -1, "Cannot find index for bone '%s'", joint.get_attribute("sid").value.value);
+
+    bone.origin_index = origin_index;
+
+    bone.name = joint.get_attribute("name").value.clone();
+
+    // printf("Binding bone %s to origin_index %u\n", bone.name.value, bone.origin_index);
+
+    Matrix4 matrix;
+
+    XMLItem& matrix_item = joint.first_named("matrix");
+    String& matrix_text = matrix_item.get_text();
+
+    char* base = matrix_text.value;
+    char* end = NULL;
+    for (size_t j = 0; j < 16; j ++) {
+      matrix[j] = strtof(base, &end);
+      matrix_item.asset_assert(end != NULL && base != end, "Not enough elements in matrix");
+      base = end;
+    }
+    
+    bone.base_matrix = matrix.transpose();
+
+    for (size_t i = 0; i < joint.count_of_name("node"); i ++) {
+      XMLItem& child_joint = joint.nth_named(i, "node");
+      XMLAttribute* type_attribute = child_joint.get_attribute_pointer("type");
+
+      if (type_attribute != NULL && type_attribute->value == "JOINT") {
+        bone.add_child(process(dae, child_joint));
+      }
+    }
+
+    return bone;
+  }
+
+  bool DAEIBone::filter (std::function<bool (DAEIBone const&)> filter) {
+    if (parent != NULL) {
+      if (filter(*this)) {
+        Array<DAEIBone> my_children = children;
+        DAEIBone* my_parent = parent;
+        String my_name = name;
+        my_parent->remove_child(*this);
+        for (auto [ i, child ] : my_children) {
+          my_parent->add_child(child);
+        }
+        my_name.destroy();
+        my_children.destroy();
+        return true;
+      } else {
+        for (auto [ i, child ] : children) if (child.filter(filter)) return true;
+      }
+    } else {
+      if (children.count > 1) {
+        for (auto [ i, child ] : children) if (child.filter(filter)) return true;
+      } else if (filter(*this)) {
+        DAEIBone child = children[0];
+        origin_index = child.origin_index;
+        sid = child.sid;
+        id = child.id;
+        name.destroy();
+        name = child.name;
+        children.destroy();
+        children = child.children;
+        for (auto [ i, new_child ] : children) new_child.parent = this;
+        base_matrix = child.base_matrix;
+        bind_matrix = child.bind_matrix;
+        inverse_bind_matrix = child.inverse_bind_matrix;
+      }
+    }
+
+    return false;
+  }
+
+  void DAEIBone::collapse (Array<DAEBoneBinding>& out_bones, s32_t parent_index) const {
+    size_t index = out_bones.count;
+
+    out_bones.append(DAEBoneBinding {
+      origin_index,
+      id,
+      sid,
+
+      name,
+      parent_index,
+      final_transform()
+    });
+    
+    for (auto [ i, child ] : children) child.collapse(out_bones, index);
+  }
+
+  bool DAEIBone::traverse_cond (std::function<bool (DAEIBone const&)> callback) const {
+    if (callback(*this)) {
+      for (auto [ i, child ] : children) {
+        if (!child.traverse_cond(callback)) return false;
+      }
+
+      return true;
+    } else return false;
+  }
+  
+  void DAEIBone::traverse (std::function<void (DAEIBone const&)> callback) const {
+    callback(*this);
+
+    for (auto [ i, child ] : children) child.traverse(callback);
+  }
+
+  void DAEIBone::destroy () {
+    for (auto [ i, child ] : children) child.destroy();
+    children.destroy();
+  }
+
+
   
 
-  struct DAEIVertex {
-    DAETriangles& triangles;
+  DAEIChannel& DAEIKeyframe::get_channel (u32_t target_index) const {
+    for (auto [ i, channel ] : channels) {
+      if (channel.target_index == target_index) return channel;
+    }
 
-    bool set;
+    dae->xml.asset_error("Cannot find DAEIChannel with target index %" PRIu32, target_index);
+  }
 
-    size_t index;
 
-    s64_t duplicate;
 
-    u32_t position;
+  DAEIKeyframe& DAEIAnimation::get_keyframe_for_time (f32_t time) {
+    for (auto [ i, keyframe ] : keyframes) {
+      if (num::almost_equal(keyframe.time, time)) return keyframe;
+    }
 
-    s64_t normal;
-    s64_t uv;
-    s64_t color;
+    keyframes.append({ dae, time, { } });
 
-    DAEIVertex (DAETriangles& in_triangles, size_t in_index)
-    : triangles(in_triangles)
-    , set(false)
-    , index(in_index)
-    , duplicate(-1)
-    , position(0)
-    , normal(0)
-    , uv(0)
-    , color(0)
-    { }
+    return keyframes.last();
+  }
 
-    void set_attributes (s64_t in_normal, s64_t in_uv, s64_t in_color) {
-      normal = in_normal;
-      uv = in_uv;
-      color = in_color;
+  DAEIAnimation DAEIAnimation::process (DAE const* dae, DAEIBone const& root_ibone, DAEAnimClip& clip) {
+    DAEIAnimation animation { clip.name, dae, clip.end - clip.start, { } };
+
+    for (auto [ i, channel_id ] : clip.channel_ids) {
+      DAEAnimChannel& channel = dae->get_anim_channel(channel_id);
+
+      s64_t bone_index = DAE::get_origin_bone_index_from_node_id(root_ibone, channel.target_id);
       
-      set = true;
-    }
-
-    bool has_same_attributes (s64_t test_normal, s64_t test_uv, s64_t test_color) const {
-      return normal == test_normal
-          && uv == test_uv
-          && color == test_color;
-    }
-  };
-
-
-  struct DAEIBone {
-    DAEIBone* parent = NULL;
-
-    String name = { };
-    Array<DAEIBone> children = { 256 };
-    Matrix4 base_matrix = { };
-    Matrix4 bind_matrix = { };
-    Matrix4 inverse_bind_matrix = { };
-
-
-    DAEIBone () = default;
-
-
-    void add_child (DAEIBone const& bone) {
-      size_t bone_index = children.count;
-      children.append(bone);
-      DAEIBone& new_bone = children[bone_index];
-      new_bone.parent = this;
-      for (auto [ i, child ] : new_bone.children) child.parent = &new_bone; 
-    }
-
-    void remove_child (DAEIBone& bone) {
-      children.remove(children.get_index(bone));
-    }
-
-    void calculate_bind (Matrix4 const& transform) {
-      if (parent == NULL) bind_matrix = transform * base_matrix;
-      else bind_matrix = parent->bind_matrix * base_matrix;
-
-      inverse_bind_matrix = bind_matrix.inverse();
-
-      for (auto [ i, child ] : children) child.calculate_bind(transform);
-    }
-
-    Transform3D final_transform () const {
-      if (parent != NULL) return (parent->inverse_bind_matrix * bind_matrix).decompose();
-      else return bind_matrix.decompose();
-    }
-
-    static DAEIBone traverse (XMLItem& joint) {
-      DAEIBone bone;
-
-      bone.name = joint.get_attribute("name").value.clone();
-
-      Matrix4 matrix;
-
-      XMLItem& matrix_item = joint.first_named("matrix");
-      String& matrix_text = matrix_item.get_text();
-
-      char* base = matrix_text.value;
-      char* end = NULL;
-      for (size_t j = 0; j < 16; j ++) {
-        matrix[j] = strtof(base, &end);
-        matrix_item.asset_assert(end != NULL && base != end, "Not enough elements in matrix");
-        base = end;
+      if (bone_index == -1) {
+        // printf("Warning: Failed to find bone index for animation target id '%s'\n", channel.target_id.value);
+        continue;
       }
-      
-      bone.base_matrix = matrix.transpose();
 
-      for (size_t i = 0; i < joint.count_of_name("node"); i ++) {
-        XMLItem& child_joint = joint.nth_named(i, "node");
-        XMLAttribute* type_attribute = child_joint.get_attribute_pointer("type");
+      DAEAnimSampler& sampler = dae->get_anim_sampler(channel.sampler_id);
 
-        if (type_attribute != NULL && type_attribute->value == "JOINT") {
-          bone.add_child(traverse(child_joint));
+      DAEInput& input = dae->get_sampler_input(sampler, "INPUT");
+      DAEInput& output = dae->get_sampler_input(sampler, "OUTPUT");
+
+      DAEAccessor& input_accessor = dae->get_accessor(input.source_id);
+      DAEAccessor& output_accessor = dae->get_accessor(output.source_id);
+
+      sampler.origin->asset_assert(
+        input_accessor.count == output_accessor.count,
+        "Cannot process sampler sources, source accessors are incongruent (input count %zu, output count %zu)",
+        input_accessor.count, output_accessor.count
+      );
+
+      sampler.origin->asset_assert(
+        input_accessor.stride == 1,
+        "Cannot process sampler input, source accessor does not have a stride of 1 (%zu)",
+        input_accessor.stride
+      );
+
+      sampler.origin->asset_assert(
+        output_accessor.stride == 16,
+        "Cannot process sampler output, source accessor does not have a stride of 16 (%zu)",
+        output_accessor.stride
+      );
+
+      DAESource& input_source = dae->get_source(input_accessor.source_id);
+      DAESource& output_source = dae->get_source(output_accessor.source_id);
+
+      for (size_t i = 0; i < input_accessor.count; i ++) {
+        f32_t time = input_source.floats[input_accessor.offset + i * input_accessor.stride];
+
+        Matrix4 matrix;
+
+        for (auto [ j, e ] : matrix) {
+          e = output_source.floats[output_accessor.offset + i * output_accessor.stride + j];
         }
-      }
 
-      return bone;
+        DAEIKeyframe& keyframe = animation.get_keyframe_for_time(time);
+
+        keyframe.channels.append(DAEIChannel {
+          static_cast<u32_t>(bone_index),
+          matrix.transpose()
+        });
+      }
     }
 
-    bool strip_ik (std::function<bool (DAEIBone const&)> filter) {
-      if (parent != NULL) {
-        if (filter(*this)) {
-          for (auto [ i, child ] : children) parent->add_child(child);
-          parent->remove_child(*this);
+    return animation;
+  }
+  
+
+
+  void DAEIAnimation::calculate_bind (DAEIBone const& root_ibone, Matrix4 const& transform) const {
+    for (pair_t<size_t, DAEIKeyframe&> pair : keyframes) {
+      DAEIKeyframe& keyframe = pair.b;
+
+      root_ibone.traverse([&] (DAEIBone const& ibone) {
+        DAEIChannel& channel = keyframe.get_channel(ibone.origin_index);
+
+        if (ibone.parent == NULL) channel.bind_matrix = transform * channel.base_matrix;
+        else {
+          DAEIChannel& parent_channel = keyframe.get_channel(ibone.parent->origin_index);
+
+          channel.bind_matrix = parent_channel.bind_matrix * channel.base_matrix;
+        }
+      });
+    }
+  }
+
+
+
+
+  void DAEIAnimation::filter (DAEBoneBindingList const& binding_list) const {
+    static auto const inner_filter = [&] (DAEIKeyframe& keyframe) -> bool {
+      for (auto [ j, channel ]: keyframe.channels) {
+        if (channel.filtered) continue;
+        
+        bool found = false;
+        
+        for (auto [ k, binding ] : binding_list) {
+          if (binding.origin_index == channel.target_index) {
+            channel.target_index = k;
+            channel.filtered = true;
+            found = true;
+            break;
+          }
+        }
+
+        if (!found) {
+          keyframe.channels.remove(j);
           return true;
-        } else {
-          for (auto [ i, child ] : children) if (child.strip_ik(filter)) return true;
-        }
-      } else {
-        if (children.count > 1) {
-          for (auto [ i, child ] : children) if (child.strip_ik(filter)) return true;
-        } else if (filter(*this)) {
-          DAEIBone child = children[0];
-          name.destroy();
-          name = child.name;
-          children.destroy();
-          children = child.children;
-          for (auto [ i, new_child ] : children) new_child.parent = this;
-          bind_matrix = child.bind_matrix;
-          inverse_bind_matrix = child.inverse_bind_matrix;
         }
       }
 
       return false;
+    };
+
+    for (auto [ i, keyframe ] : keyframes) {
+      bool cont = false;
+      do cont = inner_filter(keyframe);
+      while (cont);
     }
+  }
 
-    void collapse (Array<Bone>& out_bones, s32_t parent_index = -1) const {
-      size_t index = out_bones.count;
+  void DAEIAnimation::collapse (DAEBoneBindingList const& binding_list, Array<SkeletalKeyframe>& out_array) const {
+    for (auto [ i, keyframe ] : keyframes) {
+      Array<SkeletalKeyframeChannel> out_transforms;
 
-      out_bones.append({
-        name,
-        parent_index,
-        final_transform()
+      for (auto [ j, channel ] : keyframe.channels) {
+        out_transforms.append({
+          channel.target_index,
+          channel.final_transform(keyframe, binding_list)
+        });
+      }
+
+      out_array.append(SkeletalKeyframe {
+        keyframe.time,
+        out_transforms
       });
-      
-      for (auto [ i, child ] : children) child.collapse(out_bones, index);
     }
+  }
 
-    void destroy () {
-      for (auto [ i, child ] : children) child.destroy();
-      children.destroy();
-    }
-  };
 
   
+  Transform3D DAEIChannel::final_transform (DAEIKeyframe const& owner, DAEBoneBindingList const& binding_list) const {
+    DAEBoneBinding& binding = binding_list[target_index];
 
-  struct DAE {
-    static std::function<bool (DAEIBone const&)> std_bone_filter;
+    if (binding.parent_index != -1) {
+      DAEIChannel& parent_channel = owner.get_channel(binding.parent_index);
+      return (parent_channel.bind_matrix.inverse() * bind_matrix).decompose();
+    } else return bind_matrix.decompose();
+  }
 
 
-    XML xml;
-
-    XMLItem& root;
-
-    XMLItem* mesh;
-    XMLItem* skin;
-
-    Array<DAESource> sources;
-    Array<DAEAccessor> accessors;
-    Array<DAEVertexBinding> vertex_bindings;
-    Array<DAETriangles> triangles_list;
-    DAEJointData joint_data;
-    DAEWeightData weight_data;
+  void DAEIAnimation::destroy () {
+    for (auto [ i, keyframe ] : keyframes) keyframe.channels.destroy();
+    keyframes.destroy();
+  }
 
 
 
-    /* Create a new DAE from an XML, taking ownership of the XML */
-    DAE (XML const& in_xml)
-    : xml(in_xml)
-    , root(in_xml.first_named("COLLADA"))
-    {
-      try {
-        XMLItem& geometries = root.first_named("library_geometries");
 
-        XMLItem& geometry = geometries.first_named("geometry");
 
-        if (geometries.count_of_name("geometry") > 1) printf(
-          "Warning: DAE loader currently only supports single geometries, only the first (named '%s') will be loaded\n",
-          geometry.get_attribute("name").value.value
-        );
+  bool DAEBoneBindingList::traverse_cond (std::function<bool (size_t, DAEBoneBinding const&)> callback, size_t index) const {
+    if (callback(index, bindings[index])) {
+      for (auto [ i, binding ] : bindings) {
+        if (binding.parent_index == index) {
+          if (!traverse_cond(callback, i)) return false;
+        }
+      }
 
+      return true;
+    } else return false;
+  }
+
+  void DAEBoneBindingList::traverse (std::function<void (size_t, DAEBoneBinding const&)> callback, size_t index) const {
+    callback(index, bindings[index]);
+
+    for (auto [ i, binding ] : bindings) {
+      if (binding.parent_index == index) traverse(callback, i);
+    }
+  }
+
+  void DAEBoneBindingList::collapse (Array<Bone>& out_array) const {
+    for (auto [ i, binding ] : bindings) {
+      out_array.append({
+        binding.name,
+        binding.parent_index,
+        binding.base_transform
+      });
+    }
+  }
+
+
+
+
+
+  std::function<bool (DAEIBone const&)> DAE::std_bone_filter = [] (DAEIBone const& bone) { return bone.name.starts_with("IK") || bone.name.starts_with("TK"); };
+  
+
+  /* Create a new DAE from an XML, taking ownership of the XML */
+  DAE::DAE (XML const& in_xml, Matrix4 const& in_transform, bool apply_bone_filter, std::function<bool (DAEIBone const&)> bone_filter)
+  : xml(in_xml)
+  , root(in_xml.first_named("COLLADA"))
+  , transform(in_transform)
+  {
+    try {
+      XMLItem& geometries = root.first_named("library_geometries");
+
+      XMLItem& geometry = geometries.first_named("geometry");
+
+      if (geometries.count_of_name("geometry") > 1) printf(
+        "Warning: DAE loader currently only supports single geometries, only the first (named '%s') will be loaded\n",
+        geometry.get_attribute("name").value.value
+      );
+
+
+      {
         XMLItem& in_mesh = geometry.first_named("mesh");
 
         if (geometry.count_of_name("mesh") > 1) printf(
           "Warning: DAE loader currently only supports single mesh, only the first will be loaded\n"
         );
 
+        mesh = &in_mesh;
+        
+        gather_base_data(in_mesh);
+      }
+
+
+      {
         XMLItem& controllers = root.first_named("library_controllers");
 
         XMLItem& controller = controllers.first_named("controller");
@@ -310,36 +431,38 @@ namespace mod {
           in_skin.get_attribute("source").value.value
         );
 
-        mesh = &in_mesh;
+
         skin = &in_skin;
 
-        gather_base_data(in_mesh);
         gather_base_data(in_skin);
+      }
 
 
-        size_t vertex_binding_count = in_mesh.count_of_name("vertices");
+      {
+        size_t vertex_binding_count = mesh->count_of_name("vertices");
 
         vertex_bindings = { vertex_binding_count };
 
         for (size_t i = 0; i < vertex_binding_count; i ++) {
-          XMLItem& vertices = in_mesh.nth_named(i, "vertices");
+          XMLItem& vertices = mesh->nth_named(i, "vertices");
           XMLItem& input = vertices.first_named("input");
 
           vertex_bindings.append({
             vertices.get_attribute("id").value, // borrowing string here, destroyed by XML
             input.get_attribute("source").value // borrowing string here, destroyed by XML
           });
-        }
+       }
+      }
 
-
-        size_t triangles_count = in_mesh.count_of_name("triangles");
+      {
+        size_t triangles_count = mesh->count_of_name("triangles");
 
         bool polylist_mode;
 
         if (triangles_count == 0) {
           polylist_mode = true;
-          triangles_count = in_mesh.count_of_name("polylist");
-          in_mesh.asset_assert(triangles_count != 0, "Expected at least one element 'triangles' or 'polylist'");
+          triangles_count = mesh->count_of_name("polylist");
+          mesh->asset_assert(triangles_count != 0, "Expected at least one element 'triangles' or 'polylist'");
         } else {
           polylist_mode = false;
         }
@@ -347,7 +470,7 @@ namespace mod {
         triangles_list = { triangles_count };
 
         for (size_t i = 0; i < triangles_count; i ++) {
-          XMLItem& triangles = polylist_mode? in_mesh.nth_named(i, "polylist") : in_mesh.nth_named(i, "triangles");
+          XMLItem& triangles = polylist_mode? mesh->nth_named(i, "polylist") : mesh->nth_named(i, "triangles");
 
           Array<DAEInput> inputs = gather_inputs(triangles);
 
@@ -393,20 +516,23 @@ namespace mod {
             indices
           });
         }
+      }
 
 
-        XMLItem& joints = in_skin.first_named("joints");
+      {
+        XMLItem& joints = skin->first_named("joints");
         joint_data = { &joints };
 
         joint_data.inputs = gather_inputs(joints);
+      }
 
-
-        XMLItem& weights = in_skin.first_named("vertex_weights");
+      {
+        XMLItem& weights = skin->first_named("vertex_weights");
         weight_data = { &weights };
 
         weight_data.inputs = gather_inputs(weights);
         weight_data.count = strtoumax(weights.get_attribute("count").value.value, NULL, 10);
-        
+
         {
           XMLItem& vcount = weights.first_named("vcount");
           char* base = vcount.get_text().value;
@@ -425,7 +551,7 @@ namespace mod {
           char* base = v.get_text().value;
           char* end = NULL;
 
-          while (*base != '<') {
+          while (*base != '<') { // TODO fix this, < is not gonna come up
             u32_t index = strtoul(base, &end, 10);
 
             if (base == end || end == NULL) break;
@@ -435,589 +561,792 @@ namespace mod {
             weight_data.indices.append(index);
           }
         }
-      } catch (Exception& exception) {
-        destroy();
-        throw exception;
-      }
-    }
-
-    void destroy () {
-      for (auto [ i, source ] : sources) {
-        if (source.float_array) source.floats.destroy();
-        else source.names.destroy();
       }
 
-      sources.destroy();
+      DAEIBone root_ibone; {
+        XMLItem& lib_vis_scenes = root.first_named("library_visual_scenes");
 
-      accessors.destroy();
+        XMLItem& scene = lib_vis_scenes.first_named("visual_scene");
 
-      vertex_bindings.destroy();
+        lib_vis_scenes.asset_assert(lib_vis_scenes.count_of_name("visual_scene") == 1, "Expected exactly one visual scene");
 
-      for (auto [ i, triangles ] : triangles_list) {
-        triangles.inputs.destroy();
-        triangles.indices.destroy();
+        XMLItem& armature = scene.find_by_attribute_value("node", "id", "Armature");
+
+        XMLItem& root_joint = armature.find_by_attribute_value("node", "type", "JOINT");
+
+        root_ibone = DAEIBone::process(*this, root_joint);
+
+        root_ibone.calculate_bind(transform);
       }
 
-      triangles_list.destroy();
-
-      joint_data.inputs.destroy();
-
-      weight_data.inputs.destroy();
-      weight_data.vcount.destroy();
-      weight_data.indices.destroy();
-      
-      xml.destroy();
-    }
-
-
-    static DAE from_str (char const* origin, char const* source) {
-      return XML::from_str(origin, source);
-    }
-
-    static DAE from_str_ex (char const* origin, char* source) {
-      return XML::from_str_ex(origin, source);
-    }
-
-    static DAE from_file (char const* origin) {
-      return XML::from_file(origin);
-    }
-    
-
-    DAEAccessor& get_accessor (String const& id) const {
-      for (auto [ i, accessor ] : accessors) {
-        if (accessor.id == id.value + 1) return accessor;
-      }
-
-      mesh->asset_error("Could not find Accessor '%s'", id.value);
-    }
-
-    DAESource& get_source (String const& id) const {
-      for (auto [ i, source ] : sources) {
-        if (source.id == id.value + 1) return source;
-      }
-
-      mesh->asset_error("Could not find Source '%s'", id.value);
-    }
-
-    static DAEInput& get_poly_input (DAETriangles const& triangles, char const* semantic) {
-      for (auto [ i, input ] : triangles.inputs) {
-        if (input.semantic == semantic) return input;
-      }
-
-      triangles.origin->asset_error("Could not find semantic Input '%s'", semantic);
-    }
-
-    static DAEInput* get_poly_input_pointer (DAETriangles const& triangles, char const* semantic) {
-      for (auto [ i, input ] : triangles.inputs) {
-        if (input.semantic == semantic) return &input;
-      }
-
-      return NULL;
-    }
-
-    DAEInput& get_wd_input (char const* semantic) const {
-      for (auto [ i, input ] : weight_data.inputs) {
-        if (input.semantic == semantic) return input;
-      }
-
-      weight_data.origin->asset_error("Could not find semantic Input '%s'", semantic);
-    }
-
-    DAEInput* get_wd_input_pointer (char const* semantic) const {
-      for (auto [ i, input ] : weight_data.inputs) {
-        if (input.semantic == semantic) return &input;
-      }
-
-      return NULL;
-    }
-
-
-
-
-
-
-    RenderMesh3D load_mesh (Matrix4 const& transform = Constants::Matrix4::identity) const {
-      // needs a try catch wrapper!!
-
-      Array<DAEIJoint> i_joints;
-
-      DAEInput& weight_input = get_wd_input("WEIGHT");
-      DAEAccessor& weight_accessor = get_accessor(weight_input.source_id);
-      DAESource& weight_source = get_source(weight_accessor.source_id);
 
       {
-        auto& [ wd_origin, inputs, count, vcount, indices ] = const_cast<DAEWeightData&>(weight_data); // Bug fix: const structures are improperly decomposed in c++17
+        XMLItem& lib_anims = root.first_named("library_animations");
 
-        size_t j = 0;
-        for (auto [ i, c ] : vcount) {
-          wd_origin->asset_assert(c < DAEIJoint::max_vcount, "VCount %" PRIu32 " (at index %zu) exceeds maximum", c, i);
+        size_t anim_channel_count = lib_anims.count_of_name("animation");
 
-          DAEIJoint idata = { c };
+        for (size_t i = 0; i < anim_channel_count; i ++) {
+          XMLItem& anim = lib_anims.nth_named(i, "animation");
 
-          for (size_t k = 0; k < c; k ++) {
-            size_t l = j * 2 + k * 2;
-            idata.joints[k] = indices[l];
-            idata.weights[k] = indices[l + 1];
-          }
+          gather_base_data(anim);
 
-          i_joints.append(idata);
-            
-          j += c;
-        }
-      }
+          XMLItem& sampler = anim.first_named("sampler");
 
-
-      Array<MaterialInfo> material_config_data;
-      Array<DAEIVertex> i_vertices;
-      Array<u32_t> i_indices;
-      
-      {
-        for (auto [ i, triangles ] : triangles_list) {
-          auto& [ _p, face_count, inputs, indices ] = triangles;
-
-          MaterialInfo mat_info = { i, indices.count / 3, 0 };
-
-
-          DAEInput& position_input = get_poly_input(triangles, "VERTEX");
-
-          for (size_t j = 0; j < indices.count; j += triangles.advance) {
-            size_t iv_index = j / triangles.advance;
-
-            u32_t position = indices[j + position_input.offset];
-
-            DAEIVertex iv = { triangles, iv_index };
-            iv.position = position;
-            i_vertices.append(iv);
-          }
-
-
-          DAEInput* normal_input = get_poly_input_pointer(triangles, "NORMAL");
-          DAEInput* uv_input = get_poly_input_pointer(triangles, "TEXCOORD");
-          DAEInput* color_input = get_poly_input_pointer(triangles, "COLOR");
-
-          bool have_normal = normal_input != NULL;
-          bool have_uv = uv_input != NULL;
-          bool have_color = color_input != NULL;
-
-          if (have_normal || have_uv || have_color) {
-            for (size_t j = 0; j < indices.count; j += triangles.advance) {
-              size_t iv_index = j / triangles.advance;
-
-              s64_t normal = have_normal? static_cast<s64_t>(indices[j + normal_input->offset]) : -1;
-              s64_t uv = have_uv? static_cast<s64_t>(indices[j + uv_input->offset]) : -1;
-              s64_t color = have_color? static_cast<s64_t>(indices[j + color_input->offset]) : -1;
-
-              DAEIVertex* existing_vertex = &i_vertices[iv_index];
-
-              if (!existing_vertex->set) {
-                existing_vertex->set_attributes(normal, uv, color);
-                i_indices.append(iv_index);
-              } else if (existing_vertex->has_same_attributes(normal, uv, color)) {
-                i_indices.append(iv_index);
-              } else {
-                bool found_existing = false;
-
-                while (existing_vertex->duplicate != -1) {
-                  existing_vertex = &i_vertices[existing_vertex->duplicate];
-
-                  if (existing_vertex->has_same_attributes(normal, uv, color)) {
-                    i_indices.append(existing_vertex->index);
-                    found_existing = true;
-                    break;
-                  }
-                }
-
-                if (!found_existing) {
-                  size_t new_iv_index = i_vertices.count;
-
-                  DAEIVertex new_iv = { triangles, new_iv_index };
-                  new_iv.set_attributes(normal, uv, color);
-                  i_vertices.append(new_iv);
-
-                  existing_vertex->duplicate = new_iv_index;
-
-                  i_indices.append(new_iv_index);
-                }
-              }
-            }
-          }
-          
-
-          mat_info.length = indices.count / 3 - mat_info.start_index;
-
-          material_config_data.append(mat_info);
-        }
-
-        mesh->asset_assert(i_indices.count % 3 == 0, "Final indices count was not cleanly divisible by 3, make sure your mesh is triangulated");
-      }
-
-      Array<Vector3f> final_positions { i_vertices.count };
-      Array<Vector3f> final_normals { i_vertices.count };
-      Array<Vector2f> final_uvs { i_vertices.count };
-      Array<Vector3f> final_colors { i_vertices.count };
-      Array<Vector3u> final_faces = { i_indices.count / 3 };
-      Array<Vector4u> final_joints = { i_vertices.count };
-      Array<Vector4f> final_weights = { i_vertices.count };
-
-
-      for (size_t i = 0; i < i_indices.count; i += 3) {
-        final_faces.append({ i_indices[i], i_indices[i + 2], i_indices[i + 1] });
-      }
-
-
-      MaterialConfig final_material_config;
-
-      if (material_config_data.count != 1) {
-        final_material_config = MaterialConfig::from_ex(material_config_data);
-      } else {
-        material_config_data.destroy();
-      }
-
-
-      bool incomplete_normals = false;
-
-      for (auto [ i, iv ] : i_vertices) {
-        DAEInput& position_input = get_poly_input(iv.triangles, "VERTEX");
-        DAEAccessor& position_accessor = get_accessor(position_input.source_id);
-        DAESource& position_source = get_source(position_accessor.source_id);
-
-        Vector3f pos;
-
-        for (size_t j = 0; j < 3; j ++) {
-          pos.elements[j] = position_source.floats[position_accessor.offset + iv.position * position_accessor.stride + j];
-        }
-
-        final_positions.append(pos.apply_matrix(transform));
-
-
-        if (!incomplete_normals) {
-          if (iv.normal != -1) {
-            Vector3f norm = { 0, 0, 0 };
-
-            DAEInput& normal_input = get_poly_input(iv.triangles, "NORMAL");
-            DAEAccessor& normal_accessor = get_accessor(normal_input.source_id);
-            DAESource& normal_source = get_source(normal_accessor.source_id);
-
-            for (size_t j = 0; j < 3; j ++) {
-              norm.elements[j] = normal_source.floats[normal_accessor.offset + iv.normal * normal_accessor.stride + j];
-            }
-
-            final_normals.append(norm);
-          } else {
-            incomplete_normals = true;
-            final_normals.destroy();
-          }
-        }
-
-
-        Vector2f uv = { 0, 0 };
-        
-        if (iv.uv != -1) {
-          DAEInput& uv_input = get_poly_input(iv.triangles, "TEXCOORD");
-          DAEAccessor& uv_accessor = get_accessor(uv_input.source_id);
-          DAESource& uv_source = get_source(uv_accessor.source_id);
-
-          for (size_t j = 0; j < 2; j ++) {
-            uv.elements[j] = uv_source.floats[uv_accessor.offset + iv.uv * uv_accessor.stride + j];
-          }
-        }
-
-        final_uvs.append(uv);
-
-
-        Vector3f color = { 1, 1, 1 };
-        
-        if (iv.color != -1) {
-          DAEInput& color_input = get_poly_input(iv.triangles, "COLOR");
-          DAEAccessor& color_accessor = get_accessor(color_input.source_id);
-          DAESource& color_source = get_source(color_accessor.source_id);
-
-          for (size_t j = 0; j < 3; j ++) {
-            color.elements[j] = color_source.floats[color_accessor.offset + iv.color * color_accessor.stride + j];
-          }
-        }
-
-        final_colors.append(color);
-
-
-        Vector4u joints = { 0, 0, 0, 0 };
-        Vector4f weights = { 0, 0, 0, 0 };
-        DAEIJoint& ij = i_joints[iv.position];
-
-        if (ij.count <= 4) {
-          for (size_t j = 0; j < ij.count; j ++) {
-            joints[j] = ij.joints[j];
-            weights[j] = weight_source.floats[weight_accessor.offset + ij.weights[j] * weight_accessor.stride];
-          }
-        } else {
-          pair_t<u32_t, f32_t> sorted [DAEIJoint::max_vcount];
-
-          for (size_t j = 0; j < ij.count; j ++) {
-            sorted[j].a = ij.joints[j];
-            sorted[j].b = weight_source.floats[weight_accessor.offset + ij.weights[j] * weight_accessor.stride];
-          }
-
-          quick_sort(sorted, 0, ij.count - 1, [&] (pair_t<u32_t, f32_t> const& x, pair_t<u32_t, f32_t> const& y) {
-            return x.b > y.b;
+          anim_samplers.append({
+            &sampler,
+            sampler.get_attribute("id").value,
+            gather_inputs(sampler)
           });
 
-          for (size_t j = 0; j < 3; j ++) {
-            joints[j] = sorted[j].a;
-            weights[j] = sorted[j].b;
-          }
+          XMLItem& channel = anim.first_named("channel");
+
+          String const& ctid = channel.get_attribute("target").value;
+
+          String target_id = { ctid.value, ctid.length - str_length("/transform") };
+
+          anim_channels.append({
+            anim.get_attribute("id").value,
+            target_id,
+            channel.get_attribute("source").value
+          });
         }
-
-        weights.normalize();
-
-        final_joints.append(joints);
-        final_weights.append(weights);
       }
 
 
-      RenderMesh3D dae_mesh = RenderMesh3D::from_ex(
-        "collada!",
+      {
+        XMLItem* lib_clips_ptr = root.first_named_pointer("library_animation_clips");
 
-        true,
+        if (lib_clips_ptr != NULL) {
+          XMLItem& lib_clips = *lib_clips_ptr;
 
-        final_positions.count,
-        final_positions.elements,
-        incomplete_normals || final_normals.count == 0? NULL : final_normals.elements,
-        final_uvs.count == 0? NULL : final_uvs.elements,
-        final_colors.count == 0? NULL : final_colors.elements,
+          size_t anim_clip_count = lib_clips.count_of_name("animation_clip");
 
-        final_faces.count,
-        final_faces.elements,
+          for (size_t i = 0; i < anim_clip_count; i ++) {
+            XMLItem& clip = lib_clips.nth_named(i, "animation_clip");
 
-        final_material_config
-      );
+            size_t channel_count = clip.count_of_name("instance_animation");
 
+            Array<String> channel_ids { channel_count };
 
-      dae_mesh.use();
+            for (size_t j = 0; j < channel_count; j ++) {
+              XMLItem& channel = clip.nth_named(j, "instance_animation");
 
-      u32_t buffers [2];
-      glGenBuffers(2, buffers);
+              channel_ids.append(channel.get_attribute("url").value);
+            }
 
-      glBindBuffer(GL_ARRAY_BUFFER, buffers[0]);
-      glVertexAttribIPointer(4, 4, GL_UNSIGNED_INT, sizeof(Vector4u), reinterpret_cast<void*>(0));
-      glBufferData(GL_ARRAY_BUFFER, final_joints.count * sizeof(Vector4u), final_joints.elements, GL_DYNAMIC_DRAW);
-      glEnableVertexAttribArray(4);
-
-      glBindBuffer(GL_ARRAY_BUFFER, buffers[1]);
-      glVertexAttribPointer(5, 4, GL_FLOAT, GL_FALSE, sizeof(Vector4f), reinterpret_cast<void*>(0));
-      glBufferData(GL_ARRAY_BUFFER, final_weights.count * sizeof(Vector4f), final_weights.elements, GL_DYNAMIC_DRAW);
-      glEnableVertexAttribArray(5);
+            anim_clips.append({
+              clip.get_attribute("name").value,
+              strtof(clip.get_attribute("start").value.value, NULL),
+              strtof(clip.get_attribute("end").value.value, NULL),
+              channel_ids
+            });
+          }
+        }
+      }
 
 
-      i_vertices.destroy();
+      {
+        if (anim_clips.count <= 1) {
+          if (anim_clips.count == 0 && anim_channels.count > 0) {
+            DAEAnimClip clip { { }, 0.0f, 1.0f, { } }; // No name here to prevent memory leak
 
-      i_indices.destroy();
+            for (auto [ i, channel ] : anim_channels) {
+              clip.channel_ids.append(channel.id);
+            }
+
+            DAEIAnimation i_anim = DAEIAnimation::process(this, root_ibone, clip);
+
+            clip.channel_ids.destroy();
+            
+            i_anim.calculate_bind(root_ibone, transform);
+
+            animations.append(i_anim);
+          } else if (anim_clips.count == 1) {
+            DAEIAnimation i_anim = DAEIAnimation::process(this, root_ibone, anim_clips[0]);
+            
+            i_anim.calculate_bind(root_ibone, transform);
+
+            animations.append(i_anim);
+          }
+        } else {
+          for (auto [ i, clip ] : anim_clips) {
+            DAEIAnimation i_anim = DAEIAnimation::process(this, root_ibone, clip);
+
+            i_anim.calculate_bind(root_ibone, transform);
+
+            animations.append(i_anim);
+          }
+        }
+      }
 
 
-      return dae_mesh;
-    }
-
-
-
-    Skeleton load_skeleton (Matrix4 const& transform = Constants::Matrix4::identity, bool apply_filter = true, std::function<bool (DAEIBone const&)> filter = std_bone_filter) const {
-      XMLItem& lib_vis_scenes = root.first_named("library_visual_scenes");
-
-      XMLItem& scene = lib_vis_scenes.first_named("visual_scene");
-
-      lib_vis_scenes.asset_assert(lib_vis_scenes.count_of_name("visual_scene") == 1, "Expected exactly one visual scene");
-
-      XMLItem& armature = scene.find_by_attribute_value("node", "id", "Armature");
-
-      XMLItem& root_joint = armature.find_by_attribute_value("node", "type", "JOINT");
-
-
-      DAEIBone root_ibone = DAEIBone::traverse(root_joint);
-
-      root_ibone.calculate_bind(transform);
-
-
-      if (apply_filter) {
+      if (apply_bone_filter) {
         bool cont;
-        do cont = root_ibone.strip_ik(filter);
+        do cont = root_ibone.filter(bone_filter);
         while (cont);
       }
 
+      root_ibone.collapse(bone_bindings_list.bindings);
 
-      Array<Bone> final_bones;
+      if (apply_bone_filter) {
+        for (auto [ i, anim ] : animations) {
+          anim.filter(bone_bindings_list);
+        }
+      }
 
-      root_ibone.collapse(final_bones);
       root_ibone.destroy();
-      
+    } catch (Exception& exception) {
+      destroy();
+      throw exception;
+    }
+  }
 
-      Skeleton skeleton = Skeleton::from_ex(
-        "collada!",
-        final_bones
-      );
+  void DAE::destroy () {
+    for (auto [ i, source ] : sources) {
+      if (source.float_array) source.floats.destroy();
+      else source.names.destroy();
+    }
 
-      /*
-        // for (auto [ i, bone ] : skeleton) {
-        //   bone.bind_matrix = transform * bone.bind_matrix;
-        //   bone.inverse_bind_matrix = bone.bind_matrix.inverse();
-        // }
+    sources.destroy();
+
+    accessors.destroy();
+
+    vertex_bindings.destroy();
+
+    for (auto [ i, triangles ] : triangles_list) {
+      triangles.inputs.destroy();
+      triangles.indices.destroy();
+    }
+
+    triangles_list.destroy();
+
+    joint_data.inputs.destroy();
+
+    weight_data.inputs.destroy();
+    weight_data.vcount.destroy();
+    weight_data.indices.destroy();
+
+    bone_bindings_list.destroy();
+
+    for (auto [ i, sampler ] : anim_samplers) sampler.inputs.destroy();
+    anim_samplers.destroy();
+
+    for (auto [ i, channel ] : anim_channels) channel.target_id.destroy();
+    anim_channels.destroy();
+
+    for (auto [ i, clip ] : anim_clips) clip.channel_ids.destroy();
+    anim_clips.destroy();
+
+    animations.destroy();
+    
+    xml.destroy();
+  }
+
+    
+
+  DAEAccessor& DAE::get_accessor (String const& id) const {
+    for (auto [ i, accessor ] : accessors) {
+      if (accessor.id == id.value + 1) return accessor;
+    }
+
+    root.asset_error("Could not find Accessor '%s'", id.value);
+  }
+
+  DAESource& DAE::get_source (String const& id) const {
+    for (auto [ i, source ] : sources) {
+      if (source.id == id.value + 1) return source;
+    }
+
+    root.asset_error("Could not find Source '%s'", id.value);
+  }
+
+  DAEInput& DAE::get_poly_input (DAETriangles const& triangles, char const* semantic) {
+    for (auto [ i, input ] : triangles.inputs) {
+      if (input.semantic == semantic) return input;
+    }
+
+    triangles.origin->asset_error("Could not find semantic Input '%s'", semantic);
+  }
+
+  DAEInput* DAE::get_poly_input_pointer (DAETriangles const& triangles, char const* semantic) {
+    for (auto [ i, input ] : triangles.inputs) {
+      if (input.semantic == semantic) return &input;
+    }
+
+    return NULL;
+  }
+
+  DAEInput& DAE::get_wd_input (char const* semantic) const {
+    for (auto [ i, input ] : weight_data.inputs) {
+      if (input.semantic == semantic) return input;
+    }
+
+    weight_data.origin->asset_error("Could not find semantic Input '%s'", semantic);
+  }
+
+  DAEInput* DAE::get_wd_input_pointer (char const* semantic) const {
+    for (auto [ i, input ] : weight_data.inputs) {
+      if (input.semantic == semantic) return &input;
+    }
+
+    return NULL;
+  }
+
+  DAEInput& DAE::get_joint_input (char const* semantic) const {
+    for (auto [ i, input ] : joint_data.inputs) {
+      if (input.semantic == semantic) return input;
+    }
+
+    joint_data.origin->asset_error("Could not find semantic Input '%s'", semantic);
+  }
+
+  DAEInput* DAE::get_joint_input_pointer (char const* semantic) const {
+    for (auto [ i, input ] : joint_data.inputs) {
+      if (input.semantic == semantic) return &input;
+    }
+
+    return NULL;
+  }
+
+  s64_t DAE::get_bone_index (String& id) const {
+    DAEInput& joint_input = get_joint_input("JOINT");
+
+    DAEAccessor& joint_accessor = get_accessor(joint_input.source_id);
+
+    DAESource& joint_source = get_source(joint_accessor.source_id);
+
+    for (size_t i = 0; i < joint_accessor.count; i ++) {
+      pair_t joint_name = joint_source.names[joint_accessor.offset + i * joint_accessor.stride];
+      if (joint_name.b == id.length && strncmp(id.value, joint_name.a, joint_name.b) == 0) return i;
+    }
+
+    return -1;
+  }
+  
+  s64_t DAE::get_origin_bone_index_from_node_id (DAEIBone const& root_ibone, String& id) {
+    s64_t result = -1;
+
+    root_ibone.traverse_cond([&] (DAEIBone const& ibone) -> bool {
+      if (ibone.id == id) {
+        result = ibone.origin_index;
+        return false;
+      } else return true;
+    });
+
+    return result;
+  }
+
+  s64_t DAE::get_filtered_bone_index_from_node_id (String& id) const {
+    for (auto [ i, binding ] : bone_bindings_list) {
+      if (binding.id == id) return binding.origin_index;
+    }
+
+    return -1;
+  }
+
+  s64_t DAE::get_filtered_bone_index (u32_t origin_index) const {
+    if (origin_index != static_cast<u32_t>(-1)) {
+      for (auto [ i, binding ] : bone_bindings_list) {
+        if (binding.origin_index == origin_index) return i;
+      }
+    }
+    return -1;
+  }
+
+  DAEAnimClip& DAE::get_anim_clip (char const* name) const {
+    for (auto [ i, clip ] : anim_clips) {
+      if (clip.name == name) return clip;
+    }
+
+    xml.asset_error("Could not find an Animation named '%s'", name);
+  }
+
+  DAEAnimChannel& DAE::get_anim_channel (String& id) const {
+    char const* value = id.value;
+
+    if (*value == '#') ++ value;
+
+    for (auto [ i, channel ] : anim_channels) {
+      if (channel.id == value) return channel;
+    }
+
+    xml.asset_error("Could not find an Animation Channel with id '%s'", id.value);
+  }
+
+  DAEAnimSampler& DAE::get_anim_sampler (String& id) const {
+    for (auto [ i, sampler ] : anim_samplers) {
+      if (sampler.id == id.value + 1) return sampler;
+    }
+
+    xml.asset_error("Could not find an Animation Sampler with id '%s'", id.value);
+  }
+
+  DAEInput& DAE::get_sampler_input (DAEAnimSampler const& sampler, char const* semantic) {
+    for (auto [ i, input ] : sampler.inputs) {
+      if (input.semantic == semantic) return input;
+    }
+
+    sampler.origin->asset_error("Could not find semantic input '%s'", semantic);
+  }
 
 
-        // std::function<bool()> const remove_ik = [&] () {
-        //   for (auto [ i, bone ] : skeleton) {
-        //     if (bone.parent_index == -1) continue;
+  DAEIAnimation& DAE::get_animation (char const* name) const {
+    for (auto [ i, anim ] : animations) {
+      if (anim.name == name) return anim;
+    }
 
-        //     if (bone.name.starts_with("IK") || bone.name.starts_with("TK")) {
-        //       size_t removed_index = i;
-        //       size_t new_parent_index = bone.parent_index;
+    xml.asset_error("Could not find an Animation with name '%s'", name);
+  }
 
-        //       for (auto [ j, child_bone ] : skeleton) {
-        //         if (child_bone.parent_index == removed_index) child_bone.parent_index = new_parent_index;
-        //       }
 
-        //       for (auto [ j, other_bone ] : skeleton) {
-        //         if (other_bone.parent_index > removed_index) -- other_bone.parent_index;
-        //       }
 
-        //       skeleton.bones.remove(i);
 
-        //       return true;
-        //     }
-        //   }
 
-          return false;
-        };
+  RenderMesh3D DAE::load_mesh () const {
+    // needs a try catch wrapper!!
 
-        bool removed;
-        do removed = remove_ik();
-        while (removed);
+    Array<DAEIJoint> i_joints;
 
+    DAEInput& weight_input = get_wd_input("WEIGHT");
+    DAEAccessor& weight_accessor = get_accessor(weight_input.source_id);
+    DAESource& weight_source = get_source(weight_accessor.source_id);
+
+    {
+      auto& [ wd_origin, inputs, count, vcount, indices ] = const_cast<DAEWeightData&>(weight_data); // Bug fix: const structures are improperly decomposed in c++17
+
+      size_t j = 0;
+      for (auto [ i, c ] : vcount) {
+        wd_origin->asset_assert(c < DAEIJoint::max_vcount, "VCount %" PRIu32 " (at index %zu) exceeds maximum", c, i);
+
+        DAEIJoint idata = { c };
+
+        for (size_t k = 0; k < c; k ++) {
+          size_t l = j * 2 + k * 2;
+          idata.joints[k] = indices[l];
+          idata.weights[k] = indices[l + 1];
+        }
+
+        i_joints.append(idata);
+          
+        j += c;
+      }
+    }
+
+
+    Array<MaterialInfo> material_config_data;
+    Array<DAEIVertex> i_vertices;
+    Array<u32_t> i_indices;
+    
+    {
+      for (auto [ i, triangles ] : triangles_list) {
+        auto& [ _p, face_count, inputs, indices ] = triangles;
+
+        MaterialInfo mat_info = { i, indices.count / 3, 0 };
+
+
+        DAEInput& position_input = get_poly_input(triangles, "VERTEX");
+
+        for (size_t j = 0; j < indices.count; j += triangles.advance) {
+          size_t iv_index = j / triangles.advance;
+
+          u32_t position = indices[j + position_input.offset];
+
+          DAEIVertex iv = { triangles, iv_index };
+          iv.position = position;
+          i_vertices.append(iv);
+        }
+
+
+        DAEInput* normal_input = get_poly_input_pointer(triangles, "NORMAL");
+        DAEInput* uv_input = get_poly_input_pointer(triangles, "TEXCOORD");
+        DAEInput* color_input = get_poly_input_pointer(triangles, "COLOR");
+
+        bool have_normal = normal_input != NULL;
+        bool have_uv = uv_input != NULL;
+        bool have_color = color_input != NULL;
+
+        if (have_normal || have_uv || have_color) {
+          for (size_t j = 0; j < indices.count; j += triangles.advance) {
+            size_t iv_index = j / triangles.advance;
+
+            s64_t normal = have_normal? static_cast<s64_t>(indices[j + normal_input->offset]) : -1;
+            s64_t uv = have_uv? static_cast<s64_t>(indices[j + uv_input->offset]) : -1;
+            s64_t color = have_color? static_cast<s64_t>(indices[j + color_input->offset]) : -1;
+
+            DAEIVertex* existing_vertex = &i_vertices[iv_index];
+
+            if (!existing_vertex->set) {
+              existing_vertex->set_attributes(normal, uv, color);
+              i_indices.append(iv_index);
+            } else if (existing_vertex->has_same_attributes(normal, uv, color)) {
+              i_indices.append(iv_index);
+            } else {
+              bool found_existing = false;
+
+              while (existing_vertex->duplicate != -1) {
+                existing_vertex = &i_vertices[existing_vertex->duplicate];
+
+                if (existing_vertex->has_same_attributes(normal, uv, color)) {
+                  i_indices.append(existing_vertex->index);
+                  found_existing = true;
+                  break;
+                }
+              }
+
+              if (!found_existing) {
+                size_t new_iv_index = i_vertices.count;
+
+                DAEIVertex new_iv = { triangles, new_iv_index };
+                new_iv.set_attributes(normal, uv, color);
+                i_vertices.append(new_iv);
+
+                existing_vertex->duplicate = new_iv_index;
+
+                i_indices.append(new_iv_index);
+              }
+            }
+          }
+        }
         
-        // Bone& root_bone = skeleton.root();
 
-        // if (root_bone.name.starts_with("IK") || root_bone.name.starts_with("TK")) {
-        //   skeleton.asset_assert(skeleton.get_child_count(root_bone) == 1, "Cannot remove IK Bones from Skeleton because the root Bone is an IK Bone with more than one child Bone");
+        mat_info.length = indices.count / 3 - mat_info.start_index;
 
-        //   size_t old_root = skeleton.root_index;
-        //   size_t new_root = 0;
-
-        //   for (auto [ i, bone ] : skeleton) {
-        //     if (bone.parent_index == old_root) {
-        //       new_root = i;
-        //       bone.parent_index = -1;
-        //       break;
-        //     }
-        //   }
-
-        //   skeleton.bones.remove(old_root);
-
-        //   for (auto [ i, bone ] : skeleton) {
-        //     if (bone.parent_index > old_root) -- bone.parent_index;
-        //   }
-        // }
-      */
-
-      return skeleton;
-    }
-
-
-
-
-
-
-
-  private:
-    DAEVertexBinding& get_vertex_binding (String const& id) const {
-      for (auto [ k, binding ] : vertex_bindings) {
-        if (binding.id == id.value + 1) return binding;
+        material_config_data.append(mat_info);
       }
 
-      mesh->asset_error("Could not find VertexBinding '%s'", id.value);
+      mesh->asset_assert(i_indices.count % 3 == 0, "Final indices count was not cleanly divisible by 3, make sure your mesh is triangulated");
     }
 
-    Array<DAEInput> gather_inputs (XMLItem& origin) const {
-      size_t input_count = origin.count_of_name("input");
+    Array<Vector3f> final_positions { i_vertices.count };
+    Array<Vector3f> final_normals { i_vertices.count };
+    Array<Vector2f> final_uvs { i_vertices.count };
+    Array<Vector3f> final_colors { i_vertices.count };
+    Array<Vector3u> final_faces = { i_indices.count / 3 };
+    Array<Vector4u> final_joints = { i_vertices.count };
+    Array<Vector4f> final_weights = { i_vertices.count };
 
-      Array<DAEInput> inputs = { input_count };
 
-      for (size_t j = 0; j < input_count; j ++) {
-        XMLItem& input = origin.nth_named(j, "input");
+    for (size_t i = 0; i < i_indices.count; i += 3) {
+      final_faces.append({ i_indices[i], i_indices[i + 2], i_indices[i + 1] });
+    }
 
-        String semantic = input.get_attribute("semantic").value; // borrowing string here, destroyed by XML
-        String source_id = input.get_attribute("source").value; // borrowing string here, destroyed by XML
 
-        if (semantic == "VERTEX") {
-          source_id = get_vertex_binding(source_id).source_id;
-        }
+    MaterialConfig final_material_config;
 
-        XMLAttribute* set = input.get_attribute_pointer("set");
-        XMLAttribute* offset = input.get_attribute_pointer("offset");
-        inputs.append({
-          semantic,
-          source_id,
-          offset != NULL? strtoumax(offset->value.value, NULL, 10) : 0,
-          set != NULL? strtoumax(set->value.value, NULL, 10) : 0
-        });
+    if (material_config_data.count != 1) {
+      final_material_config = MaterialConfig::from_ex(material_config_data);
+    } else {
+      material_config_data.destroy();
+    }
+
+
+    bool incomplete_normals = false;
+
+    for (auto [ i, iv ] : i_vertices) {
+      DAEInput& position_input = get_poly_input(iv.triangles, "VERTEX");
+      DAEAccessor& position_accessor = get_accessor(position_input.source_id);
+      DAESource& position_source = get_source(position_accessor.source_id);
+
+      Vector3f pos;
+
+      for (size_t j = 0; j < 3; j ++) {
+        pos.elements[j] = position_source.floats[position_accessor.offset + iv.position * position_accessor.stride + j];
       }
 
-      return inputs;
-    }
+      final_positions.append(pos.apply_matrix(transform));
 
-    void gather_base_data (XMLItem& section) {
-      size_t sources_count = section.count_of_name("source");
 
-      for (size_t i = 0; i < sources_count; i ++) {
-        XMLItem source = section.nth_named(i, "source");
+      if (!incomplete_normals) {
+        if (iv.normal != -1) {
+          Vector3f norm = { 0, 0, 0 };
 
-        XMLItem* float_array = source.first_named_pointer("float_array");
-        XMLItem* name_array = source.first_named_pointer("Name_array");
+          DAEInput& normal_input = get_poly_input(iv.triangles, "NORMAL");
+          DAEAccessor& normal_accessor = get_accessor(normal_input.source_id);
+          DAESource& normal_source = get_source(normal_accessor.source_id);
 
-        if (float_array != NULL) {
-          String id = float_array->get_attribute("id").value; // borrowing string here, destroyed by XML
-
-          size_t float_count = strtoumax(float_array->get_attribute("count").value.value, NULL, 10);
-          Array<f64_t> floats { float_count };
-
-          char* base = float_array->get_text().value;
-          char* end = NULL;
-          for (size_t j = 0; j < float_count; j ++) {
-            floats.append(strtod(base, &end));
-            float_array->asset_assert(end != base, "Failed to parse float at index %zu", j);
-            base = end;
+          for (size_t j = 0; j < 3; j ++) {
+            norm.elements[j] = normal_source.floats[normal_accessor.offset + iv.normal * normal_accessor.stride + j];
           }
 
-          sources.append({ id, floats });
-        } else if (name_array != NULL) {
-          String id = name_array->get_attribute("id").value;
+          final_normals.append(norm);
+        } else {
+          incomplete_normals = true;
+          final_normals.destroy();
+        }
+      }
 
-          size_t name_count = strtoumax(name_array->get_attribute("count").value.value, NULL, 10);
-          Array < pair_t<char*, size_t> > names;
 
-          char* base = name_array->get_text().value;
-          char* end = NULL;
-          for (size_t j = 0; j < name_count; j ++) {
-            while (char_is_whitespace(*base)) ++ base;
-            end = base;
-            while (!char_is_whitespace(*end)) ++ end;
-            names.append({ base, static_cast<size_t>(end - base) });
-            base = end;
-          }
+      Vector2f uv = { 0, 0 };
+      
+      if (iv.uv != -1) {
+        DAEInput& uv_input = get_poly_input(iv.triangles, "TEXCOORD");
+        DAEAccessor& uv_accessor = get_accessor(uv_input.source_id);
+        DAESource& uv_source = get_source(uv_accessor.source_id);
 
-          sources.append({ id, names });
+        for (size_t j = 0; j < 2; j ++) {
+          uv.elements[j] = uv_source.floats[uv_accessor.offset + iv.uv * uv_accessor.stride + j];
+        }
+      }
+
+      final_uvs.append(uv);
+
+
+      Vector3f color = { 1, 1, 1 };
+      
+      if (iv.color != -1) {
+        DAEInput& color_input = get_poly_input(iv.triangles, "COLOR");
+        DAEAccessor& color_accessor = get_accessor(color_input.source_id);
+        DAESource& color_source = get_source(color_accessor.source_id);
+
+        for (size_t j = 0; j < 3; j ++) {
+          color.elements[j] = color_source.floats[color_accessor.offset + iv.color * color_accessor.stride + j];
+        }
+      }
+
+      final_colors.append(color);
+
+
+      Vector4u joints = { static_cast<u32_t>(-1), static_cast<u32_t>(-1), static_cast<u32_t>(-1), static_cast<u32_t>(-1) };
+      Vector4f weights = { 0, 0, 0, 0 };
+      DAEIJoint& ij = i_joints[iv.position];
+
+      if (ij.count <= 4) {
+        for (size_t j = 0; j < ij.count; j ++) {
+          joints[j] = ij.joints[j];
+          weights[j] = weight_source.floats[weight_accessor.offset + ij.weights[j] * weight_accessor.stride];
+        }
+      } else {
+        pair_t<u32_t, f32_t> sorted [DAEIJoint::max_vcount];
+
+        for (size_t j = 0; j < ij.count; j ++) {
+          sorted[j].a = ij.joints[j];
+          sorted[j].b = weight_source.floats[weight_accessor.offset + ij.weights[j] * weight_accessor.stride];
         }
 
-        XMLItem accessor = source.first_named("technique_common").first_named("accessor");
-
-        XMLAttribute* offset = accessor.get_attribute_pointer("offset");
-
-        accessors.append({
-          source.get_attribute("id").value, // borrowing string here, destroyed by XML
-          accessor.get_attribute("source").value, // borrowing string here, destroyed by XML
-          strtoumax(accessor.get_attribute("count").value.value, NULL, 10),
-          offset != NULL? strtoumax(offset->value.value, NULL, 10) : 0,
-          strtoumax(accessor.get_attribute("stride").value.value, NULL, 10),
-          accessor.count_of_name("param")
+        quick_sort(sorted, 0, ij.count - 1, [&] (pair_t<u32_t, f32_t> const& x, pair_t<u32_t, f32_t> const& y) {
+          return x.b > y.b;
         });
+
+        for (size_t j = 0; j < 4; j ++) {
+          joints[j] = sorted[j].a;
+          weights[j] = sorted[j].b;
+        }
+      }
+
+      weights.normalize();
+
+      final_joints.append(joints);
+      final_weights.append(weights);
+    }
+    
+
+
+
+    RenderMesh3D dae_mesh = RenderMesh3D::from_ex(
+      "collada!",
+
+      true,
+
+      final_positions.count,
+      final_positions.elements,
+      incomplete_normals || final_normals.count == 0? NULL : final_normals.elements,
+      final_uvs.count == 0? NULL : final_uvs.elements,
+      final_colors.count == 0? NULL : final_colors.elements,
+
+      final_faces.count,
+      final_faces.elements,
+
+      final_material_config
+    );
+
+    for (auto [ i, joint ] : final_joints) {
+      Vector4f& weight = final_weights[i];
+
+      for (auto [ j, index ] : joint) {
+        s64_t filtered_index = get_filtered_bone_index(index);
+
+        if (filtered_index == -1) {
+          if (weight[j] != 0.0f) {
+            weight[j] = 0.0f;
+            printf("Warning: Original bone %u has non-zero weight but is no longer present in filtered bones\n", index);
+            weight = weight.normalize();
+          }
+          index = 0;
+        } else {
+          index = filtered_index;
+        }
       }
     }
-  };
 
-  std::function<bool (DAEIBone const&)> DAE::std_bone_filter = [] (DAEIBone const& bone) { return bone.name.starts_with("IK") || bone.name.starts_with("TK"); };
+
+    dae_mesh.use();
+
+    u32_t buffers [2];
+    glGenBuffers(2, buffers);
+
+    glBindBuffer(GL_ARRAY_BUFFER, buffers[0]);
+    glVertexAttribIPointer(4, 4, GL_UNSIGNED_INT, sizeof(Vector4u), reinterpret_cast<void*>(0));
+    glBufferData(GL_ARRAY_BUFFER, final_joints.count * sizeof(Vector4u), final_joints.elements, GL_DYNAMIC_DRAW);
+    glEnableVertexAttribArray(4);
+
+    glBindBuffer(GL_ARRAY_BUFFER, buffers[1]);
+    glVertexAttribPointer(5, 4, GL_FLOAT, GL_FALSE, sizeof(Vector4f), reinterpret_cast<void*>(0));
+    glBufferData(GL_ARRAY_BUFFER, final_weights.count * sizeof(Vector4f), final_weights.elements, GL_DYNAMIC_DRAW);
+    glEnableVertexAttribArray(5);
+
+
+    i_vertices.destroy();
+
+    i_indices.destroy();
+
+
+    return dae_mesh;
+  }
+
+
+
+
+
+
+
+
+
+
+  Skeleton DAE::load_skeleton () const {
+    Array<Bone> final_bones;
+
+    bone_bindings_list.collapse(final_bones);
+
+    Skeleton skeleton = Skeleton::from_ex(
+      "collada!",
+      final_bones,
+      0
+    );
+
+    return skeleton;
+  }
+
+
+    
+
+
+
+
+  SkeletalAnimation DAE::load_animation (char const* name) const {
+    if (name == NULL) xml.asset_assert(animations.count == 1, "Animation name is required if there is more than 1 animation in the source");
+
+    DAEIAnimation& i_anim = name != NULL? get_animation(name) : animations[0];
+
+    Array<SkeletalKeyframe> final_keyframes;
+    i_anim.collapse(bone_bindings_list, final_keyframes);
+
+    SkeletalAnimation anim = SkeletalAnimation::from_ex(
+      "collada!",
+      final_keyframes,
+      1.0f,
+      i_anim.length
+    );
+
+    return anim;
+  }
+
+
+
+
+
+
+
+  DAEVertexBinding& DAE::get_vertex_binding (String const& id) const {
+    for (auto [ k, binding ] : vertex_bindings) {
+      if (binding.id == id.value + 1) return binding;
+    }
+
+    mesh->asset_error("Could not find VertexBinding '%s'", id.value);
+  }
+
+  Array<DAEInput> DAE::gather_inputs (XMLItem& origin) const {
+    size_t input_count = origin.count_of_name("input");
+
+    Array<DAEInput> inputs = { input_count };
+
+    for (size_t j = 0; j < input_count; j ++) {
+      XMLItem& input = origin.nth_named(j, "input");
+
+      String semantic = input.get_attribute("semantic").value; // borrowing string here, destroyed by XML
+      String source_id = input.get_attribute("source").value; // borrowing string here, destroyed by XML
+
+      if (semantic == "VERTEX") {
+        source_id = get_vertex_binding(source_id).source_id;
+      }
+
+      XMLAttribute* set = input.get_attribute_pointer("set");
+      XMLAttribute* offset = input.get_attribute_pointer("offset");
+      inputs.append({
+        semantic,
+        source_id,
+        offset != NULL? strtoumax(offset->value.value, NULL, 10) : 0,
+        set != NULL? strtoumax(set->value.value, NULL, 10) : 0
+      });
+    }
+
+    return inputs;
+  }
+
+  void DAE::gather_base_data (XMLItem& section) {
+    size_t sources_count = section.count_of_name("source");
+
+    for (size_t i = 0; i < sources_count; i ++) {
+      XMLItem source = section.nth_named(i, "source");
+
+      XMLItem* float_array = source.first_named_pointer("float_array");
+      XMLItem* name_array = source.first_named_pointer("Name_array");
+
+      if (float_array != NULL) {
+        String id = float_array->get_attribute("id").value; // borrowing string here, destroyed by XML
+
+        size_t float_count = strtoumax(float_array->get_attribute("count").value.value, NULL, 10);
+        Array<f64_t> floats { float_count };
+
+        char* base = float_array->get_text().value;
+        char* end = NULL;
+        for (size_t j = 0; j < float_count; j ++) {
+          floats.append(strtod(base, &end));
+          float_array->asset_assert(end != base, "Failed to parse float at index %zu", j);
+          base = end;
+        }
+
+        sources.append({ id, floats });
+      } else if (name_array != NULL) {
+        String id = name_array->get_attribute("id").value;
+
+        size_t name_count = strtoumax(name_array->get_attribute("count").value.value, NULL, 10);
+        Array < pair_t<char*, size_t> > names;
+
+        char* base = name_array->get_text().value;
+        char* end = NULL;
+        for (size_t j = 0; j < name_count; j ++) {
+          while (char_is_whitespace(*base)) ++ base;
+          end = base;
+          while (!char_is_whitespace(*end) && *end != '\0') ++ end;
+          names.append({ base, static_cast<size_t>(end - base) });
+          base = end;
+        }
+
+        sources.append({ id, names });
+      }
+
+      XMLItem accessor = source.first_named("technique_common").first_named("accessor");
+
+      XMLAttribute* offset = accessor.get_attribute_pointer("offset");
+
+      accessors.append({
+        source.get_attribute("id").value, // borrowing string here, destroyed by XML
+        accessor.get_attribute("source").value, // borrowing string here, destroyed by XML
+        strtoumax(accessor.get_attribute("count").value.value, NULL, 10),
+        offset != NULL? strtoumax(offset->value.value, NULL, 10) : 0,
+        strtoumax(accessor.get_attribute("stride").value.value, NULL, 10),
+        accessor.count_of_name("param")
+      });
+    }
+  }
 }

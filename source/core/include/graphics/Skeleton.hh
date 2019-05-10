@@ -88,6 +88,13 @@ namespace mod {
 
 
 
+    /* Iterate a Skeleton's Bones in hierarchical order */
+    ENGINE_API void traverse (std::function<void (u32_t, Bone const&)> callback, s64_t index = -1) const;
+
+    /* Iterate a Skeleton's Bones in hierarchical order, and stop iteration early if the callback returns false */
+    ENGINE_API bool traverse_cond (std::function<bool (u32_t, Bone const&)> callback, s64_t index = -1) const;
+
+
 
     /* Get a pointer to a Bone in a Skeleton by index.
      * Returns NULL if no Bone with the given index exists */

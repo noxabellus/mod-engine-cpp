@@ -142,6 +142,35 @@ namespace mod {
 
 
 
+  void Skeleton::traverse (std::function<void (u32_t, Bone const&)> callback, s64_t index) const {
+    if (index == -1) index = root_index;
+
+    Bone& bone = get_bone(index);
+
+    callback(index, bone);
+
+    for (auto [ i, bone ] : bones) {
+      if (bone.parent_index == index) traverse(callback, i);
+    }
+  }
+
+  bool Skeleton::traverse_cond (std::function<bool (u32_t, Bone const&)> callback, s64_t index) const {
+    if (index == -1) index = root_index;
+
+    Bone& bone = get_bone(index);
+
+    if (callback(index, bone)) {
+      for (auto [ i, bone ] : bones) {
+        if (bone.parent_index == index) if (!traverse_cond(callback, i)) return false;
+      }
+
+      return true;
+    }
+
+    return false;
+  }
+
+
 
   Bone* Skeleton::get_bone_pointer (size_t index) const {
     return bones.get_element(index);
@@ -204,7 +233,7 @@ namespace mod {
 
       for (auto [ i, child_bone ] : skel.bones) {
         if (child_bone.parent_index == parent_index) {
-          child_bone.bind_matrix = parent_bone.bind_matrix * Matrix4::compose(child_bone.base_transform);
+          child_bone.bind_matrix = parent_bone.bind_matrix * child_bone.base_transform.compose();
           child_bone.inverse_bind_matrix = child_bone.bind_matrix.inverse();
 
           calculate_descendant_bind_matrices(skel, child_bone);
@@ -214,7 +243,7 @@ namespace mod {
 
     Bone& root_bone = root();
 
-    root_bone.bind_matrix = Matrix4::compose(root_bone.base_transform);
+    root_bone.bind_matrix = root_bone.base_transform.compose();
     root_bone.inverse_bind_matrix = root_bone.bind_matrix.inverse();
 
     calculate_descendant_bind_matrices(*this, root_bone);

@@ -7,12 +7,12 @@ layout (location = 1) in vec3 v_norm;
 layout (location = 2) in vec2 v_uv;
 layout (location = 3) in vec3 v_color;
 
-layout (location = 4) in vec3 v_weights;
+layout (location = 4) in vec3 v_weight_color;
 
 out vec4 f_color;
 
 
 
 void main () {
-  f_color = vec4(v_weights, 1.0);
+  f_color = vec4(v_weight_color, 1.0);
 }

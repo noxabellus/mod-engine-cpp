@@ -40,7 +40,7 @@ namespace mod {
   SkeletalAnimation SkeletalAnimation::from_json_item (char const* origin, JSONItem const& json) {
     Array<SkeletalKeyframe> keyframes;
 
-    Array<SkeletalKeyframeTransform> intermediate_transforms;
+    Array<SkeletalKeyframeChannel> intermediate_transforms;
 
     JSONItem* keyframes_item =  json.get_object_item("keyframes");
     json.asset_assert(keyframes_item != NULL, "Expected a key/value pair 'keyframes'");
@@ -200,8 +200,10 @@ namespace mod {
 
     for (auto [ i, keyframe ] : keyframes) {
       if (num::flt_equal(keyframe.time, offset_time)) return keyframe;
-      else if (keyframe.time > offset_time) return *last_frame;
-      else last_frame = &keyframe;
+      else if (keyframe.time > offset_time) {
+        if (last_frame != NULL) return *last_frame;
+        else break;
+      } else last_frame = &keyframe;
     }
 
     return keyframes.last();
@@ -216,7 +218,7 @@ namespace mod {
   }
 
 
-  void SkeletalAnimation::get_pose_slerp (f32_t offset_time, Array<SkeletalKeyframeTransform>& out_transforms) const {
+  void SkeletalAnimation::get_pose_slerp (f32_t offset_time, Array<SkeletalKeyframeChannel>& out_transforms) const {
     offset_time = fmod(offset_time / time_scale, length);
 
     out_transforms.clear();
@@ -233,7 +235,7 @@ namespace mod {
     }
   }
   
-  void SkeletalAnimation::get_pose_lerp (f32_t offset_time, Array<SkeletalKeyframeTransform>& out_transforms) const {
+  void SkeletalAnimation::get_pose_lerp (f32_t offset_time, Array<SkeletalKeyframeChannel>& out_transforms) const {
     offset_time = fmod(offset_time / time_scale, length);
 
     out_transforms.clear();
