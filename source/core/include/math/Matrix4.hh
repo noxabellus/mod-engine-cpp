@@ -64,6 +64,18 @@ namespace mod {
         scale.lerp(alpha, other.scale)
       };
     }
+
+    /* Normalize the Quaternion component of a Transform */
+    Transform3D normalize () const {
+      return {
+        position,
+        rotation.normalize(),
+        scale
+      };
+    }
+
+    /* Compose a Transform into a Matrix */
+    ENGINE_API Matrix4 compose () const;
   };
 
 

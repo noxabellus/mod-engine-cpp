@@ -52,6 +52,9 @@ namespace mod {
         scale.lerp(alpha, other.scale)
       };
     }
+
+    /* Compose a Transform into a Matrix */
+    ENGINE_API Matrix3 compose () const;
   };
 
 

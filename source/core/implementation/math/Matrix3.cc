@@ -3,6 +3,10 @@
 
 
 namespace mod {
+  Matrix3 Transform2D::compose () const {
+    return Matrix3::compose(*this);
+  }
+
   Matrix3 Matrix3::from_4 (Matrix4 const& m) {
     return row_major(
       m.e0, m.e4, m.e8,

@@ -3,6 +3,10 @@
 
 
 namespace mod {
+  Matrix4 Transform3D::compose () const {
+    return Matrix4::compose(*this);
+  }
+
   Matrix4 Matrix4::from_3 (Matrix3 const& m, Vector3f const& axis) {
     Transform2D t = m.decompose();
 
