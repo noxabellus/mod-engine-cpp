@@ -159,6 +159,17 @@ namespace mod {
     }
 
 
+    /* Get an ArrayIterator representing the start of a vectors elements */
+    ArrayIterator<T> begin () const {
+      return { const_cast<T*>(&elements[0]), 0 };
+    }
+
+    /* Get an ArrayIterator representing the end of a vectors elements */
+    ArrayIterator<T> end () const {
+      return { const_cast<T*>(&elements[0]), 4 };
+    }
+
+
     /* x + r.x, y + r.y, z + r.z, w + r.w */
     Vector4 add (Vector4 const& r) const {
       return {

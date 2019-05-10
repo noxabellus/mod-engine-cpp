@@ -62,6 +62,17 @@ namespace mod {
       return const_cast<T&>(elements[index]);
     }
 
+
+    /* Get an ArrayIterator representing the start of a vectors elements */
+    ArrayIterator<T> begin () const {
+      return { const_cast<T*>(&elements[0]), 0 };
+    }
+
+    /* Get an ArrayIterator representing the end of a vectors elements */
+    ArrayIterator<T> end () const {
+      return { const_cast<T*>(&elements[0]), 2 };
+    }
+
     
     /* x + r.x, y + r.y */
     Vector2 add (Vector2 const& r) const {
