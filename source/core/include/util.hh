@@ -126,6 +126,13 @@ namespace mod {
     return true;
   }
 
+  /* Get the length of a str (same as strlen but constexpr) */
+  static constexpr size_t str_length (char const* str) {
+    size_t l = 0;
+    while (str[l] != '\0') ++ l;
+    return l;
+  }
+
 
   
 
