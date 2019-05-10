@@ -4,7 +4,7 @@ SETLOCAL EnableDelayedExpansion
 
 
 :: Flags to pass to the compiler
-set WARNINGS=-Wall
+set WARNINGS=-Wall -Weverything -Wextra
 set DISALBED_WARNINGS=^
 -D_CRT_SECURE_NO_WARNINGS -D_CRT_NONSTDC_NO_WARNINGS ^
 -Wno-c++98-compat -Wno-c++98-compat-unnamed-type-template-args -Wno-c++98-compat-pedantic ^
