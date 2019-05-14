@@ -7,6 +7,7 @@
 
 #include "String.hh"
 #include "Exception.hh"
+#include "Optional.hh"
 #include "Array.hh"
 #include "Bitmask.hh"
 #include "SharedLib.hh"

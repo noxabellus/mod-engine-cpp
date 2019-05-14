@@ -34,8 +34,8 @@ namespace mod {
 
 
   void draw_debug_2d::line (Line2 const& positions, Line3 const& colors) {
-    line_mesh.append_vertex(positions.a, colors.a);
-    line_mesh.append_vertex(positions.b, colors.b);
+    line_mesh.append_vertex({ positions.a, { }, colors.a });
+    line_mesh.append_vertex({ positions.b, { }, colors.b });
   }
 
   void draw_debug_2d::line (Line2 const& positions, Vector3f const& color) {
@@ -48,7 +48,7 @@ namespace mod {
     size_t p_offset = rect_mesh.positions.count;
 
     for (auto [ i, position ] : rect_mesh_basis.positions) {
-      rect_mesh.append_vertex(position.apply_matrix(mat), color);
+      rect_mesh.append_vertex({ position.apply_matrix(mat), { }, color });
     }
 
     for (auto [ i, face ] : rect_mesh_basis.faces) {
@@ -125,8 +125,8 @@ namespace mod {
 
   void draw_debug_3d::line (bool depth, Line3 const& positions, Line3 const& colors) {
     RenderMesh3D* lm = depth? &line_mesh : &depthless_line_mesh;
-    lm->append_vertex(positions.a, { 0.0f }, colors.a);
-    lm->append_vertex(positions.b, { 0.0f }, colors.b);
+    lm->append_vertex({ positions.a, { 0.0f }, { }, colors.a });
+    lm->append_vertex({ positions.b, { 0.0f }, { }, colors.b });
   }
 
   void draw_debug_3d::line (bool depth, Line3 const& positions, Vector3f const& color) {
@@ -142,7 +142,7 @@ namespace mod {
     size_t p_offset = cm->positions.count;
 
     for (auto [ i, position ] : cube_mesh_basis.positions) {
-      cm->append_vertex(position.apply_matrix(mat), cube_mesh_basis.normals[i], color);
+      cm->append_vertex({ position.apply_matrix(mat), cube_mesh_basis.normals[i], { }, color });
     }
 
     for (auto [ i, face ] : cube_mesh_basis.faces) {

@@ -767,171 +767,71 @@ namespace mod {
   }
 
 
-  quad_t<Vector3f*, Vector3f*, Vector2f*, Vector3f*> RenderMesh3D::get_vertex (size_t index) const {
+  VertexRef3D RenderMesh3D::get_vertex (size_t index) const {
     return {
-      &positions[index],
-      &normals[index],
-      uvs.elements != NULL? &uvs[index] : NULL,
-      colors.elements != NULL? &colors[index] : NULL
+      positions[index],
+      normals[index],
+      uvs.elements != NULL? Optional<Vector2f&> { uvs[index] } : Optional<Vector2f&> { },
+      colors.elements != NULL? Optional<Vector3f&> { colors[index] } : Optional<Vector3f&> { }
     };
   }
 
-  void RenderMesh3D::set_vertex (size_t index, Vector3f const& position, Vector3f const& normal) {
+
+
+  void RenderMesh3D::set_vertex (size_t index, VertexData3D const& data) {
     using namespace Mesh3DAttribute;
 
-    m_assert(uvs.elements == NULL, "Expected a uv attribute");
-    m_assert(colors.elements == NULL, "Expected a color attribute");
-
-    positions[index] = position;
-    normals[index] = normal;
-
+    positions[index] = data.position;
+    normals[index] = data.normal;
     needs_update.set_multiple(Position, bounds_flag, Normal);
-  }
 
-  void RenderMesh3D::set_vertex (size_t index, Vector3f const& position, Vector3f const& normal, Vector2f const& uv) {
-    using namespace Mesh3DAttribute;
+    if (uvs.elements != NULL) {
+      uvs[index] = data.uv;
+      needs_update.set(UV);
+    } else m_assert(!data.uv.valid, "Unexpected UV attribute data");
 
-    m_assert(uvs.elements != NULL, "Unexpected uv attribute");
-    m_assert(colors.elements == NULL, "Expected a color attribute");
-
-    positions[index] = position;
-    normals[index] = normal;
-    uvs[index] = uv;
-
-    needs_update.set_multiple(Position, bounds_flag, Normal, UV);
-  }
-
-  void RenderMesh3D::set_vertex (size_t index, Vector3f const& position, Vector3f const& normal, Vector3f const& color) {
-    using namespace Mesh3DAttribute;
-
-    m_assert(uvs.elements == NULL, "Expected a uv attribute");
-    m_assert(colors.elements != NULL, "Unexpected color attribute");
-
-    positions[index] = position;
-    normals[index] = normal;
-    colors[index] = color;
-
-    needs_update.set_multiple(Position, bounds_flag, Normal, Color);
-  }
-
-  void RenderMesh3D::set_vertex (size_t index, Vector3f const& position, Vector3f const& normal, Vector2f const& uv, Vector3f const& color) {
-    using namespace Mesh3DAttribute;
-
-    m_assert(uvs.elements != NULL, "Unexpected uv attribute");
-    m_assert(colors.elements != NULL, "Unexpected color attribute");
-
-    positions[index] = position;
-    normals[index] = normal;
-    uvs[index] = uv;
-    colors[index] = color;
-
-    needs_update.set_multiple(Position, bounds_flag, Normal, UV, Color);
+    if (colors.elements != NULL) {
+      colors[index] = data.color;
+      needs_update.set(Color);
+    } else m_assert(!data.color.valid, "Unexpected Color attribute data");
   }
 
 
-  void RenderMesh3D::append_vertex (Vector3f const& position, Vector3f const& normal) {
+  void RenderMesh3D::append_vertex (VertexData3D const& data) {
     using namespace Mesh3DAttribute;
 
-    m_assert(uvs.elements == NULL, "Expected a uv attribute");
-    m_assert(colors.elements == NULL, "Expected a color attribute");
-
-    positions.append(position);
-    normals.append(normal);
-
+    positions.append(data.position);
+    normals.append(data.normal);
     needs_update.set_multiple(Position, bounds_flag, Normal);
-  }
 
-  void RenderMesh3D::append_vertex (Vector3f const& position, Vector3f const& normal, Vector2f const& uv) {
-    using namespace Mesh3DAttribute;
+    if (uvs.elements != NULL) {
+      uvs.append(data.uv);
+      needs_update.set(UV);
+    } else m_assert(!data.uv.valid, "Unexpected UV attribute data");
 
-    m_assert(uvs.elements != NULL, "Unexpected uv attribute");
-    m_assert(colors.elements == NULL, "Expected a color attribute");
-
-    positions.append(position);
-    normals.append(normal);
-    uvs.append(uv);
-
-    needs_update.set_multiple(Position, bounds_flag, Normal, UV);
-  }
-
-  void RenderMesh3D::append_vertex (Vector3f const& position, Vector3f const& normal, Vector3f const& color) {
-    using namespace Mesh3DAttribute;
-
-    m_assert(uvs.elements == NULL, "Expected a uv attribute");
-    m_assert(colors.elements != NULL, "Unexpected color attribute");
-
-    positions.append(position);
-    normals.append(normal);
-    colors.append(color);
-
-    needs_update.set_multiple(Position, bounds_flag, Normal, Color);
-  }
-
-  void RenderMesh3D::append_vertex (Vector3f const& position, Vector3f const& normal, Vector2f const& uv, Vector3f const& color) {
-    using namespace Mesh3DAttribute;
-
-    m_assert(uvs.elements != NULL, "Unexpected uv attribute");
-    m_assert(colors.elements != NULL, "Unexpected color attribute");
-
-    positions.append(position);
-    normals.append(normal);
-    uvs.append(uv);
-    colors.append(color);
-
-    needs_update.set_multiple(Position, bounds_flag, Normal, UV, Color);
+    if (colors.elements != NULL) {
+      colors.append(data.color);
+      needs_update.set(Color);
+    } else m_assert(!data.color.valid, "Unexpected Color attribute data");
   }
 
 
-  void RenderMesh3D::insert_vertex (size_t index, Vector3f const& position, Vector3f const& normal) {
+  void RenderMesh3D::insert_vertex (size_t index, VertexData3D const& data) {
     using namespace Mesh3DAttribute;
 
-    m_assert(uvs.elements == NULL, "Expected a uv attribute");
-    m_assert(colors.elements == NULL, "Expected a color attribute");
-
-    positions.insert(index, position);
-    normals.insert(index, normal);
-
+    positions.insert(index,data.position);
+    normals.insert(index, data.normal);
     needs_update.set_multiple(Position, bounds_flag, Normal);
-  }
 
-  void RenderMesh3D::insert_vertex (size_t index, Vector3f const& position, Vector3f const& normal, Vector2f const& uv) {
-    using namespace Mesh3DAttribute;
+    if (uvs.elements != NULL) {
+      uvs.insert(index, data.uv);
+      needs_update.set(UV);
+    } else m_assert(!data.uv.valid, "Unexpected UV attribute data");
 
-    m_assert(uvs.elements != NULL, "Unexpected uv attribute");
-    m_assert(colors.elements == NULL, "Expected a color attribute");
-
-    positions.insert(index, position);
-    normals.insert(index, normal);
-    uvs.insert(index, uv);
-
-    needs_update.set_multiple(Position, bounds_flag, Normal, UV);
-  }
-
-  void RenderMesh3D::insert_vertex (size_t index, Vector3f const& position, Vector3f const& normal, Vector3f const& color) {
-    using namespace Mesh3DAttribute;
-
-    m_assert(uvs.elements == NULL, "Expected a uv attribute");
-    m_assert(colors.elements != NULL, "Unexpected color attribute");
-
-    positions.insert(index, position);
-    normals.insert(index, normal);
-    colors.insert(index, color);
-
-    needs_update.set_multiple(Position, bounds_flag, Normal, Color);
-  }
-
-  void RenderMesh3D::insert_vertex (size_t index, Vector3f const& position, Vector3f const& normal, Vector2f const& uv, Vector3f const& color) {
-    using namespace Mesh3DAttribute;
-
-    m_assert(uvs.elements != NULL, "Unexpected uv attribute");
-    m_assert(colors.elements != NULL, "Unexpected color attribute");
-
-    positions.insert(index, position);
-    normals.insert(index, normal);
-    uvs.insert(index, uv);
-    colors.insert(index, color);
-
-    needs_update.set_multiple(Position, bounds_flag, Normal, UV, Color);
+    if (colors.elements != NULL) {
+      colors.insert(index, data.color);
+      needs_update.set(Color);
+    } else m_assert(!data.color.valid, "Unexpected Color attribute data");
   }
 
 
@@ -940,20 +840,15 @@ namespace mod {
 
     positions.remove(index);
     normals.remove(index);
-
     needs_update.set_multiple(Position, bounds_flag, Normal);
-
 
     if (uvs.elements != NULL) {
       uvs.remove(index);
-
       needs_update.set(UV);
     }
 
-
     if (colors.elements != NULL) {
       colors.remove(index);
-
       needs_update.set(Color);
     }
   }

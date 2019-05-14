@@ -7,6 +7,7 @@
 #include "../Array.hh"
 #include "../JSON.hh"
 #include "../Exception.hh"
+#include "../Optional.hh"
 
 #include "../math/lib.hh"
 
@@ -57,6 +58,29 @@ namespace mod {
     static constexpr bool validate (u8_t attribute) {
       return attribute < total_attribute_count;
     }
+  };
+
+  struct VertexRef2D {
+    Vector2f& position;
+    Optional<Vector2f&> uv;
+    Optional<Vector3f&> color;
+  };
+
+  struct VertexData2D {
+    Vector2f position;
+    Optional<Vector2f> uv;
+    Optional<Vector3f> color;
+
+    VertexData2D () { }
+    VertexData2D (
+      Vector2f const& in_position,
+      Optional<Vector2f> const& in_uv = { },
+      Optional<Vector3f> const& in_color = { }
+    )
+    : position(in_position)
+    , uv(in_uv)
+    , color(in_color)
+    { }
   };
 
   struct RenderMesh2D {
@@ -377,78 +401,32 @@ namespace mod {
 
 
 
-    /* Get pointers to the various attributes of a vertex in a RenderMesh2D.
-     * Returns a tri_t<Vector2f* (Position), Vector2f* (UV), Vector3f* (Color)>.
-     * If a particular attribute is disabled, the pointer will be NULL.
+    /* Get references to the various attributes of a vertex in a RenderMesh2D.
+     * Returns a set of optional references, where each reference is only enabled if the corresponding attribute is enabled for the mesh.
      * Panics if the given index is out of range */
-    ENGINE_API tri_t<Vector2f*, Vector2f*, Vector3f*> get_vertex (size_t index) const;
+    ENGINE_API VertexRef2D get_vertex (size_t index) const;
 
 
     /* Set the various attributes of a vertex in a RenderMesh2D.
-     * If a particular attribute is disabled, the overload of this function not including that attribute may be used.
+     * If a particular attribute is disabled on the mesh, the input data should be disabled as well.
      * Panics if the given index is out of range, or if unexpected attributes were supplied, or if attributes were expected but not supplied */
-    ENGINE_API void set_vertex (size_t index, Vector2f const& position);
-
-    /* Set the various attributes of a vertex in a RenderMesh2D.
-     * If a particular attribute is disabled, the overload of this function not including that attribute may be used.
-     * Panics if the given index is out of range, or if unexpected attributes were supplied, or if attributes were expected but not supplied */
-    ENGINE_API void set_vertex (size_t index, Vector2f const& position, Vector2f const& uv);
-
-    /* Set the various attributes of a vertex in a RenderMesh2D.
-     * If a particular attribute is disabled, the overload of this function not including that attribute may be used.
-     * Panics if the given index is out of range, or if unexpected attributes were supplied, or if attributes were expected but not supplied */
-    ENGINE_API void set_vertex (size_t index, Vector2f const& position, Vector3f const& color);
-
-    /* Set the various attributes of a vertex in a RenderMesh2D.
-     * If a particular attribute is disabled, the overload of this function not including that attribute may be used.
-     * Panics if the given index is out of range, or if unexpected attributes were supplied, or if attributes were expected but not supplied */
-    ENGINE_API void set_vertex (size_t index, Vector2f const& position, Vector2f const& uv, Vector3f const& color);
+    ENGINE_API void set_vertex (size_t index, VertexData2D const& data);
 
 
     /* Append the various attributes of a vertex to the ends of a RenderMesh2D.
-     * If a particular attribute is disabled, the overload of this function not including that attribute may be used.
+     * If a particular attribute is disabled on the mesh, the input data should be disabled as well.
      * Panics if unexpected attributes were supplied, or if attributes were expected but not supplied */
-    ENGINE_API void append_vertex (Vector2f const& position);
-
-    /* Append the various attributes of a vertex to the ends of a RenderMesh2D.
-     * If a particular attribute is disabled, the overload of this function not including that attribute may be used.
-     * Panics if unexpected attributes were supplied, or if attributes were expected but not supplied */
-    ENGINE_API void append_vertex (Vector2f const& position, Vector2f const& uv);
-
-    /* Append the various attributes of a vertex to the ends of a RenderMesh2D.
-     * If a particular attribute is disabled, the overload of this function not including that attribute may be used.
-     * Panics if unexpected attributes were supplied, or if attributes were expected but not supplied */
-    ENGINE_API void append_vertex (Vector2f const& position, Vector3f const& color);
-
-    /* Append the various attributes of a vertex to the ends of a RenderMesh2D.
-     * If a particular attribute is disabled, the overload of this function not including that attribute may be used.
-     * Panics if unexpected attributes were supplied, or if attributes were expected but not supplied */
-    ENGINE_API void append_vertex (Vector2f const& position, Vector2f const& uv, Vector3f const& color);
+    ENGINE_API void append_vertex (VertexData2D const& data);
 
 
     /* Insert the various attributes of a vertex in a RenderMesh2D at a given index.
-     * If a particular attribute is disabled, the overload of this function not including that attribute may be used.
+     * If a particular attribute is disabled on the mesh, the input data should be disabled as well.
      * Panics if unexpected attributes were supplied, or if attributes were expected but not supplied */
-    ENGINE_API void insert_vertex (size_t index, Vector2f const& position);
-
-    /* Insert the various attributes of a vertex in a RenderMesh2D at a given index.
-     * If a particular attribute is disabled, the overload of this function not including that attribute may be used.
-     * Panics if unexpected attributes were supplied, or if attributes were expected but not supplied */
-    ENGINE_API void insert_vertex (size_t index, Vector2f const& position, Vector2f const& uv);
-
-    /* Insert the various attributes of a vertex in a RenderMesh2D at a given index.
-     * If a particular attribute is disabled, the overload of this function not including that attribute may be used.
-     * Panics if unexpected attributes were supplied, or if attributes were expected but not supplied */
-    ENGINE_API void insert_vertex (size_t index, Vector2f const& position, Vector3f const& color);
-
-    /* Insert the various attributes of a vertex in a RenderMesh2D at a given index.
-     * If a particular attribute is disabled, the overload of this function not including that attribute may be used.
-     * Panics if unexpected attributes were supplied, or if attributes were expected but not supplied */
-    ENGINE_API void insert_vertex (size_t index, Vector2f const& position, Vector2f const& uv, Vector3f const& color);
+    ENGINE_API void insert_vertex (size_t index, VertexData2D const& data);
 
 
     /* Remove the various attributes of a vertex from a given index in a RenderMesh2D.
-     * Does nothing to the vertex data if the index is out of range, but will still change the needs_update mask */
+     * Does nothing to the vertex data for the index is out of range, but will still change the needs_update mask */
     ENGINE_API void remove_vertex (size_t index);
 
 
