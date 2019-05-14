@@ -296,6 +296,8 @@ namespace mod {
         parse_item_body(item, str, offset);
         parse_item_footer(item, str, offset);
       }
+      
+      while (char_is_whitespace(str[*offset])) ++ *offset;
     } catch (Exception& exception) {
       item.destroy();
       throw exception;
