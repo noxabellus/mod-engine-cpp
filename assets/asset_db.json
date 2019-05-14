@@ -6,6 +6,7 @@
     "PointLight Frag": "shaders/PointLight.frag",
     "UnlitColor Vert": "shaders/UnlitColor.vert",
     "UnlitColor Frag": "shaders/UnlitColor.frag",
+    "UnlitColorUniform Frag": "shaders/UnlitColorUniform.frag",
     "UnlitTexture Frag": "shaders/UnlitTexture.frag",
     "WeightCheck Vert": "shaders/WeightCheck.vert",
     "WeightCheck Frag": "shaders/WeightCheck.frag"
@@ -23,6 +24,10 @@
     "UnlitColor": {
       "vertex": "UnlitColor Vert",
       "fragment": "UnlitColor Frag"
+    },
+    "UnlitColorUniform": {
+      "vertex": "UnlitColor Vert",
+      "fragment": "UnlitColorUniform Frag"
     },
     "UnlitTexture": {
       "vertex": "UnlitColor Vert",
@@ -47,6 +52,7 @@
     "Minimal2DC": "materials/minimal2dC.json",
     "PointLight": "materials/PointLight.json",
     "UnlitColor": "materials/UnlitColor.json",
+    "UnlitColorUniform": "materials/UnlitColorUniform.json",
     "UnlitTexture": "materials/UnlitTexture.json",
     "WeightCheck": "materials/WeightCheck.json"
   },
