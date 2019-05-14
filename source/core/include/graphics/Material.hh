@@ -705,7 +705,7 @@ namespace mod {
     : Matrix4 { }
     { }
 
-    /* Create a new Uniform and initialize its location and value
+    /* Create a new Uniform and initialize its location and value.
      * If the value is an array, creates a copy (Does not take ownership) */
     template <typename T> Uniform (s32_t in_location, T const& value)
     : location(in_location)
@@ -722,6 +722,10 @@ namespace mod {
         arr.copy(value);
       } else get<T>() = value;
     }
+
+    /* Create a new Uniform and initialize its location and value by copying from another Uniform.
+     * If the value is an array, creates a copy (Does not take ownership) */
+    ENGINE_API Uniform (Uniform const& proto);
 
     /* Create a new Uniform and initialize its location and value
      * If the value is an array, takes ownership */
@@ -1276,14 +1280,7 @@ namespace mod {
 
     /* Remove a Uniform from a Material by location.
      * Not recommended under most circumstances */
-    void unset_uniform (s32_t location) {
-      s64_t index = get_uniform_index(location);
-
-      if (index != -1) {
-        uniforms[index].destroy();
-        uniforms.remove(index);
-      }
-    }
+    ENGINE_API void unset_uniform (s32_t location);
 
 
 

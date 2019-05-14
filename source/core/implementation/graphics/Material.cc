@@ -4,6 +4,198 @@
 
 
 namespace mod {
+  Uniform::Uniform (Uniform const& proto)
+  : location(proto.location)
+  , type(proto.type)
+  {
+    switch (type) {
+      case UniformType::Bool: {
+        Bool = proto.Bool;
+      } break;
+
+      case UniformType::F32: {
+        F32 = proto.F32;
+      } break;
+
+      case UniformType::F64: {
+        F64 = proto.F64;
+      } break;
+
+      case UniformType::S32: {
+        S32 = proto.S32;
+      } break;
+
+      case UniformType::U32: {
+        U32 = proto.U32;
+      } break;
+
+
+      case UniformType::Vector2f: {
+        Vector2f = proto.Vector2f;
+      } break;
+
+      case UniformType::Vector2d: {
+        Vector2d = proto.Vector2d;
+      } break;
+
+      case UniformType::Vector2s: {
+        Vector2s = proto.Vector2s;
+      } break;
+
+      case UniformType::Vector2u: {
+        Vector2u = proto.Vector2u;
+      } break;
+
+      case UniformType::Vector3f: {
+        Vector3f = proto.Vector3f;
+      } break;
+
+      case UniformType::Vector3d: {
+        Vector3d = proto.Vector3d;
+      } break;
+
+      case UniformType::Vector3s: {
+        Vector3s = proto.Vector3s;
+      } break;
+
+      case UniformType::Vector3u: {
+        Vector3u = proto.Vector3u;
+      } break;
+
+      case UniformType::Vector4f: {
+        Vector4f = proto.Vector4f;
+      } break;
+
+      case UniformType::Vector4d: {
+        Vector4d = proto.Vector4d;
+      } break;
+
+      case UniformType::Vector4s: {
+        Vector4s = proto.Vector4s;
+      } break;
+
+      case UniformType::Vector4u: {
+        Vector4u = proto.Vector4u;
+      } break;
+
+      case UniformType::Matrix3: {
+        Matrix3 = proto.Matrix3;
+      } break;
+
+      case UniformType::Matrix4: {
+        Matrix4 = proto.Matrix4;
+      } break;
+
+
+      case UniformType::Texture: {
+        Texture = proto.Texture;
+      } break;
+
+
+
+
+      case UniformType::BoolArray: {
+        BoolArray = { };
+        BoolArray.copy(proto.BoolArray);
+      } break;
+
+      case UniformType::F32Array: {
+        F32Array = { };
+        F32Array.copy(proto.F32Array);
+      } break;
+
+      case UniformType::F64Array: {
+        F64Array = { };
+        F64Array.copy(proto.F64Array);
+      } break;
+
+      case UniformType::S32Array: {
+        S32Array = { };
+        S32Array.copy(proto.S32Array);
+      } break;
+
+      case UniformType::U32Array: {
+        U32Array = { };
+        U32Array.copy(proto.U32Array);
+      } break;
+
+
+      case UniformType::Vector2fArray: {
+        Vector2fArray = { };
+        Vector2fArray.copy(proto.Vector2fArray);
+      } break;
+
+      case UniformType::Vector2dArray: {
+        Vector2dArray = { };
+        Vector2dArray.copy(proto.Vector2dArray);
+      } break;
+
+      case UniformType::Vector2sArray: {
+        Vector2sArray = { };
+        Vector2sArray.copy(proto.Vector2sArray);
+      } break;
+
+      case UniformType::Vector2uArray: {
+        Vector2uArray = { };
+        Vector2uArray.copy(proto.Vector2uArray);
+      } break;
+
+      case UniformType::Vector3fArray: {
+        Vector3fArray = { };
+        Vector3fArray.copy(proto.Vector3fArray);
+      } break;
+
+      case UniformType::Vector3dArray: {
+        Vector3dArray = { };
+        Vector3dArray.copy(proto.Vector3dArray);
+      } break;
+
+      case UniformType::Vector3sArray: {
+        Vector3sArray = { };
+        Vector3sArray.copy(proto.Vector3sArray);
+      } break;
+
+      case UniformType::Vector3uArray: {
+        Vector3uArray = { };
+        Vector3uArray.copy(proto.Vector3uArray);
+      } break;
+
+      case UniformType::Vector4fArray: {
+        Vector4fArray = { };
+        Vector4fArray.copy(proto.Vector4fArray);
+      } break;
+
+      case UniformType::Vector4dArray: {
+        Vector4dArray = { };
+        Vector4dArray.copy(proto.Vector4dArray);
+      } break;
+
+      case UniformType::Vector4sArray: {
+        Vector4sArray = { };
+        Vector4sArray.copy(proto.Vector4sArray);
+      } break;
+
+      case UniformType::Vector4uArray: {
+        Vector4uArray = { };
+        Vector4uArray.copy(proto.Vector4uArray);
+      } break;
+
+
+      case UniformType::Matrix3Array: {
+        Matrix3Array = { };
+        Matrix3Array.copy(proto.Matrix3Array);
+      } break;
+
+      case UniformType::Matrix4Array :{
+        Matrix4Array = { };
+        Matrix4Array.copy(proto.Matrix4Array);
+      } break;
+
+
+      default: m_error("Cannot copy invalid Uniform with unknown type");
+    }
+  }
+
   Uniform Uniform::from_json_item (ShaderProgram const& program, JSONItem& item) {
     static const auto extract_value = [] (u8_t value_type, JSONItem& value_item, void* out) -> void {
       switch (value_type) {
@@ -609,6 +801,15 @@ namespace mod {
     m_assert(ptr != NULL, "There is no Uniform bound to name %s" PRId32, name);
 
     return *ptr;
+  }
+
+  void Material::unset_uniform (s32_t location) {
+    s64_t index = get_uniform_index(location);
+
+    if (index != -1) {
+      uniforms[index].destroy();
+      uniforms.remove(index);
+    }
   }
 
   
