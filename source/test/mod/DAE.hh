@@ -110,9 +110,9 @@ namespace mod {
     , index(in_index)
     , duplicate(-1)
     , position(0)
-    , normal(0)
-    , uv(0)
-    , color(0)
+    , normal(-1)
+    , uv(-1)
+    , color(-1)
     { }
 
     MODULE_INTERNAL void set_attributes (s64_t in_normal, s64_t in_uv, s64_t in_color);

@@ -570,9 +570,11 @@ namespace mod {
 
         lib_vis_scenes.asset_assert(lib_vis_scenes.count_of_name("visual_scene") == 1, "Expected exactly one visual scene");
 
-        XMLItem& armature = scene.find_by_attribute_value("node", "id", "Armature");
+        XMLItem* armature_ptr = scene.find_pointer_by_attribute_value("node", "id", "Armature");
 
-        XMLItem& root_joint = armature.find_by_attribute_value("node", "type", "JOINT");
+        if (armature_ptr == NULL) return;
+
+        XMLItem& root_joint = armature_ptr->find_by_attribute_value("node", "type", "JOINT");
 
         root_ibone = DAEIBone::process(*this, root_joint);
 
@@ -581,34 +583,36 @@ namespace mod {
 
 
       {
-        XMLItem& lib_anims = root.first_named("library_animations");
+        XMLItem* lib_anims_ptr = root.first_named_pointer("library_animations");
 
-        size_t anim_channel_count = lib_anims.count_of_name("animation");
+        if (lib_anims_ptr != NULL) {
+          size_t anim_channel_count = lib_anims_ptr->count_of_name("animation");
 
-        for (size_t i = 0; i < anim_channel_count; i ++) {
-          XMLItem& anim = lib_anims.nth_named(i, "animation");
+          for (size_t i = 0; i < anim_channel_count; i ++) {
+            XMLItem& anim = lib_anims_ptr->nth_named(i, "animation");
 
-          gather_base_data(anim);
+            gather_base_data(anim);
 
-          XMLItem& sampler = anim.first_named("sampler");
+            XMLItem& sampler = anim.first_named("sampler");
 
-          anim_samplers.append({
-            &sampler,
-            sampler.get_attribute("id").value,
-            gather_inputs(sampler)
-          });
+            anim_samplers.append({
+              &sampler,
+              sampler.get_attribute("id").value,
+              gather_inputs(sampler)
+            });
 
-          XMLItem& channel = anim.first_named("channel");
+            XMLItem& channel = anim.first_named("channel");
 
-          String const& ctid = channel.get_attribute("target").value;
+            String const& ctid = channel.get_attribute("target").value;
 
-          String target_id = { ctid.value, ctid.length - str_length("/transform") };
+            String target_id = { ctid.value, ctid.length - str_length("/transform") };
 
-          anim_channels.append({
-            anim.get_attribute("id").value,
-            target_id,
-            channel.get_attribute("source").value
-          });
+            anim_channels.append({
+              anim.get_attribute("id").value,
+              target_id,
+              channel.get_attribute("source").value
+            });
+          }
         }
       }
 
@@ -938,10 +942,12 @@ namespace mod {
     Array<u32_t> i_indices;
     
     {
+      Array<DAEIVertex> local_i_vertices;
+      Array<u32_t> local_i_indices;
       for (auto [ i, triangles ] : triangles_list) {
         auto& [ _p, face_count, inputs, indices ] = triangles;
 
-        MaterialInfo mat_info = { i, indices.count / 3, 0 };
+        MaterialInfo mat_info = { i, i_indices.count / 3, 0 };
 
 
         DAEInput& position_input = get_poly_input(triangles, "VERTEX");
@@ -953,7 +959,7 @@ namespace mod {
 
           DAEIVertex iv = { triangles, iv_index };
           iv.position = position;
-          i_vertices.append(iv);
+          local_i_vertices.append(iv);
         }
 
 
@@ -973,46 +979,63 @@ namespace mod {
             s64_t uv = have_uv? static_cast<s64_t>(indices[j + uv_input->offset]) : -1;
             s64_t color = have_color? static_cast<s64_t>(indices[j + color_input->offset]) : -1;
 
-            DAEIVertex* existing_vertex = &i_vertices[iv_index];
+            DAEIVertex* existing_vertex = &local_i_vertices[iv_index];
 
             if (!existing_vertex->set) {
               existing_vertex->set_attributes(normal, uv, color);
-              i_indices.append(iv_index);
+              local_i_indices.append(iv_index);
             } else if (existing_vertex->has_same_attributes(normal, uv, color)) {
-              i_indices.append(iv_index);
+              local_i_indices.append(iv_index);
             } else {
               bool found_existing = false;
 
               while (existing_vertex->duplicate != -1) {
-                existing_vertex = &i_vertices[existing_vertex->duplicate];
+                existing_vertex = &local_i_vertices[existing_vertex->duplicate];
 
                 if (existing_vertex->has_same_attributes(normal, uv, color)) {
-                  i_indices.append(existing_vertex->index);
+                  local_i_indices.append(existing_vertex->index);
                   found_existing = true;
                   break;
                 }
               }
 
               if (!found_existing) {
-                size_t new_iv_index = i_vertices.count;
+                size_t new_iv_index = local_i_vertices.count;
 
                 DAEIVertex new_iv = { triangles, new_iv_index };
                 new_iv.set_attributes(normal, uv, color);
-                i_vertices.append(new_iv);
+                local_i_vertices.append(new_iv);
 
                 existing_vertex->duplicate = new_iv_index;
 
-                i_indices.append(new_iv_index);
+                local_i_indices.append(new_iv_index);
               }
             }
           }
         }
+
+        size_t iv_offset = i_vertices.count;
+        for (auto [ i, liv ] : local_i_vertices) {
+          liv.index += iv_offset;
+          if (liv.duplicate != -1) liv.duplicate += iv_offset;
+          i_vertices.append(liv);
+        }
+
+        for (auto [ i, lii ] : local_i_indices) {
+          i_indices.append(lii + iv_offset);
+        }
+
+        local_i_vertices.clear();
+        local_i_indices.clear();
         
 
-        mat_info.length = indices.count / 3 - mat_info.start_index;
+        mat_info.length = (i_indices.count / 3) - mat_info.start_index;
 
         material_config_data.append(mat_info);
       }
+
+      local_i_vertices.destroy();
+      local_i_indices.destroy();
 
       mesh->asset_assert(i_indices.count % 3 == 0, "Final indices count was not cleanly divisible by 3, make sure your mesh is triangulated");
     }
@@ -1090,7 +1113,8 @@ namespace mod {
 
       final_uvs.append(uv);
 
-
+      DAEIVertex ivert = iv;
+      s64_t color_index = iv.color;
       Vector3f color = { 1, 1, 1 };
       
       if (iv.color != -1) {
