@@ -129,19 +129,7 @@ struct Version {
 };
 
 
-/* Runtime panic with printf formatted error message */
-#define m_error(FMT, ...) { \
-  fprintf(stderr, "Internal error at [%s:%d]: ", __FILE__, __LINE__); \
-  fprintf(stderr, FMT, __VA_ARGS__); \
-  fprintf(stderr, "\n"); \
-  abort(); \
-}
 
-/* Runtime assertion with panic and printf formatted error message if the boolean condition is not true */
-#define m_assert(COND, FMT, ...) if (!(COND)) m_error(FMT, __VA_ARGS__)
-
-
-  
 /* printf with no warning about nonliteral format strings */
 template <typename ... A> int printf_nonliteral (char const* const fmt, A ... args) {
   #pragma clang diagnostic push
@@ -189,6 +177,30 @@ static inline int vsnprintf_nonliteral (char* const buff, size_t n, char const* 
   return vsnprintf(buff, n, fmt, args);
   #pragma clang diagnostic pop
 }
+
+
+/* Runtime panic with printf formatted error message */
+#define m_error(FMT, ...) { \
+  fprintf(stderr, "Internal error at [%s:%d]: ", __FILE__, __LINE__); \
+  fprintf(stderr, FMT, __VA_ARGS__); \
+  fprintf(stderr, "\n"); \
+  abort(); \
+}
+
+/* Runtime assertion with panic and printf formatted error message if the boolean condition is not true */
+#define m_assert(COND, FMT, ...) if (!(COND)) m_error(FMT, __VA_ARGS__)
+
+
+/* Runtime panic with printf_nonliteral formatted error message */
+#define m_error_nonliteral(FMT, ...) { \
+  fprintf_nonliteral(stderr, "Internal error at [%s:%d]: ", __FILE__, __LINE__); \
+  fprintf_nonliteral(stderr, FMT, __VA_ARGS__); \
+  fprintf_nonliteral(stderr, "\n"); \
+  abort(); \
+}
+
+/* Runtime assertion with panic and printf_nonliteral formatted error message if the boolean condition is not true */
+#define m_assert_nonliteral(COND, FMT, ...) if (!(COND)) m_error_nonliteral(FMT, __VA_ARGS__)
 
 
 namespace mod {
