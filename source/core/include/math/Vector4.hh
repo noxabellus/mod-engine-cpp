@@ -9,6 +9,8 @@ namespace mod {
   struct Matrix4;
 
   template <typename T> struct Vector4 {
+    using element_t = T;
+    
     union {
       struct {
         T x;

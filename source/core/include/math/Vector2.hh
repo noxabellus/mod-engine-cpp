@@ -10,6 +10,8 @@ namespace mod {
   struct Matrix4;
 
   template <typename T> struct Vector2 {
+    using element_t = T;
+
     union {
       struct {
         T x;
@@ -17,7 +19,7 @@ namespace mod {
       };
       T elements [2];
     };
-
+    
 
 
     /* Create a new zero-initialized vector */

@@ -13,6 +13,8 @@ namespace mod {
 
 
   template <typename T> struct Vector3 {
+    using element_t = T;
+    
     union {
       struct {
         T x;
