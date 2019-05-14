@@ -72,6 +72,8 @@ namespace mod {
 
 
   void MaterialSet::destroy () {
+    for (auto [ i, entry ] : materials) entry.destroy();
+    
     if (origin != NULL) {
       free(origin);
       origin = NULL;

@@ -4,6 +4,7 @@
 #include "Texture.cc"
 
 #include "Material.cc"
+#include "MaterialInstance.cc"
 #include "MaterialSet.cc"
 
 #include "RenderMesh2D.cc"

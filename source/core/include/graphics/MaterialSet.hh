@@ -10,15 +10,76 @@
 #include "../AssetHandle.hh"
 
 #include "Material.hh"
-
+#include "MaterialInstance.hh"
 
 
 namespace mod {
+  struct MaterialSetEntry {
+    bool is_instance;
+    union {
+      MaterialHandle handle;
+      MaterialInstance instance;
+    };
+
+    MaterialSetEntry ()
+    : is_instance(false)
+    , handle(reinterpret_cast<Material*>(NULL))
+    { }
+
+    MaterialSetEntry (MaterialHandle in_handle)
+    : is_instance(false)
+    , handle(in_handle)
+    { }
+
+    MaterialSetEntry (Material* material)
+    : is_instance(false)
+    , handle(material)
+    { }
+
+    MaterialSetEntry (char const* material_name)
+    : is_instance(false)
+    , handle(material_name)
+    { }
+
+    MaterialSetEntry (u32_t material_id)
+    : is_instance(false)
+    , handle(material_id)
+    { }
+
+    MaterialSetEntry (MaterialInstance in_instance)
+    : is_instance(true)
+    , instance(in_instance)
+    { }
+
+    operator MaterialHandle& () const {
+      m_assert(!is_instance, "Expected a MaterialHandle but found MaterialInstance");
+      return const_cast<MaterialHandle&>(handle);
+    }
+
+    operator MaterialInstance& () const {
+      m_assert(is_instance, "Expected a MaterialInstance but found MaterialHandle");
+      return const_cast<MaterialInstance&>(instance);
+    }
+
+    void use () const {
+      if (is_instance) instance.use();
+      else handle->use();
+    }
+
+    void destroy () {
+      if (is_instance) {
+        instance.destroy();
+        is_instance = false;
+        handle = reinterpret_cast<Material*>(NULL);
+      }
+    }
+  };
+
   struct MaterialSet {
     char* origin;
     u32_t asset_id = 0;
 
-    Array<MaterialHandle> materials;
+    Array<MaterialSetEntry> materials;
 
 
     /* Create a new uninitialized MaterialSet */
@@ -30,24 +91,24 @@ namespace mod {
     { }
 
     /* Create a new MaterialSet and initialize its material array from a buffer of material refs */
-    MaterialSet (char const* in_origin, MaterialHandle const* in_materials, size_t material_count)
+    MaterialSet (char const* in_origin, MaterialSetEntry const* in_materials, size_t material_count)
     : origin(str_clone(in_origin))
     { for (size_t i = 0; i < material_count; i ++) materials.append(in_materials[i]); }
 
     /* Create a new MaterialSet and initialize its material array by copying from an array of material handles */
-    MaterialSet (char const* in_origin, Array<MaterialHandle> const& in_materials)
+    MaterialSet (char const* in_origin, Array<MaterialSetEntry> const& in_materials)
     : MaterialSet(in_origin, in_materials.elements, in_materials.count)
     { }
 
     /* Create a new MaterialSet from a parameter pack list of Materials */
     template <typename ... A> static MaterialSet from_elements (char const* origin, A ... args) {
       static constexpr size_t arg_count = sizeof...(args);
-      MaterialHandle materials [arg_count] = { ((MaterialHandle) args)... };
+      MaterialSetEntry materials [arg_count] = { MaterialSetEntry(args)... };
       return { origin, materials, arg_count };
     }
 
-    /* Create a new MaterialSet from an existing Array of MaterialHandles and take ownership of the Array */
-    static MaterialSet from_ex (char const* origin, Array<MaterialHandle> const& materials) {
+    /* Create a new MaterialSet from an existing Array of MaterialSetEntrys and take ownership of the Array */
+    static MaterialSet from_ex (char const* origin, Array<MaterialSetEntry> const& materials) {
       MaterialSet material_set;
       material_set.origin = str_clone(origin);
       material_set.materials = materials;
@@ -74,42 +135,42 @@ namespace mod {
     ENGINE_API void destroy ();
 
 
-    /* Get a pointer to a MaterialHandle at a given index of a MaterialSet.
+    /* Get a pointer to a MaterialSetEntry at a given index of a MaterialSet.
      * Returns NULL if the index is out of range */
-    MaterialHandle* get (size_t index) const {
+    MaterialSetEntry* get (size_t index) const {
       return materials.get_element(index);
     }
 
-    /* Get a MaterialHandle at a given index of a MaterialSet.
+    /* Get a MaterialSetEntry at a given index of a MaterialSet.
      * Panics if the index is out of range */
-    MaterialHandle& operator [] (size_t index) const {
+    MaterialSetEntry& operator [] (size_t index) const {
       return materials[index];
     }
 
     /* Get an ArrayIterator for the beginning of a MaterialSet */
-    ArrayIterator<MaterialHandle> begin () const {
+    ArrayIterator<MaterialSetEntry> begin () const {
       return materials.begin();
     }
 
     /* Get an ArrayIterator for the end of a MaterialSet */    
-    ArrayIterator<MaterialHandle> end () const {
+    ArrayIterator<MaterialSetEntry> end () const {
       return materials.end();
     }
 
-    /* Set a MaterialHandle at a given index of a MaterialSet.
+    /* Set a MaterialSetEntry at a given index of a MaterialSet.
      * Panics if the index is out of range */
-    void set (size_t index, MaterialHandle const& material) {
+    void set (size_t index, MaterialSetEntry const& material) {
       materials[index] = material;
     }
 
 
     /* Add a Material to the end of a MaterialSet */
-    void append (MaterialHandle const& material) {
+    void append (MaterialSetEntry const& material) {
       materials.append(material);
     }
 
     /* Insert a Material at a given index in a MaterialSet */
-    void insert (size_t index, MaterialHandle const& material) {
+    void insert (size_t index, MaterialSetEntry const& material) {
       materials.insert(index, material);
     }
 

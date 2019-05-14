@@ -61,7 +61,7 @@ namespace mod {
       return attribute < total_attribute_count;
     }
   };
-  
+
   struct VertexRef3D {
     Vector3f& position;
     Vector3f& normal;
@@ -456,11 +456,19 @@ namespace mod {
 
     /* Draw a RenderMesh3D into OpenGL's active framebuffer using a designated Material */
     ENGINE_API void draw_with_material (MaterialHandle const& material);
+    
+    /* Draw a RenderMesh3D into OpenGL's active framebuffer using a designated MaterialInstance */
+    ENGINE_API void draw_with_material_instance (MaterialInstance const& material);
 
     /* Draw a subsection of a RenderMesh3D into OpenGL's active framebuffer using a designated Material.
      * Panics if the RenderMesh3D is not a multi-material mesh,
      * or if the given section index is out of bounds */
     ENGINE_API void draw_section_with_material (size_t section_index, MaterialHandle const& material);
+    
+    /* Draw a subsection of a RenderMesh3D into OpenGL's active framebuffer using a designated MaterialInstance.
+     * Panics if the RenderMesh3D is not a multi-material mesh,
+     * or if the given section index is out of bounds */
+    ENGINE_API void draw_section_with_material_instance (size_t section_index, MaterialInstance const& material);
 
     /* Draw a RenderMesh3D into OpenGL's active framebuffer using a designated MaterialSet.
      * If the mesh is multi-material, each subsection selects the appropriate material from the set.

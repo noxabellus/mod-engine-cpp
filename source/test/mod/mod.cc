@@ -25,7 +25,7 @@ void module_init () {
   /* XML TEST */
   Matrix4 dae_tran = Transform3D { 0, Quaternion::from_euler(Euler { Vector3f { 0, 0, num::deg_to_rad(180) } }), 1 }.compose();
 
-  DAE dae = DAE::from_file("./assets/meshes/animated_character.dae", dae_tran);
+  DAE dae = DAE::from_file("./assets/meshes/animated_character_underwear.dae", dae_tran);
 
   RenderMesh3D dae_mesh = dae.load_mesh();
 
@@ -63,11 +63,19 @@ void module_init () {
   MaterialHandle weight_check_mat = AssetManager.get<Material>("WeightCheck");
   MaterialHandle directional_light_mat = AssetManager.get<Material>("PointLight");
   MaterialHandle unlit_color_mat = AssetManager.get<Material>("UnlitColor");
+
+  MaterialHandle unlit_color_uniform_mat = AssetManager.get<Material>("UnlitColorUniform");
+  
+  // MaterialSet unlit_colors = MaterialSet::from_ex("UnlitColors", Array<MaterialSetEntry>::from_elements(unlit_color_a, unlit_color_b));
+
   MaterialHandle unlit_texture_mat = AssetManager.get<Material>("UnlitTexture");
   RenderMesh3DHandle test_cube_mesh = AssetManager.get<RenderMesh3D>("Test Cube");
 
   ecs.create_component_type<Transform3D>();
   ecs.create_component_type<MaterialHandle>();
+  ecs.create_component_type<MaterialInstance>();
+  ecs.create_component_type<MaterialSetHandle>();
+  ecs.create_component_type<MaterialSet>();
   ecs.create_component_type<RenderMesh3DHandle>();
   ecs.create_component_type<BasicInput>();
   ecs.create_component_type<PointLight>();
@@ -84,7 +92,7 @@ void module_init () {
       Constants::Quaternion::identity,
       1
     });
-    character.add_component(weight_check_mat);
+    // character.add_component(weight_check_mat);
     character.add_component(BasicInput { true, 64 });
     character.add_component(RenderMesh3DHandle { &dae_mesh });
     // character.add_component(SkeletonHandle { &dae_skel });
@@ -114,6 +122,12 @@ void module_init () {
        }
      )
     ));
+
+    MaterialInstance unlit_color_a = { unlit_color_uniform_mat };
+    MaterialInstance unlit_color_b = { unlit_color_uniform_mat };
+    unlit_color_a.set_uniform("color", Vector3f { 1, 0, 0 });
+    unlit_color_b.set_uniform("color", Vector3f { 0, 0, 1 });
+    character.add_component(MaterialSet::from_ex("UnlitColors", Array<MaterialSetEntry>::from_elements(unlit_color_a, unlit_color_b)));
   }
 
   EntityHandle plane; {
@@ -289,13 +303,13 @@ void module_init () {
   f32_t camera_dist = 500;
   f32_t camera_height = camera_dist;
   Vector3f camera_target = { 0, 0, 100 };
-  f32_t camera_zoom = .1;
+  f32_t camera_zoom = .01;
 
   f32_t camera_rot_rate = M_PI;
   f32_t camera_roll_rate = 512;
-  f32_t camera_zoom_rate = 1;
+  f32_t camera_zoom_rate = .25;
   f32_t camera_max_zoom = 3;
-  f32_t camera_min_zoom = .1;
+  f32_t camera_min_zoom = .01;
 
   Vector2f camera_drag_start;
   f32_t camera_rot_start;
@@ -387,37 +401,75 @@ void module_init () {
 
     ComponentMask mask = ComponentMask {
       ecs.get_component_type_by_instance_type<Transform3D>().id,
-      ecs.get_component_type_by_instance_type<MaterialHandle>().id,
       ecs.get_component_type_by_instance_type<RenderMesh3DHandle>().id
     };
+
+    ComponentType::ID single_mat_h_id = ecs.get_component_type_by_instance_type<MaterialHandle>().id;
+    ComponentType::ID single_mat_i_id = ecs.get_component_type_by_instance_type<MaterialInstance>().id;
+    ComponentType::ID mat_set_h_id = ecs.get_component_type_by_instance_type<MaterialSetHandle>().id;
+    ComponentType::ID mat_set_id = ecs.get_component_type_by_instance_type<MaterialSet>().id;
+
+    ComponentType::ID skel_state_id = ecs.get_component_type_by_instance_type<SkeletonState>().id;
+
 
     for (u32_t i = 0; i < ecs.entity_count; i ++) {
       EntityHandle entity = ecs.get_handle(i);
 
       if (entity->enabled_components.match_subset(mask)) {
         Transform3D& transform = entity.get_component<Transform3D>();
+        RenderMesh3D& mesh = *entity.get_component<RenderMesh3DHandle>();
 
         Matrix4 model_matrix = transform.compose();
+        
+        Matrix3 normal_matrix = Matrix3::normal(view_matrix * model_matrix);
 
-        RenderMesh3D& mesh = *entity.get_component<RenderMesh3DHandle>();
-        MaterialHandle& material = entity.get_component<MaterialHandle>();
-        Material& ref = *material;
+        bool has_skel_state = entity->enabled_components.match_index(skel_state_id);
 
-        ref.set_uniform("m_model", model_matrix);
-        ref.set_uniform("m_view", view_matrix);
-        ref.set_uniform("m_projection", projection_matrix);
-        ref.set_uniform("m_normal", Matrix3::normal(view_matrix * model_matrix));
+        auto const update_mat_uniforms = [&] (Material& mat) {
+          mat.set_uniform("m_model", model_matrix);
+          mat.set_uniform("m_view", view_matrix);
+          mat.set_uniform("m_projection", projection_matrix);
+          mat.set_uniform("m_normal", normal_matrix);
 
-        if (ref.enable_skinning && entity->enabled_components.match_index(ecs.get_component_type_by_instance_type<SkeletonState>().id)) {
-          ref.set_uniform_array("bone_transforms", entity.get_component<SkeletonState>().pose);
+          if (mat.enable_skinning && has_skel_state) {
+            mat.set_uniform_array("bone_transforms", entity.get_component<SkeletonState>().pose);
+          }
+
+          if (mat.supports_uniform("light_pos")) {
+            mat.set_uniform("light_pos", light.get_component<Transform3D>().position);
+            mat.set_uniform("light_color", light.get_component<PointLight>().color * light.get_component<PointLight>().brightness);
+          }
+        };
+
+        if (entity->enabled_components.match_index(single_mat_h_id)) {
+          MaterialHandle& material = entity.get_component<MaterialHandle>();
+
+          update_mat_uniforms(*material);
+
+          mesh.draw_with_material(material);
+        } else if (entity->enabled_components.match_index(single_mat_i_id)) {
+          MaterialInstance& material_instance = entity.get_component<MaterialInstance>();
+
+          update_mat_uniforms(*material_instance.base);
+
+          mesh.draw_with_material_instance(material_instance);
+        } else if (entity->enabled_components.match_index(mat_set_h_id)) {
+          MaterialSetHandle& material_set = entity.get_component<MaterialSetHandle>();
+
+          for (auto [ i, mat ] : *material_set) {
+            update_mat_uniforms(mat.is_instance? *mat.instance.base : *mat.handle);
+          }
+
+          mesh.draw_with_material_set(material_set);
+        } else if (entity->enabled_components.match_index(mat_set_id)) {
+          MaterialSet& material_set = entity.get_component<MaterialSet>();
+
+          for (auto [ i, mat ] : material_set) {
+            update_mat_uniforms(mat.is_instance? *mat.instance.base : *mat.handle);
+          }
+
+          mesh.draw_with_material_set(&material_set);
         }
-
-        if (ref.supports_uniform("light_pos")) {
-          ref.set_uniform("light_pos", light.get_component<Transform3D>().position);
-          ref.set_uniform("light_color", light.get_component<PointLight>().color * light.get_component<PointLight>().brightness);
-        }
-
-        mesh.draw_with_material(material);
       }
     }
   });
@@ -731,25 +783,25 @@ void module_init () {
     Checkbox("Animator Controls", &ecs.get_system_by_name("Skeletal Animator Debug Controller").enabled);
     Checkbox("Animated Skeleton", &ecs.get_system_by_name("Skeletal Animator Debugger").enabled);
 
-    MaterialHandle material_options [] = {
-      weight_check_mat,
-      directional_light_mat,
-      unlit_texture_mat
-    };
+    // MaterialHandle material_options [] = {
+    //   weight_check_mat,
+    //   directional_light_mat,
+    //   unlit_texture_mat
+    // };
     
-    if (BeginCombo("Mesh Material", AssetManager.get_name_from_id<Material>(character.get_component<MaterialHandle>().get_id()))) {
-      for (u8_t i = 0; i < m_array_length(material_options); i ++) {
-        bool is_selected = character.get_component<MaterialHandle>().get_id() == material_options[i].get_id();
+    // if (BeginCombo("Mesh Material", AssetManager.get_name_from_id<Material>(character.get_component<MaterialHandle>().get_id()))) {
+    //   for (u8_t i = 0; i < m_array_length(material_options); i ++) {
+    //     bool is_selected = character.get_component<MaterialHandle>().get_id() == material_options[i].get_id();
 
-        if (Selectable(AssetManager.get_name_from_id<Material>(material_options[i].get_id()), is_selected)) {
-          character.get_component<MaterialHandle>() = material_options[i];
-        }
+    //     if (Selectable(AssetManager.get_name_from_id<Material>(material_options[i].get_id()), is_selected)) {
+    //       character.get_component<MaterialHandle>() = material_options[i];
+    //     }
 
-        if (is_selected) SetItemDefaultFocus();
-      }
+    //     if (is_selected) SetItemDefaultFocus();
+    //   }
 
-      EndCombo();
-    }
+    //   EndCombo();
+    // }
     End();
 
     

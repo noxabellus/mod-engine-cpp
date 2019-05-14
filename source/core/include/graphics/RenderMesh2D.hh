@@ -341,10 +341,18 @@ namespace mod {
     /* Draw a RenderMesh2D into OpenGL's active framebuffer using a designated Material */
     ENGINE_API void draw_with_material (MaterialHandle const& material);
 
+    /* Draw a RenderMesh2D into OpenGL's active framebuffer using a designated MaterialInstance */
+    ENGINE_API void draw_with_material_instance (MaterialInstance const& material);
+
     /* Draw a subsection of a RenderMesh2D into OpenGL's active framebuffer using a designated Material.
      * Panics if the RenderMesh2D is not a multi-material mesh,
      * or if the given section index is out of bounds */
     ENGINE_API void draw_section_with_material (size_t section_index, MaterialHandle const& material);
+
+    /* Draw a subsection of a RenderMesh2D into OpenGL's active framebuffer using a designated MaterialInstance.
+     * Panics if the RenderMesh2D is not a multi-material mesh,
+     * or if the given section index is out of bounds */
+    ENGINE_API void draw_section_with_material_instance (size_t section_index, MaterialInstance const& material);
 
     /* Draw a RenderMesh2D into OpenGL's active framebuffer using a designated MaterialSet.
      * If the mesh is multi-material, each subsection selects the appropriate material from the set.
@@ -413,7 +421,7 @@ namespace mod {
     ENGINE_API void set_vertex (size_t index, VertexData2D const& data);
 
 
-    /* Append the various attributes of a vertex to the ends of a RenderMesh2D.
+     /* Append the various attributes of a vertex to the ends of a RenderMesh2D.
      * If a particular attribute is disabled on the mesh, the input data should be disabled as well.
      * Panics if unexpected attributes were supplied, or if attributes were expected but not supplied */
     ENGINE_API void append_vertex (VertexData2D const& data);

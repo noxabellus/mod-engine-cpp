@@ -7,6 +7,7 @@
 #include "Texture.hh"
 
 #include "Material.hh"
+#include "MaterialInstance.hh"
 #include "MaterialSet.hh"
 
 #include "MaterialConfig.hh"

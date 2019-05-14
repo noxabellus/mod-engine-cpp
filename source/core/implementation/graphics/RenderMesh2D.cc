@@ -528,8 +528,20 @@ namespace mod {
     draw_with_active_shader();
   }
 
+  void RenderMesh2D::draw_with_material_instance (MaterialInstance const& material_instance) {
+    material_instance.use();
+
+    draw_with_active_shader();
+  }
+
   void RenderMesh2D::draw_section_with_material (size_t section_index, MaterialHandle const& material) {
     material->use();
+
+    draw_section_with_active_shader(section_index);
+  }
+
+  void RenderMesh2D::draw_section_with_material_instance (size_t section_index, MaterialInstance const& material_instance) {
+    material_instance.use();
 
     draw_section_with_active_shader(section_index);
   }
@@ -541,12 +553,12 @@ namespace mod {
     
     if (material_config.multi_material) {
       for (auto [ i, info ] : material_config.materials) {
-        ref[info.material_index]->use();
+        ref[info.material_index].use();
         
         glDrawElements(GL_TRIANGLES, info.length * 3, GL_UNSIGNED_INT, reinterpret_cast<void*>(info.start_index * 3 * sizeof(uint32_t)));
       }
     } else {
-      ref[material_config.material_index]->use();
+      ref[material_config.material_index].use();
     
       glDrawElements(GL_TRIANGLES, faces.count * 3, GL_UNSIGNED_INT, reinterpret_cast<void*>(0));
     }
