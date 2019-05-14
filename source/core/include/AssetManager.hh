@@ -71,7 +71,7 @@ namespace mod {
         if (str_cmp_caseless(asset_name.value, name) == 0) return { assets[i].asset_id };
       }
 
-      return { };
+      m_error("Failed to locate asset of type %s with name %s", typeid(T).name(), name);
     }
 
 
