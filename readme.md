@@ -84,6 +84,9 @@ This is still early in production, but a list of architectural elements that hav
   - Materials
   - Material sets
   - 2d & 3d Meshes
+  - Skinning for 3D meshes
+  - Skeletal Animations
+  - Collada importer
   <!-- - Batched rendering (Speculative) -->
 + Asset manager:
   - JSON database files
