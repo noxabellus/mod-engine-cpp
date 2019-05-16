@@ -35,6 +35,8 @@ All dependencies are embedded in the source tracking so no extra downloads or bu
 + tinycthread ([zlib](https://github.com/tinycthread/tinycthread/blob/master/README.txt#L71))
   > https://github.com/tinycthread/tinycthread
 
++ StackWalker (Used for indepth memory debug mode during development only) ([BSD3](https://github.com/JochenKalmbach/StackWalker/blob/master/LICENSE))
+  > https://github.com/JochenKalmbach/StackWalker
 
 
 ## Third Party Assets
@@ -91,6 +93,9 @@ This is still very early in production, and code is being ported from the C-only
   - Definition priority is load order, later loads overwrite earlier loads
   - Automatic reloading of assets when source files are modified
   - Utilizes exceptions to prevent crashes from loading improperly formatted assets
++ Memory leak detector:
+  - Tracks all nonstatic allocations to determine if anything is leaked by the program
+  - Indepth memory debug compilation mode gives stack trace for all leaks
 
 
 
@@ -136,6 +141,13 @@ Build by running `.\build.bat` followed by the names of the targets you want to 
 E.g. Build the debug engine, header files, test game, and test modification by running
 ```
 .\build.bat engine_debug include test_game_debug test_mod_debug
+```
+
+You can prefix the build target names with `memory_debugging` to enable indepth memory debugging with stack traces on allocations. This is only recommended if a leak has been detected, as it will take several minutes to start up the binaries compiled in this mode.
+
+E.g. Build the debug engine, etc with indepth memory debugging enabled by running
+```
+.\build.bat memory_debugging engine_debug include test_game_debug test_mod_debug
 ```
 
 You may also delete all untracked files with the build script's `clear` command, followed by the names of the directories you want to delete
