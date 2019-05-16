@@ -491,6 +491,8 @@ namespace mod {
       Text("UI Scale: %g", ui_scale);
       Text("Vsync mode: %d", vsync);
       if (vsync > 1) Text("Target FPS: %d", target_framerate);
+      Text("Tracked memory allocation size: %zu", memory::allocated_size);
+      Text("Tracked memory allocation count: %zu", memory::allocation_count);
       PopFont();
       End();
     }

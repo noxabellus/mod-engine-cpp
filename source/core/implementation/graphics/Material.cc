@@ -702,17 +702,18 @@ namespace mod {
     try {
       material = from_str(origin, static_cast<char*>(source));
     } catch (Exception& exception) {
-      free(source);
+      memory::deallocate(source);
       throw exception;
     }
 
-    free(source);
+    memory::deallocate(source);
 
     return material;
   }
 
 
   void Material::destroy () {
+    if (origin != NULL) memory::deallocate(origin);
     for (auto [ i, uniform ] : uniforms) uniform.destroy();
     uniforms.destroy();
     textures.destroy();

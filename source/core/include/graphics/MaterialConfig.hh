@@ -48,6 +48,7 @@ namespace mod {
     : multi_material(true)
     { materials.copy(in_materials); }
 
+
     static MaterialConfig empty_multi () {
       MaterialConfig config;
       config.multi_material = true;

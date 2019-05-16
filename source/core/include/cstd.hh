@@ -203,63 +203,6 @@ static inline int vsnprintf_nonliteral (char* const buff, size_t n, char const* 
 #define m_assert_nonliteral(COND, FMT, ...) if (!(COND)) m_error_nonliteral(FMT, __VA_ARGS__)
 
 
-namespace mod {
-  /* Wrapper for snprintf that produces a new heap-allocated str */
-  static char* str_fmt_va (char const* fmt, va_list args) {
-    va_list args_copy;
-
-    va_copy(args_copy, args);
-
-    int length = vsnprintf_nonliteral(NULL, 0, fmt, args_copy) + 1;
-
-    va_end(args_copy);
-
-    auto out = static_cast<char*>(calloc(1, length));
-
-    vsnprintf_nonliteral(out, length, fmt, args);
-
-    return out;
-  }
-
-  /* Wrapper for vsnprintf that produces a new heap-allocated str */
-  static char* str_fmt (char const* fmt, ...) {
-    va_list args;
-    
-    va_start(args, fmt);
-
-    char* result = str_fmt_va(fmt, args);
-
-    va_end(args);
-    
-    return result;
-  }
-
-  /* Create a new heap-allocated str copy of a str or substr */
-  static char* str_clone (char const* base, size_t length = 0) {
-    if (base == NULL) return NULL;
-    
-    if (length == 0) length = strlen(base);
-    
-    auto out = static_cast<char*>(malloc(length + 1));
-
-    m_assert(out != NULL, "Out of memory or other null pointer error while allocating new str via str_clone with length %zu + 1", length);
-    
-    memcpy(out, base, length);
-
-    out[length] = '\0';
-
-    return out;
-  }
-}
-
-
-/* Determine the length of an array */
-#define m_array_length(ARR) (sizeof(ARR) / sizeof(ARR[0]))
-
-/* Get the address offset of a structure's field */
-#define m_field_offset(TY, FIELD) ((size_t) (&((TY*) 0)->FIELD))
-
-
 #define M_PIF static_cast<f32_t>(M_PI)
 
 namespace num {
@@ -422,5 +365,400 @@ namespace num {
     return U(deg) * (U(M_PI) / U(180));
   }
 }
+
+
+namespace mod {
+  template <size_t in_max_length = 64> struct Name {
+    static constexpr size_t max_length = in_max_length;
+
+    char value [max_length];
+
+    Name (char const* in_value = NULL) {
+      *this = in_value;
+    }
+
+    Name& operator = (char const* in_value) {
+      size_t len = in_value != NULL? num::min(strlen(in_value), max_length) : 0;
+      if (len != 0) memcpy(value, in_value, len);
+      value[len] = '\0';
+      return *this;
+    }
+
+    operator char* () const {
+      return const_cast<char*>(value);
+    }
+
+    operator char const* () const {
+      return value;
+    }
+  };
+
+  
+  namespace memory {
+    ENGINE_API extern size_t allocated_size;
+    ENGINE_API extern size_t allocation_count;
+
+    #ifdef MEMORY_DEBUG_INDEPTH
+      using AllocationName = Name<128>;
+      using AllocationTrace = Name<1024>;
+
+      struct AllocationTracePair {
+        AllocationTrace origin = { };
+        AllocationTrace realloc = { };
+      };
+      
+      ENGINE_API extern void** allocated_addresses;
+      ENGINE_API extern AllocationName* allocated_types;
+      ENGINE_API extern AllocationTracePair* allocated_traces;
+      ENGINE_API extern size_t* allocated_type_sizes;
+      ENGINE_API extern size_t allocated_address_count;
+      ENGINE_API extern size_t allocated_address_capacity;
+      
+      template <typename T> void register_address (T* address, char const* trace) {
+        size_t new_count = allocated_address_count + 1;
+        size_t new_capacity = allocated_address_capacity;
+        while (new_capacity < new_count) new_capacity *= 2;
+        if (new_capacity > allocated_address_capacity) {
+          allocated_addresses = reinterpret_cast<void**>(realloc(allocated_addresses, new_capacity * sizeof(void*)));
+          allocated_types = reinterpret_cast<AllocationName*>(realloc(allocated_types, new_capacity * sizeof(AllocationName)));
+          allocated_traces = reinterpret_cast<AllocationTracePair*>(realloc(allocated_traces, new_capacity * sizeof(AllocationTracePair)));
+          allocated_type_sizes = reinterpret_cast<size_t*>(realloc(allocated_type_sizes, new_capacity * sizeof(size_t)));
+          allocated_address_capacity = new_capacity;
+        }
+        allocated_addresses[allocated_address_count] = address;
+        allocated_types[allocated_address_count] = typeid(T).name();
+        new (allocated_traces + allocated_address_count) AllocationTracePair { };
+        allocated_traces[allocated_address_count].origin = trace;
+        if constexpr (std::is_same_v<void, T>) allocated_type_sizes[allocated_address_count] = 1;
+        else allocated_type_sizes[allocated_address_count] = sizeof(T);
+        ++ allocated_address_count;
+      }
+
+      static void update_address (void* old_address, void* new_address, char const* trace) {
+        for (size_t i = 0; i < allocated_address_count; i ++) {
+          if (allocated_addresses[i] == old_address) {
+            allocated_addresses[i] = new_address;
+            allocated_traces[i].realloc = trace;
+            break;
+          }
+        }
+      }
+
+      static void unregister_address (void* address) {
+        for (size_t i = 0; i < allocated_address_count; i ++) {
+          if (allocated_addresses[i] == address) {
+            size_t index = i;
+
+            -- allocated_address_count;
+
+            while (index < allocated_address_count) {
+              allocated_addresses[index] = allocated_addresses[index + 1];
+              allocated_types[index] = allocated_types[index + 1];
+              allocated_traces[index] = allocated_traces[index + 1];
+              allocated_type_sizes[index] = allocated_type_sizes[index + 1];
+              ++ index;
+            }
+
+            return;
+          }
+        }
+
+        m_error("Cannot unregister unknown address %p", address);
+      }
+    #endif
+    
+
+    template <typename T, void* (*allocator) (size_t) = malloc> T* allocate_untracked (size_t size, bool clear) {
+      m_assert(size != 0, "Cannot allocate zero sized buffer");
+
+      if constexpr (!std::is_same_v<T, void>) size *= sizeof(T);
+
+      auto mem = reinterpret_cast<T*>(allocator(size));
+      m_assert(mem != NULL, "Out of memory");
+
+      if (clear) memset(mem, 0, size);
+
+      return mem;
+    }
+
+    template <typename T, void* (*allocator) (size_t) = malloc> T* allocate_tracked (size_t size, bool clear) {
+      m_assert(size != 0, "Cannot allocate zero sized buffer");
+
+      if constexpr(!std::is_same_v<T, void>) size *= sizeof(T);
+
+      size_t a_size = size + sizeof(size_t);
+
+      auto mem = reinterpret_cast<size_t*>(allocator(a_size));
+      m_assert(mem != NULL, "Out of memory");
+      
+      *(mem ++) = size;
+
+      allocated_size += size;
+      ++ allocation_count;
+
+      // printf("New alloc size/count: %zu / %zu\n", allocated_size, allocation_count);
+
+      if (clear) memset(mem, 0, size);
+
+      T* ptr = reinterpret_cast<T*>(mem);
+
+      #ifdef MEMORY_DEBUG_INDEPTH
+        register_address(ptr, StringStackWalker.CreateStackStr());
+      #endif
+
+      return ptr;
+    }
+
+
+    template <typename T, bool tracked = true, void* (*allocator) (size_t) = malloc> T* allocate (size_t size, bool clear = false) {
+      if constexpr (tracked) {
+        #ifdef MEMORY_DEBUG_INDEPTH
+          StringStackWalker.ShowCallstack();
+        #endif
+
+        return allocate_tracked<T, allocator>(size, clear);
+      } else return allocate_untracked<T, allocator>(size, clear);
+    }
+
+    template <typename T, void* (*allocator) (size_t) = malloc> T* allocate (bool tracked, size_t size, bool clear = false) {
+      if (tracked) {
+        #ifdef MEMORY_DEBUG_INDEPTH
+          StringStackWalker.ShowCallstack();
+        #endif
+
+        return allocate_tracked<T, allocator>(size, clear);
+      } else return allocate_untracked<T, allocator>(size, clear);
+    }
+
+    
+
+
+
+
+    template <typename T, void* (*reallocator) (void*, size_t) = realloc> T* reallocate_untracked (T*& mem, size_t size) {
+      m_assert(size != 0, "Cannot reallocate zero sized buffer");
+
+      if constexpr(!std::is_same_v<T, void>) size *= sizeof(T);
+
+      mem = reinterpret_cast<T*>(reallocator(mem, size));
+      m_assert(mem != NULL, "Out of memory");
+
+      return mem;
+    }
+
+    template <typename T, void* (*reallocator) (void*, size_t) = realloc> T* reallocate_tracked (T*& mem, size_t size) {
+      m_assert(size != 0, "Cannot reallocate zero sized buffer");
+
+      if constexpr(!std::is_same_v<T, void>) size *= sizeof(T);
+
+      size_t a_size = size + sizeof(size_t);
+
+      auto omem = reinterpret_cast<size_t*>(mem) - 1;
+      size_t o_size = *omem;
+
+      if (o_size > size) {
+        allocated_size -= o_size - size;
+      } else {
+        allocated_size += size - o_size;
+      }
+      
+      omem = reinterpret_cast<size_t*>(reallocator(omem, a_size));
+      m_assert(omem != NULL, "Out of memory");
+
+      *(omem ++) = size;
+
+      T* new_mem = reinterpret_cast<T*>(omem);
+
+      #ifdef MEMORY_DEBUG_INDEPTH
+        update_address(mem, new_mem, StringStackWalker.CreateStackStr());
+      #endif
+
+      mem = new_mem;
+
+      return mem;
+    }
+
+
+    template <typename T, bool tracked = true, void* (*reallocator) (void*, size_t) = realloc> T* reallocate (T*& mem, size_t size) {
+      if constexpr (tracked) {
+        #ifdef MEMORY_DEBUG_INDEPTH
+          StringStackWalker.ShowCallstack();
+        #endif
+
+        return reallocate_tracked<T, reallocator>(mem, size);
+      } else return reallocate_untracked<T, reallocator>(mem, size);
+    }
+
+
+    template <typename T, void* (*reallocator) (void*, size_t) = realloc> T* reallocate (bool tracked, T*& mem, size_t size) {
+      if (tracked) {
+        #ifdef MEMORY_DEBUG_INDEPTH
+          StringStackWalker.ShowCallstack();
+        #endif
+
+        return reallocate_tracked<T, reallocator>(mem, size);
+      } else return reallocate_untracked<T, reallocator>(mem, size);
+    }
+
+    
+
+
+
+    template <typename T, void (*deallocator) (void*) = free> void deallocate_untracked_const (T* mem) {
+      m_assert(mem != NULL, "Cannot deallocate NULL pointer");
+      deallocator(mem);
+    }
+
+    template <typename T, void (*deallocator) (void*) = free> void deallocate_tracked_const (T* mem) {
+      m_assert(mem != NULL, "Cannot deallocate NULL pointer");
+      auto omem = reinterpret_cast<size_t*>(mem) - 1;
+      allocated_size -= *omem;
+      -- allocation_count;
+      // printf("New alloc size/count: %zu / %zu\n", allocated_size, allocation_count);
+
+      #ifdef MEMORY_DEBUG_INDEPTH
+        unregister_address(mem);
+      #endif
+
+      deallocator(omem);
+    }
+
+
+
+    template <typename T, void (*deallocator) (void*) = free> void deallocate_untracked (T*& mem) {
+      deallocate_untracked_const<T, deallocator>(mem);
+      mem = NULL;
+    }
+
+    template <typename T, void (*deallocator) (void*) = free> void deallocate_tracked (T*& mem) {
+      deallocate_tracked_const<T, deallocator>(mem);
+      mem = NULL;
+    }
+
+
+
+    template <typename T, bool tracked = true, void (*deallocator) (void*) = free> void deallocate_const (T* mem) {
+      if constexpr (tracked) return deallocate_tracked_const<T>(mem);
+      else return deallocate_untracked_const<T, deallocator>(mem);
+    }
+
+    template <typename T, void (*deallocator) (void*) = free> void deallocate_const (bool tracked, T* mem) {
+      if (tracked) return deallocate_tracked_const<T>(mem);
+      else return deallocate_untracked_const<T, deallocator>(mem);
+    }
+
+    
+    
+
+    template <typename T, bool tracked = true, void (*deallocator) (void*) = free> void deallocate (T*& mem) {
+      if constexpr (tracked) return deallocate_tracked<T>(mem);
+      else return deallocate_untracked<T, deallocator>(mem);
+    }
+
+    template <typename T, void (*deallocator) (void*) = free> void deallocate (bool tracked, T*& mem) {
+      if (tracked) return deallocate_tracked<T>(mem);
+      else return deallocate_untracked<T, deallocator>(mem);
+    }
+
+    
+
+
+
+    template <typename T> size_t get_tracked_allocation_size (T* mem) {
+      return *(reinterpret_cast<size_t*>(mem) - 1);
+    }
+
+    template <typename T> size_t get_tracked_allocation_element_count (T* mem) {
+      return get_tracked_allocation_size(mem) / sizeof(T);
+    }
+
+    static size_t get_tracked_allocation_element_count (void* mem, size_t type_size) {
+      return get_tracked_allocation_size(mem) / type_size;
+    }
+
+    
+
+    static void dump_allocation_data (FILE* stream = stdout) {
+      fprintf(stream, "Allocation count %zu, total allocation size %zu\n", allocation_count, allocated_size);
+      #ifdef MEMORY_DEBUG_INDEPTH
+      for (size_t i = 0; i < allocated_address_count; i ++) {
+        fprintf(stream, "%p : %s\n", allocated_addresses[i], allocated_types[i].value);
+        fprintf(stream, "- Allocation stack trace:\n%s\n", allocated_traces[i].origin.value);
+        if (allocated_traces[i].realloc.value[0] != '\0') fprintf(stream, "- Last Reallocation stack trace:\n%s\n", allocated_traces[i].realloc.value);
+        fprintf(stream, "- Size %zu\n", get_tracked_allocation_size(allocated_addresses[i]));
+        fprintf(stream, "- Count %zu\n", get_tracked_allocation_element_count(allocated_addresses[i], allocated_type_sizes[i]));
+      }
+      #endif
+    }
+  }
+
+  /* Wrapper for snprintf that produces a new heap-allocated str */
+  static char* str_fmt_va (char const* fmt, va_list args) {
+    va_list args_copy;
+
+    va_copy(args_copy, args);
+
+    int length = vsnprintf_nonliteral(NULL, 0, fmt, args_copy) + 1;
+
+    va_end(args_copy);
+
+    auto out = memory::allocate<char>(length, true);
+
+    vsnprintf_nonliteral(out, length, fmt, args);
+
+    return out;
+  }
+
+  /* Wrapper for vsnprintf that produces a new heap-allocated str */
+  static char* str_fmt (char const* fmt, ...) {
+    va_list args;
+    
+    va_start(args, fmt);
+
+    char* result = str_fmt_va(fmt, args);
+
+    va_end(args);
+    
+    return result;
+  }
+
+  /* Create a new heap-allocated str copy of a str or substr */
+  static char* str_clone (char const* base, size_t length = 0) {
+    if (base == NULL) return NULL;
+    
+    if (length == 0) length = strlen(base);
+    
+    auto out = memory::allocate<char>(length + 1);
+
+    m_assert(out != NULL, "Out of memory or other null pointer error while allocating new str via str_clone with length %zu + 1", length);
+    
+    memcpy(out, base, length);
+
+    out[length] = '\0';
+
+    return out;
+  }
+}
+
+#define m_impl_debug_constructors(T) \
+  T (T const& t) { memcpy(this, &t, sizeof(T)); } \
+  T& operator = (T const& t) { memcpy(this, &t, sizeof(T)); return *this; }
+
+#define m_impl_debug_destructor(T) \
+  ~##T () { }
+
+#define m_impl_debug_boilerplate(T) \
+  m_impl_debug_constructors(T) \
+  m_impl_debug_destructor(T)
+
+
+/* Determine the length of an array */
+#define m_array_length(ARR) (sizeof(ARR) / sizeof(ARR[0]))
+
+/* Get the address offset of a structure's field */
+#define m_field_offset(TY, FIELD) ((size_t) (&((TY*) 0)->FIELD))
+
+
+
 
 #endif

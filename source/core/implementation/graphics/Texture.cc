@@ -251,21 +251,18 @@ namespace mod {
     try {
       texture = from_str(origin, static_cast<char*>(source));
     } catch (Exception& exception) {
-      free(source);
+      memory::deallocate(source);
       throw exception;
     }
 
-    free(source);
+    memory::deallocate(source);
 
     return texture;
   }
 
 
   void Texture::destroy () {
-    if (origin != NULL) {
-      free(origin);
-      origin = 0;
-    }
+    if (origin != NULL) memory::deallocate(origin);
 
     if (gl_id != 0) {
       glDeleteTextures(1, &gl_id);
@@ -275,7 +272,7 @@ namespace mod {
 
   void Texture::update (FIBITMAP* new_image, char const* new_origin) {
     if (new_origin != NULL) {
-      free(origin);
+      memory::deallocate(origin);
       origin = str_clone(new_origin);
     }
 
@@ -295,7 +292,7 @@ namespace mod {
 
 
   FIBITMAP* Texture::read (s32_t level) const {
-    static Array<u8_t> data;
+    static Array<u8_t> data = Array<u8_t> { 0, true };
     
     Vector2s size = get_size();
 

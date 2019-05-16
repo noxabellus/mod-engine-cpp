@@ -16,7 +16,7 @@
 
     void SharedLib::destroy () {
       m_asset_assert(FreeLibrary(reinterpret_cast<HMODULE>(platform_ptr)) != 0, origin, "Failed to unload SharedLib, Windows error code was %lu", GetLastError());
-      free(origin);
+      memory::deallocate(origin);
     }
 
 
@@ -36,7 +36,7 @@
 
   void SharedLib::destroy () {
     m_asset_assert(dlclose(platform_ptr) == 0, origin, "Failed to unload SharedLib, POSIX error message was '%s'", dlerror());
-    free(origin);
+    memory::deallocate(origin);
   }
 
 

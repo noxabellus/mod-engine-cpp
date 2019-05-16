@@ -496,7 +496,7 @@ namespace mod {
      * Panics if there are not enough elements in the array, or if uvs are already enabled */
     ENGINE_API void enable_uvs_ex (Array<Vector2f> const& arr);
 
-    /* Disable uv coordinates for a RenderMesh3D and free its data.
+    /* Disable uv coordinates for a RenderMesh3D and clean up its data.
      * Does nothing if no uvs are enabled */
     ENGINE_API void disable_uvs ();
 
@@ -519,7 +519,7 @@ namespace mod {
      * Panics if there are not enough elements in the array, or if colors are already enabled */
     ENGINE_API void enable_colors_ex (Array<Vector3f> const& arr);
 
-    /* Disable colors for a RenderMesh3D and free its data.
+    /* Disable colors for a RenderMesh3D and clean up its data.
      * Does nothing if no colors are enabled */
     ENGINE_API void disable_colors ();
 

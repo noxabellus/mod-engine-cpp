@@ -1015,11 +1015,13 @@ namespace mod {
   };
   
 
+  using ControlName = Name<64>;
+
 
   struct Control {
     u32_t id;
 
-    char* name;
+    ControlName name;
 
     InputCombination input_combination;
 
@@ -1034,7 +1036,7 @@ namespace mod {
       InputCombination const& in_input_combination
     )
     : id(in_id)
-    , name(str_clone(in_name))
+    , name(in_name)
     , input_combination(in_input_combination)
     { }
 
@@ -1043,7 +1045,7 @@ namespace mod {
       InputCombination const& in_input_combination
     )
     : id(0)
-    , name(str_clone(in_name))
+    , name(in_name)
     , input_combination(in_input_combination)
     { }
 
@@ -1052,7 +1054,7 @@ namespace mod {
       Control const& proto
     )
     : id(in_id)
-    , name(str_clone(proto.name))
+    , name(proto.name)
     , input_combination(proto.input_combination)
     { }
 
@@ -1062,9 +1064,6 @@ namespace mod {
 
     /* Clear a Controls' InputCombination */
     ENGINE_API void clear ();
-
-    /* Free the heap allocation of a Control */
-    ENGINE_API void destroy ();
   };
 
 

@@ -15,8 +15,8 @@ namespace mod {
     char* message = NULL;
 
     void handle () {
-      if (file != NULL) free(file);
-      if (message != NULL) free(message);
+      if (file != NULL) memory::deallocate(file);
+      if (message != NULL) memory::deallocate(message);
     }
 
     void print (FILE* stream = stderr) {

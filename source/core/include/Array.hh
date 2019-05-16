@@ -29,23 +29,46 @@ namespace mod {
     T* elements = NULL;
     size_t count = 0;
     size_t capacity = 0;
+    
+    bool is_static = false;
 
 
     /* Create a new zero-initialized Array */
     Array () = default;
 
+
     /* Create a new Array with a specific capacity */
-    Array (size_t new_capacity)
+    Array (size_t in_capacity, bool in_is_static = false)
+    : is_static(in_is_static)
     {
-      grow_allocation(new_capacity);
+      grow_allocation(in_capacity);
     }
 
     /* Create a new Array with explicit initialization of all members */
-    Array (T* new_elements, size_t new_count, size_t new_capacity)
-    : elements(new_elements)
-    , count(new_count)
-    , capacity(new_capacity)
+    Array (T* in_elements, size_t in_count, size_t in_capacity, bool in_is_static = false)
+    : elements(in_elements)
+    , count(in_count)
+    , capacity(in_capacity)
+    , is_static(in_is_static)
     { }
+
+    /* Create a new Array by copying an existing buffer or region */
+    Array (T* in_elements, size_t in_count, bool in_is_static = false)
+    : is_static(in_is_static)
+    {
+      size_t in_capacity = default_capacity;
+
+      while (in_capacity < in_count) in_capacity *= 2;
+
+      elements = memory::allocate<T>(!is_static, in_capacity);
+
+      m_assert(elements != NULL, "Out of memory or other null pointer error while allocating Array elements with capacity %zu", in_capacity);
+
+      memcpy(elements, in_elements, in_count * sizeof(T));
+      
+      count = in_count;
+      capacity = in_capacity;
+    }
 
     /* Create a new Array from a parameter pack list of elements */
     template <typename ... A> static Array from_elements (A ... args) {
@@ -54,50 +77,46 @@ namespace mod {
       return { arg_arr, arg_count };
     }
 
-    /* Create a new Array by copying an existing buffer or region */
-    Array (T* new_elements, size_t new_count) {
-      size_t new_capacity = default_capacity;
-
-      while (new_capacity < new_count) new_capacity *= 2;
-
-      elements = static_cast<T*>(malloc(new_capacity * sizeof(T)));
-
-      m_assert(elements != NULL, "Out of memory or other null pointer error while allocating Array elements with capacity %zu", new_capacity);
-
-      memcpy(elements, new_elements, new_count * sizeof(T));
-      
-      count = new_count;
-      capacity = new_capacity;
+    /* Create a new static Array from a parameter pack list of elements */
+    template <typename ... A> static Array from_elements_static (A ... args) {
+      static constexpr size_t arg_count = sizeof...(args);
+      T arg_arr [arg_count] = { static_cast<T>(args)... };
+      return { arg_arr, arg_count, true };
     }
 
 
     /* Create a new Array by taking ownership of an existing buffer */
-    static Array from_ex (T* elements, size_t count) {
+    static Array from_ex (T* elements, size_t count, bool is_static = false) {
       size_t capacity = default_capacity;
 
       while (capacity < count) capacity *= 2;
 
-      elements = static_cast<T*>(realloc(elements, capacity * sizeof(T)));
+      if (is_static) {
+        T* new_mem = memory::allocate<T, false>(capacity);
+        memcpy(new_mem, elements, count * sizeof(T));
+        memory::deallocate(elements);
+        elements = new_mem;
+      } else {
+        memory::reallocate(elements, capacity);
+      }
 
-      m_assert(elements != NULL, "Out of memory or other null pointer error while reallocating elements for Array from_ex with capacity %zu", capacity);
-
-      return Array { elements, count, capacity };
+      return Array { elements, count, capacity, is_static };
     }
 
 
     /* Create an Array by copying it from a file. 
      * Throws an exception if the file could not be loaded or was an odd size */
-    static Array from_file (char const* path) {
+    static Array from_file (char const* path, bool is_static = false) {
       auto [ elements, byte_length ] = load_file(path);
       m_asset_assert(elements != NULL, path, "Failed to load Array from file");
       size_t rem = byte_length % sizeof(T);
       m_asset_assert(rem == 0, path, "Failed to load Array from file: The file has an odd size, should be evenly divisible by %zu but size was %zu (remainder %zu)", sizeof(T), byte_length, rem);
-      return from_ex(elements, byte_length / sizeof(T));
+      return from_ex(elements, byte_length / sizeof(T), is_static);
     }
 
     /* Create a new Array by cloning an existing Array */
-    Array clone () const {
-      return { elements, count };
+    Array clone (bool new_is_static = false) const {
+      return { elements, count, new_is_static };
     }
 
     /* Reset an Array's count to 0 but keep its capacity */
@@ -119,12 +138,9 @@ namespace mod {
     }
 
     
-    /* Free the heap allocation of an Array */
+    /* Clean up the heap allocation of an Array */
     void destroy () {
-      if (elements != NULL) {
-        free(elements);
-        elements = NULL;
-      }
+      if (elements != NULL) memory::deallocate(!is_static, elements);
       
       count = 0;
       capacity = 0;
@@ -237,10 +253,8 @@ namespace mod {
       }
 
       if (new_capacity != capacity) {
-        size_t byte_size = new_capacity * sizeof(T);
-        elements = static_cast<T*>(elements != NULL? realloc(elements, byte_size) : malloc(byte_size));
-
-        m_assert(elements != NULL, "Out of memory or other null pointer error while reallocating Array for capacity %zu", new_capacity);
+        if (elements != NULL) memory::reallocate<T>(!is_static, elements, new_capacity);
+        else elements = memory::allocate<T>(!is_static, new_capacity);
 
         capacity = new_capacity;
       }

@@ -45,7 +45,7 @@ namespace mod {
   }
 
   DAEIBone DAEIBone::process (DAE const& dae, XMLItem& joint) {
-    DAEIBone bone;
+    DAEIBone bone { 256 };
     
     bone.sid = joint.get_attribute("sid").value;
     bone.id = joint.get_attribute("id").value;
@@ -741,6 +741,7 @@ namespace mod {
     for (auto [ i, clip ] : anim_clips) clip.channel_ids.destroy();
     anim_clips.destroy();
 
+    for (auto [ i, anim ] : animations) anim.destroy();
     animations.destroy();
     
     xml.destroy();
@@ -1219,9 +1220,14 @@ namespace mod {
     glEnableVertexAttribArray(5);
 
 
+    i_joints.destroy();
     i_vertices.destroy();
 
     i_indices.destroy();
+
+    // REMOVE THIS when skinned meshes are implemented
+    final_joints.destroy();
+    final_weights.destroy();
 
 
     return dae_mesh;

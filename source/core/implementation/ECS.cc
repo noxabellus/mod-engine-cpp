@@ -144,7 +144,7 @@ namespace mod {
 
 
   ECS::ECS (u32_t in_entity_capacity, u32_t in_entity_thread_threshold, uint8_t in_max_threads, uint8_t thread_iterator_ratio)
-  : entities(static_cast<Entity*>(malloc(sizeof(Entity) * in_entity_capacity)))
+  : entities(memory::allocate<Entity>(in_entity_capacity))
   , entity_count(0)
   , entity_capacity(in_entity_capacity)
   , entity_id_counter(1)
@@ -164,7 +164,7 @@ namespace mod {
 
   void ECS::enable_thread_pool () {
     if (thread_pool == NULL) {
-      system_iterator_args = static_cast<SystemIteratorArg*>(malloc(sizeof(SystemIteratorArg) * max_iterators));
+      system_iterator_args = memory::allocate<SystemIteratorArg>(max_iterators);
 
       for (u32_t i = 0; i < max_iterators; i ++) {
         system_iterator_args[i].ecs = this;
@@ -195,7 +195,7 @@ namespace mod {
       component_types[i].destroy();
     }
 
-    free(entities);
+    memory::deallocate(entities);
 
     for (System::ID i = 0; i < system_count; i ++) {
       systems[i].destroy();
@@ -212,7 +212,7 @@ namespace mod {
     while (new_capacity < new_count) new_capacity *= 2;
 
     if (new_capacity > entity_capacity) {
-      entities = static_cast<Entity*>(realloc(entities, new_capacity * sizeof(Entity)));
+      memory::reallocate(entities, new_capacity);
 
       m_assert(entities != NULL, "Out of memory or other null pointer error while reallocating ECS entities for capacity %" PRIu32, new_capacity);
 

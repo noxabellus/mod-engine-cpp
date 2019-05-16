@@ -468,11 +468,11 @@ namespace mod {
     try {
       mesh = from_str(origin, static_cast<char*>(source));
     } catch (Exception& exception) {
-      free(source);
+      memory::deallocate(source);
       throw exception;
     }
 
-    free(source);
+    memory::deallocate(source);
 
     return mesh;
   }
@@ -513,11 +513,8 @@ namespace mod {
 
 
   void RenderMesh3D::destroy () {
-    if (origin != NULL) {
-      free(origin);
-      origin = NULL;
-    }
-
+    if (origin != NULL)  memory::deallocate(origin);
+    
     positions.destroy();
     normals.destroy();
     faces.destroy();

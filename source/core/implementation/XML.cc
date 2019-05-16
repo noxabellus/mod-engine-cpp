@@ -33,14 +33,14 @@ namespace mod {
 
 
   void XMLItem::destroy () const {
-    free(static_cast<void*>(name.value));
+    memory::deallocate_const(static_cast<void*>(name.value));
 
     for (auto [ i, attribute ] : attributes) {
-      free(static_cast<void*>(attribute.name.value));
-      free(static_cast<void*>(attribute.value.value));
+      memory::deallocate_const(static_cast<void*>(attribute.name.value));
+      memory::deallocate_const(static_cast<void*>(attribute.value.value));
     }
 
-    free(static_cast<void*>(attributes.elements));
+    memory::deallocate_const(static_cast<void*>(attributes.elements));
     
     switch (type) {
       case XMLType::Comment:
@@ -48,11 +48,11 @@ namespace mod {
 
       case XMLType::CDATA:
       case XMLType::DocumentType:
-      case XMLType::Text: free(text.value); break;
+      case XMLType::Text: memory::deallocate_const(text.value); break;
 
       case XMLType::Array: {
         for (auto [ i, element ] : array) const_cast<XMLItem const&>(element).destroy();
-        free(static_cast<void*>(array.elements));
+        memory::deallocate_const(static_cast<void*>(array.elements));
         break;
       }
     }
@@ -799,15 +799,9 @@ namespace mod {
 
 
   void XML::destroy () {
-    if (origin != NULL) {
-      free(origin);
-      origin = NULL;
-    }
+    if (origin != NULL) memory::deallocate(origin);
 
-    if (source != NULL) {
-      free(source);
-      source = NULL;
-    }
+    if (source != NULL) memory::deallocate(source);
 
     for (auto [ i, element ] : data) element.destroy();
 

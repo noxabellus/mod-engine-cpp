@@ -168,7 +168,7 @@ namespace mod {
      * and perform supporting library initialization */
     ENGINE_API Application_t& init ();
 
-    /* Destroy the Application, free allocations, save the config file,
+    /* Destroy the Application, clean up allocations, save the config file,
      * and perform supporting library clean up */
     ENGINE_API void destroy ();
 

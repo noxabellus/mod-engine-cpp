@@ -61,11 +61,11 @@ namespace mod {
     try {
       material_set = from_str(origin, static_cast<char*>(source));
     } catch (Exception& exception) {
-      free(source);
+      memory::deallocate(source);
       throw exception;
     }
 
-    free(source);
+    memory::deallocate(source);
 
     return material_set;
   }
@@ -75,7 +75,7 @@ namespace mod {
     for (auto [ i, entry ] : materials) entry.destroy();
     
     if (origin != NULL) {
-      free(origin);
+      memory::deallocate(origin);
       origin = NULL;
     }
 

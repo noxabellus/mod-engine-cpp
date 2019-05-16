@@ -22,7 +22,7 @@ namespace mod {
 
     char value [max_length] = { 0 };
 
-    AssetName ();
+    AssetName () { }
     AssetName (char const* in_value, size_t value_max_length = 0)
     {
       if (value_max_length == 0) value_max_length = strlen(in_value);

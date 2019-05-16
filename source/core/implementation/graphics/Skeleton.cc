@@ -119,21 +119,18 @@ namespace mod {
     try {
       skeleton = from_str(origin, static_cast<char*>(source));
     } catch (Exception& exception) {
-      free(source);
+      memory::deallocate(source);
       throw exception;
     }
 
-    free(source);
+    memory::deallocate(source);
 
     return skeleton;
   }
   
 
   void Skeleton::destroy () {
-    if (origin != NULL) {
-      free(origin);
-      origin = NULL;
-    }
+    if (origin != NULL) memory::deallocate(origin);
 
     for (auto [ i, bone ] : bones) bone.destroy();
 

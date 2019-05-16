@@ -234,16 +234,16 @@ namespace mod {
 
   void JSONItem::destroy () const {
     switch (type) {
-      case JSONType::String: free(static_cast<void*>(string.value)); break;
+      case JSONType::String: memory::deallocate_const(static_cast<void*>(string.value)); break;
       case JSONType::Array: {
         for (auto [ i, item ] : array) item.destroy();
-        free(static_cast<void*>(array.elements));
+        memory::deallocate_const(static_cast<void*>(array.elements));
       } break;
       case JSONType::Object: {
-        for (auto [ i, key ] : object.keys) free(static_cast<void*>(key.value));
-        free(static_cast<void*>(object.keys.elements));
+        for (auto [ i, key ] : object.keys) memory::deallocate_const(static_cast<void*>(key.value));
+        memory::deallocate_const(static_cast<void*>(object.keys.elements));
         for (auto [ i, item ] : object.items) item.destroy();
-        free(static_cast<void*>(object.items.elements));
+        memory::deallocate_const(static_cast<void*>(object.items.elements));
       } break;
       default: break;
     }

@@ -10,7 +10,6 @@ void module_init () {
   using namespace mod;
   using namespace ImGui;
 
-
   Application.init();
 
   AssetManager.load_database_from_file("./assets/asset_db.json");
@@ -34,9 +33,14 @@ void module_init () {
   SkeletalAnimation dae_idle_anim = dae.load_animation("idle_attention");
   SkeletalAnimation dae_walk_anim = dae.load_animation("walk");
   SkeletalAnimation dae_run_anim = dae.load_animation("run");
+  
 
+  // source animation data is corrupted on first frames
+  dae_idle_anim.keyframes[0].destroy();
   dae_idle_anim.keyframes.remove(0);
+  dae_walk_anim.keyframes[0].destroy();
   dae_walk_anim.keyframes.remove(0);
+  dae_run_anim.keyframes[0].destroy();
   dae_run_anim.keyframes.remove(0);
   
   
@@ -225,8 +229,8 @@ void module_init () {
 
 
   // ecs.create_system("Skeletal Animation Debugger", false, { ecs.get_component_type_by_instance_type<SkeletonHandle>().id, ecs.get_component_type_by_instance_type<SkeletalAnimationState>().id }, [&] (ECS*, u32_t index) {
-  //   static Array<SkeletalKeyframeChannel> intermediate_transforms;
-  //   static Array<Matrix4> pose;
+  //   static Array<SkeletalKeyframeChannel> intermediate_transforms = Array<SkeletalKeyframeChannel> { 0, true };
+  //   static Array<Matrix4> pose = Array<Matrix4> { 0, true };
 
   //   Skeleton& skel = *ecs.get_component<SkeletonHandle>(index);
   //   SkeletalAnimationState& animation_state = ecs.get_component<SkeletalAnimationState>(index);
@@ -571,7 +575,7 @@ void module_init () {
 
   //   ComponentType::ID animation_type = ecs.get_component_type_by_instance_type<SkeletalAnimationHandle>().id;
 
-  //   static Array<pair_t<bool, s32_t>> settings;
+  //   static Array<pair_t<bool, s32_t>> settings = Array<pair_t<bool, s32_t>> { 0, true };
 
   //   static auto const get_settings = [&] (size_t index) -> auto& {
   //     while (settings.count <= index) settings.append({ true, 1 });
@@ -815,6 +819,12 @@ void module_init () {
 
     Application.end_frame();
   }
+
+  dae_mesh.destroy();
+  dae_skel.destroy();
+  dae_idle_anim.destroy();
+  dae_walk_anim.destroy();
+  dae_run_anim.destroy();
 
   update_reports.destroy();
   ecs.destroy();

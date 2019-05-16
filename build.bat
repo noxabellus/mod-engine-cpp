@@ -24,11 +24,21 @@ REM set ENGINE_INCLUDE_PATH=-I.\build\include\
 set ENGINE_INCLUDE_PATH=-I.\source\ -I.\source\core\include\
 
 
+set ENGINE_LIBS=^
+.\source\extern\sdl2\sdl2.lib ^
+.\source\extern\freeimage\FreeImage.lib ^
+.\source\extern\imgui\imgui.lib ^
+.\source\extern\ImGuiColorTextEdit\text_editor.lib
+
+
+set MEM_DBG=0
+
+
 
 :: Handle action dispatch
 if "%1" == "" (
   echo Build script requires the names of build tasks you would like to run
-  echo For example to build the test game and dependencies, run ".\build.bat engine_debug include test_game test_mod"
+  echo For example to build the test game and dependencies, run ".\build.bat engine_debug include test_game_debug test_mod_debug"
   exit /b 1
 ) else (
   if "%1" == "clear" (
@@ -50,6 +60,14 @@ if "%1" == "" (
 
   exit /b 0
 )
+
+
+:memory_debugging
+  set ENGINE_LIBS=!ENGINE_LIBS! .\source\extern\StackWalker\StackWalker.lib
+  set DBG_FLAGS=!DBG_FLAGS! -DMEMORY_DEBUG_INDEPTH
+  set MEM_DBG=1
+
+  exit /b 0
 
 
 :include
@@ -98,14 +116,14 @@ if "%1" == "" (
     %STD_FLAGS% %DBG_FLAGS% -LD ^
     -I.\source\ -I.\source\core\include\ ^
     .\source\core\implementation\ModEngine.cc ^
-    .\source\extern\sdl2\sdl2.lib .\source\extern\freeimage\FreeImage.lib .\source\extern\imgui\imgui.lib .\source\extern\ImGuiColorTextEdit\text_editor.lib ^
+    %ENGINE_LIBS% ^
     -o.\build\debug\ModEngine ^
   || exit /b 1
 
   :: Merge dependency libs into engine lib
   lib ^
     .\build\debug\ModEngine.lib ^
-    .\source\extern\sdl2\sdl2.lib .\source\extern\freeimage\FreeImage.lib .\source\extern\imgui\imgui.lib .\source\extern\ImGuiColorTextEdit\text_editor.lib ^
+    %ENGINE_LIBS% ^
     /OUT:.\build\debug\ModEngine.lib ^
   || exit /b 1
 
@@ -118,6 +136,12 @@ if "%1" == "" (
   :: Copy dependency pdbs into engine directory
   copy .\source\extern\imgui\imgui.pdb .\build\debug\imgui.pdb
   copy .\source\extern\ImGuiColorTextEdit\text_editor.pdb .\build\debug\text_editor.pdb
+  
+  :: Copy memory debugging dependency
+  if "%MEM_DBG%" NEQ "0" (
+    copy .\source\extern\StackWalker\StackWalker_dbg.dll .\build\debug\StackWalker.dll
+    copy .\source\extern\StackWalker\StackWalker.pdb .\build\debug\StackWalker.pdb
+  )
 
   :: Clean up intermediate files
   for %%i in (
@@ -131,6 +155,11 @@ if "%1" == "" (
 
 
 :engine_release
+  if "%MEM_DBG%" NEQ "0" (
+    echo Cannot use memory_debugging with engine_release
+    exit /b 1
+  )
+
   :: Setup execution env
   call :get_tools || exit /b 1
 
@@ -145,14 +174,14 @@ if "%1" == "" (
     %STD_FLAGS% %REL_FLAGS% -LD ^
     -I.\source\ -I.\source\core\include\ ^
     .\source\core\implementation\ModEngine.cc ^
-    .\source\extern\sdl2\sdl2.lib .\source\extern\freeimage\FreeImage.lib .\source\extern\imgui\imgui.lib .\source\extern\ImGuiColorTextEdit\text_editor.lib ^
+    %ENGINE_LIBS% ^
     -o.\build\release\ModEngine ^
   || exit /b 1
 
   :: Merge dependency libs into engine lib
   lib ^
     .\build\release\ModEngine.lib ^
-    .\source\extern\sdl2\sdl2.lib .\source\extern\freeimage\FreeImage.lib .\source\extern\imgui\imgui.lib .\source\extern\ImGuiColorTextEdit\text_editor.lib ^
+    %ENGINE_LIBS% ^
     /OUT:.\build\release\ModEngine.lib ^
   || exit /b 1
 
@@ -233,6 +262,11 @@ if "%1" == "" (
 
 
 :test_game_release
+  if "%MEM_DBG%" NEQ "0" (
+    echo Cannot use memory_debugging with test_game_release
+    exit /b 1
+  )
+  
   :: Make sure other tasks have been run first
   if NOT EXIST .\build\release (
     echo Build task 'test_game_release' requires tasks 'engine_release' and 'include' to be run first
@@ -331,6 +365,11 @@ if "%1" == "" (
 
 
 :test_mod_release
+  if "%MEM_DBG%" NEQ "0" (
+    echo Cannot use memory_debugging with test_mod_release
+    exit /b 1
+  )
+  
   :: Make sure other tasks have been run first
   if NOT EXIST .\build\test\release (
     echo Build task 'test_mod_release' requires tasks 'test_game_release' and 'include' to be run first

@@ -288,20 +288,13 @@ namespace mod {
     input_combination.clear();
   }
 
-  void Control::destroy () {
-    if (name != NULL) {
-      free(name);
-      name = NULL;
-    }
-  }
-
 
   
   JSONObject ControlBinding::to_json_object () const {
     JSONObject object;
     
     for (auto [ i, control ] : controls) {
-      object.set({ control.input_combination.to_json_item() }, control.name);
+      object.set({ control.input_combination.to_json_item() }, control.name.value);
     }
 
     return object;
@@ -321,7 +314,7 @@ namespace mod {
 
   s64_t ControlBinding::get_index (char const* name) const {
     for (auto [ i, control ] : controls) {
-      if (str_cmp_caseless(name, control.name) == 0) return i;
+      if (str_cmp_caseless(name, control.name.value) == 0) return i;
     }
 
     return -1;
@@ -341,7 +334,7 @@ namespace mod {
 
   Control* ControlBinding::get_pointer (char const* name) const {
     for (auto [ i, control ] : controls) {
-      if (str_cmp_caseless(name, control.name) == 0) return &control;
+      if (str_cmp_caseless(name, control.name.value) == 0) return &control;
     }
 
     return NULL;
@@ -442,7 +435,6 @@ namespace mod {
     Control* control = get_pointer(id);
     
     if (control != NULL) {
-      control->destroy();
       controls.remove(controls.get_index(control));
     }
   }
@@ -451,7 +443,6 @@ namespace mod {
     Control* control = get_pointer(name);
 
     if (control != NULL) {
-      control->destroy();
       controls.remove(controls.get_index(control));
     }
   }
@@ -461,7 +452,6 @@ namespace mod {
   }
 
   void ControlBinding::destroy () {
-    for (auto [ i, control ] : controls) control.destroy();
     controls.destroy();
   }
 
@@ -474,7 +464,7 @@ namespace mod {
 
   char const* Input_t::config_path = "./assets/controls.json";
 
-  Array<Control> Input_t::default_controls = Array<Control>::from_elements(
+  Array<Control> Input_t::default_controls = Array<Control>::from_elements_static(
     Control { "Forward", { { }, { Keycode::W }, { } } },
     Control { "Left", { { }, { Keycode::A }, { } } },
     Control { "Backward", { { }, { Keycode::S }, { } } },
@@ -498,26 +488,34 @@ namespace mod {
       json = { JSONType::Object, "Empty default config" };
     }
 
-    if (json.get_object().items.count > 0) {
-      for (auto [ i, control ] : default_controls) {
-        JSONItem* control_item = json.get_object_item(control.name);
+    try {
+      if (json.get_object().items.count > 0) {
+        for (auto [ i, control ] : default_controls) {
+          JSONItem* control_item = json.get_object_item(control.name.value);
 
-        if (control_item != NULL) {
-          try {
-            bind(control.name, InputCombination::from_json_item(*control_item));
-          } catch (Exception& exception) {
-            printf("Input config warning: ");
-            exception.print();
-            exception.handle();
+          if (control_item != NULL) {
+            try {
+              bind(control.name.value, InputCombination::from_json_item(*control_item));
+            } catch (Exception& exception) {
+              printf("Input config warning: ");
+              exception.print();
+              exception.handle();
+              bind(control);
+            }
+          } else {
             bind(control);
           }
-        } else {
-          bind(control);
         }
+      } else {
+        for (auto [ i, control ] : default_controls) bind(control);
       }
-    } else {
-      for (auto [ i, control ] : default_controls) bind(control);
+    } catch (Exception& exception) {
+      json.destroy();
+      control_binding.destroy();
+      throw exception;
     }
+
+    json.destroy();
 
     return *this;
   }
@@ -592,7 +590,7 @@ namespace mod {
 
 
   void Input_t::show_binding_menu () {
-    static String control_string;
+    static String control_string = String { 0, true };
 
     using namespace ImGui;
 
@@ -601,7 +599,7 @@ namespace mod {
       control_string.clear();
       control.input_combination.generate_string(control_string);
 
-      Text("%s", control.name);
+      Text("%s", control.name.value);
       NextColumn();
       if (Button(control_string.value, { GetContentRegionAvailWidth(), 0 })) {
         begin_capture_binding(control.id);
@@ -612,14 +610,14 @@ namespace mod {
   }
 
   void Input_t::show_binding_modal () const {
-    static String control_string;
+    static String control_string = String { 0, true };
     
     using namespace ImGui;
 
     if (BeginPopupModal("ModEngine Input Binding Capture Modal", NULL, ImGuiWindowFlags_AlwaysAutoResize | ImGuiWindowFlags_NoTitleBar | ImGuiWindowFlags_NoInputs)) {
       if (capture_id == 0) CloseCurrentPopup();
       else {
-        Text("Binding Control %s (Press escape to cancel)", get_control(capture_id).name);
+        Text("Binding Control %s (Press escape to cancel)", get_control(capture_id).name.value);
 
         control_string.clear();
         capture_combo.generate_string(control_string);

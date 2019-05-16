@@ -194,6 +194,7 @@ namespace mod {
     { }
 
 
+
     /* Create a special DOCTYPE type XMLItem */
     static XMLItem doctype (String in_text, XML* in_root = NULL, size_t in_origin_offset = 0) {
       XMLItem out = { "DOCTYPE", XMLType::DocumentType, in_root, in_origin_offset };

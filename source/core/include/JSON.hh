@@ -265,7 +265,7 @@ namespace mod {
 
     /* Destroy a JSONItem and clean up its heap allocation if its type has one */
     ENGINE_API void destroy () const;
-
+    
 
 
     /* Assume a JSONItem is a JSONObject and get a reference to a subitem associated with a particular key.
@@ -838,8 +838,8 @@ namespace mod {
 
     /* Destroy a JSON root and clean up all of its descendants */
     void destroy () {
-      if (origin != NULL) free(origin);
-      if (source != NULL) free(source);
+      if (origin != NULL) memory::deallocate(origin);
+      if (source != NULL) memory::deallocate(source);
       data.destroy();
     }
 

@@ -150,11 +150,11 @@ namespace mod {
     try {
       animation = from_str(origin, static_cast<char*>(source));
     } catch (Exception& exception) {
-      free(source);
+      memory::deallocate(source);
       throw exception;
     }
 
-    free(source);
+    memory::deallocate(source);
 
     return animation;
   }
@@ -186,7 +186,9 @@ namespace mod {
 
 
   void SkeletalAnimation::destroy () {
+    if (origin != NULL) memory::deallocate(origin);
     for (auto [ i, keyframe ] : keyframes) keyframe.destroy();
+    keyframes.destroy();
   }
 
 

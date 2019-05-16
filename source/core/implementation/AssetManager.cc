@@ -69,7 +69,7 @@ namespace mod {
 
 
   void AssetManager_t::update_watched_files (Array<WatchedFileReport>* update_reports_output) {
-    static String report_error_intermediate;
+    static String report_error_intermediate = String { 0, true };
     static WatchedFileReport report;
 
     m_assert(!have_lock, "Unknown error occurred, already had mutex lock at start of AssetManager::update_watched_files");
@@ -569,10 +569,10 @@ namespace mod {
       load_database_from_str(origin, static_cast<char*>(source), err_msg_output, watch_sub);
       if (watch) add_watched_file<void>(origin);
     } catch (Exception& exception) {
-      free(source);
+      memory::deallocate(source);
       throw exception;
     }
 
-    free(source);
+    memory::deallocate(source);
   }
 }

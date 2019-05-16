@@ -86,7 +86,7 @@ namespace mod {
       ComponentType (u32_t capacity, ID in_id, char const* in_name, size_t in_instance_size, size_t in_hash_code, Destroyer in_destroyer)
       : id(in_id)
       , name(str_clone(in_name))
-      , instances(malloc(capacity * in_instance_size))
+      , instances(memory::allocate<void>(capacity * in_instance_size))
       , instance_size(in_instance_size)
       , hash_code(in_hash_code)
       , destroyer(in_destroyer)
@@ -94,7 +94,7 @@ namespace mod {
 
 
       void reallocate (u32_t new_capacity) {
-        instances = realloc(instances, new_capacity * instance_size);
+        memory::reallocate(instances, new_capacity * instance_size);
 
         m_assert(
           instances != NULL,
@@ -108,8 +108,8 @@ namespace mod {
       }
 
       void destroy () {
-        free(name);
-        free(instances);
+        memory::deallocate(name);
+        memory::deallocate(instances);
       }
   };
 
@@ -193,7 +193,7 @@ namespace mod {
 
 
       void destroy () {
-        free(name);
+        memory::deallocate(name);
       }
 
       ENGINE_API static void iterator_execution_instance (SystemIteratorArg* arg);

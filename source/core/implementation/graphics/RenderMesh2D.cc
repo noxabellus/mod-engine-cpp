@@ -394,11 +394,11 @@ namespace mod {
     try {
       mesh = from_str(origin, static_cast<char*>(source));
     } catch (Exception& exception) {
-      free(source);
+      memory::deallocate(source);
       throw exception;
     }
 
-    free(source);
+    memory::deallocate(source);
 
     return mesh;
   }
@@ -439,8 +439,7 @@ namespace mod {
 
   void RenderMesh2D::destroy () {
     if (origin != NULL) {
-      free(origin);
-      origin = NULL;
+      memory::deallocate(origin);
     }
 
     positions.destroy();

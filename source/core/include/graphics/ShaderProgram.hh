@@ -226,7 +226,7 @@ namespace mod {
         "Matrix4, or arrays of these types"
       );
 
-      static Array<s32_t> intermediate_bool_array;
+      static Array<s32_t> intermediate_bool_array = Array<s32_t> { 0, true };
 
       if constexpr (std::is_same<T, bool>::value) {
         intermediate_bool_array.clear();

@@ -76,6 +76,32 @@ namespace ImGui {
 
 #include <extern/ImGuiColorTextEdit/TextEditor.h>
 
+
+#ifdef MEMORY_DEBUG_INDEPTH
+  #include <extern/StackWalker/StackWalker.h>
+
+  class StringStackWalker_t : public StackWalker {
+    public:
+      ENGINE_API static size_t max_msgs;
+
+      StringStackWalker_t ()
+      : StackWalker()
+      { }
+
+      ENGINE_API static StringStackWalker_t& init ();
+
+      ENGINE_API char const* CreateStackStr ();
+
+      ENGINE_API virtual bool ShowCallstack ();
+
+    protected:
+      ENGINE_API virtual void OnOutput (LPCSTR szText);
+  };
+
+  ENGINE_API extern StringStackWalker_t StringStackWalker;
+#endif
+
+
 #pragma clang diagnostic pop
 
 #endif

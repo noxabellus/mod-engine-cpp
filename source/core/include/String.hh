@@ -13,37 +13,38 @@ namespace mod {
     size_t length = 0;
     size_t capacity = 0;
 
+    bool is_static = false;
+
 
     /* Create a new zero-initialized String */
     String () = default;
 
     /* Create a new String with a specific capacity */
-    String (size_t new_capacity)
-    : value(static_cast<char*>(malloc(new_capacity)))
-    , length(0)
-    , capacity(new_capacity)
+    String (size_t in_capacity, bool in_is_static = false)
+    : is_static(in_is_static)
     {
-      m_assert(value != NULL, "Out of memory or other null pointer error while allocating String value with capacity %zu", capacity);
+      grow_allocation(in_capacity);
     }
 
     /* Create a new String with explicit initialization of all members */
-    String (char* new_value, size_t new_length, size_t new_capacity)
-    : value(new_value)
-    , length(new_length)
-    , capacity(new_capacity)
+    String (char* in_value, size_t in_length, size_t in_capacity, bool in_is_static = false)
+    : value(in_value)
+    , length(in_length)
+    , capacity(in_capacity)
+    , is_static(in_is_static)
     { }
 
     /* Create a new String by copying an existing str or substr */
-    ENGINE_API String (char const* new_value, size_t new_length = 0);
+    ENGINE_API String (char const* in_value, size_t in_length = 0, bool in_is_static = false);
 
     /* Create a new String by taking ownership of an existing str */
-    ENGINE_API static String from_ex (char* value, size_t length = 0);
+    ENGINE_API static String from_ex (char* value, size_t length = 0, bool is_static = false);
 
     
 
     /* Create a String by copying it from a file.
      * Throws an exception if the file could not be loaded */
-    ENGINE_API static String from_file (char const* path);
+    ENGINE_API static String from_file (char const* path, bool is_static = false);
 
     /* Create a new String by cloning an existing String */
     String clone () {
@@ -64,10 +65,8 @@ namespace mod {
     }
 
 
-    /* Free the heap allocation of a String */
-    void destroy () {
-      if (value != NULL) free(value);
-    }
+    /* Clean up the heap allocation of a String */
+    ENGINE_API void destroy ();
 
     
     /* Access a char at a specific offset in a String.
@@ -91,13 +90,11 @@ namespace mod {
 
 
     /* Grow the allocation of a String (if necessary) to support some additional length (Defaults to 1) */
-    ENGINE_API void grow_allocation (size_t additional_length = 1);
+    ENGINE_API void grow_allocation (size_t additional_length);
 
     /* Grow the allocation if necessary to encompass a new length.
      * This is different from grow_allocation in that it takes a new total rather than an addition */
-    void reallocate (size_t new_length) {
-      if (new_length > length) grow_allocation(new_length - length);
-    }
+    ENGINE_API void reallocate (size_t new_length);
 
 
     /* Set the value of String by copying from a str or substr */
@@ -110,7 +107,7 @@ namespace mod {
     ENGINE_API void insert (size_t offset, char const* new_value, size_t new_value_length = 0);
 
     /* Remove a section of a String */
-    ENGINE_API void remove (size_t offset, size_t remove_length = 1);
+    ENGINE_API void remove (size_t offset, size_t remove_length);
 
 
     /* Overwrite a String with the product of vsnprintf */
@@ -134,72 +131,42 @@ namespace mod {
     ENGINE_API void fmt_insert (size_t offset, char const* fmt, ...);
 
     /* Compare the start of a String to a str */
-    bool starts_with (char const* other_value, size_t other_value_length = 0) const {
-      if (other_value_length == 0) other_value_length = strlen(other_value);
-      return length >= other_value_length && strncmp(value, other_value, other_value_length) == 0;
-    }
+    ENGINE_API bool starts_with (char const* other_value, size_t other_value_length = 0) const;
 
     /* Compare the end of a String to a str */
-    bool ends_with (char const* other_value, size_t other_value_length = 0) const {
-      if (other_value_length == 0) other_value_length = strlen(other_value);
-      return length >= other_value_length && strncmp(value + length - other_value_length, other_value, other_value_length) == 0;
-    }
+    ENGINE_API bool ends_with (char const* other_value, size_t other_value_length = 0) const;
 
     /* Compare the end of a String with another String */
-    bool starts_with (String const& other) const {
-      return starts_with(other.value, other.length);
-    }
+    ENGINE_API bool starts_with (String const& other) const;
 
     /* Compare the end of a String with another String */
-    bool ends_with (String const& other) const {
-      return ends_with(other.value, other.length);
-    }
+    ENGINE_API bool ends_with (String const& other) const;
 
     /* Compare a String to a str */
-    bool equal (char const* other_value, size_t other_value_length = 0) const {
-      if (other_value_length == 0) other_value_length = strlen(other_value);
-      return length == other_value_length && strncmp(value, other_value, other_value_length) == 0;
-    }
+    ENGINE_API bool equal (char const* other_value, size_t other_value_length = 0) const;
 
     /* Compare a String to another String */
-    bool equal (String const* other_string) const {
-      return equal(other_string->value, other_string->length);
-    }
+    ENGINE_API bool equal (String const* other_string) const;
 
     /* Compare a String to a str */
-    bool not_equal (char const* other_value, size_t other_value_length = 0) const {
-      if (other_value_length == 0) other_value_length = strlen(other_value);
-      return length != other_value_length || strncmp(value, other_value, other_value_length) != 0;
-    }
+    ENGINE_API bool not_equal (char const* other_value, size_t other_value_length = 0) const;
 
     /* Compare a String to another String */
-    bool not_equal (String const* other_string) const {
-      return not_equal(other_string->value, other_string->length);
-    }
+    ENGINE_API bool not_equal (String const* other_string) const;
 
 
     
     /* Compare a String to a str, ignoring character case */
-    bool equal_caseless (char const* other_value, size_t other_value_length = 0) const {
-      if (other_value_length == 0) other_value_length = strlen(other_value);
-      return length == other_value_length && str_cmp_caseless(value, other_value, other_value_length) == 0;
-    }
+    ENGINE_API bool equal_caseless (char const* other_value, size_t other_value_length = 0) const;
 
     /* Compare a String to another String, ignoring character case */
-    bool equal_caseless (String const* other_string) const {
-      return equal_caseless(other_string->value, other_string->length);
-    }
+    ENGINE_API bool equal_caseless (String const* other_string) const;
 
     /* Compare a String to a str, ignoring character case */
-    bool not_equal_caseless (char const* other_value, size_t other_value_length = 0) const {
-      if (other_value_length == 0) other_value_length = strlen(other_value);
-      return length != other_value_length || str_cmp_caseless(value, other_value, other_value_length) != 0;
-    }
+    ENGINE_API bool not_equal_caseless (char const* other_value, size_t other_value_length = 0) const;
 
     /* Compare a String to another String, ignoring character case */
-    bool not_equal_caseless (String const* other_string) const {
-      return not_equal_caseless(other_string->value, other_string->length);
-    }
+    ENGINE_API bool not_equal_caseless (String const* other_string) const;
   };
 }
 

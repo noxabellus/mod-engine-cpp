@@ -57,21 +57,18 @@ namespace mod {
     try {
       shader = { origin, type, static_cast<char*>(source) };
     } catch (Exception& exception) {
-      free(source);
+      memory::deallocate(source);
       throw exception;
     }
 
-    free(source);
+    memory::deallocate(source);
 
     return shader;
   }
 
 
   void Shader::destroy () {
-    if (origin != NULL) {
-      free(origin);
-      origin = NULL;
-    }
+    if (origin != NULL) memory::deallocate(origin);
     
     if (gl_id != 0) {
       glDeleteShader(gl_id);

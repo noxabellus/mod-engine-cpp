@@ -141,13 +141,16 @@ namespace mod {
     String sid = { };
 
     String name = { };
-    Array<DAEIBone> children = { 256 };
+    Array<DAEIBone> children;
     Matrix4 base_matrix = { };
     Matrix4 bind_matrix = { };
     Matrix4 inverse_bind_matrix = { };
 
 
-    DAEIBone () = default;
+    DAEIBone () { }
+    DAEIBone (size_t children_alloc)
+    : children(children_alloc)
+    { }
 
     DAEIBone& operator = (DAEIBone const& bone) {
       parent = bone.parent;
@@ -157,6 +160,7 @@ namespace mod {
       sid = bone.sid;
 
       name = bone.name;
+      // children.destroy();
       children = bone.children;
       for (auto [ i, child ] : children) child.parent = this;
       base_matrix = bone.base_matrix;

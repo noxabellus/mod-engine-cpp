@@ -25,7 +25,7 @@ namespace mod {
     /* Create a new initialized ThreadPool with the given number of threads */
     ENGINE_API ThreadPool (size_t num_threads);
 
-    /* Clean up a ThreadPool and free its heap allocation, after waiting for all threads to complete their Jobs */
+    /* Clean up a ThreadPool and clean up its heap allocation, after waiting for all threads to complete their Jobs */
     ENGINE_API void destroy ();
 
 
