@@ -19,6 +19,8 @@
 #include "math/lib.hh"
 #include "graphics/lib.hh"
 
+#include "DAE.hh"
+
 #include "AssetHandle.hh"
 #include "AssetManager.hh"
 

@@ -1,5 +1,12 @@
+#ifndef DAE_H
+#define DAE_H
 
-#include "../main.hh"
+#include "XML.hh"
+#include "math/lib.hh"
+#include "graphics/lib.hh"
+
+
+
 namespace mod {
   struct DAE;
 
@@ -115,9 +122,9 @@ namespace mod {
     , color(-1)
     { }
 
-    MODULE_INTERNAL void set_attributes (s64_t in_normal, s64_t in_uv, s64_t in_color);
+    ENGINE_API void set_attributes (s64_t in_normal, s64_t in_uv, s64_t in_color);
 
-    MODULE_INTERNAL bool has_same_attributes (s64_t test_normal, s64_t test_uv, s64_t test_color) const;
+    ENGINE_API bool has_same_attributes (s64_t test_normal, s64_t test_uv, s64_t test_color) const;
   };
 
 
@@ -171,25 +178,25 @@ namespace mod {
     }
 
 
-    MODULE_INTERNAL void add_child (DAEIBone const& bone);
+    ENGINE_API void add_child (DAEIBone const& bone);
 
-    MODULE_INTERNAL void remove_child (DAEIBone& bone);
+    ENGINE_API void remove_child (DAEIBone& bone);
 
-    MODULE_INTERNAL void calculate_bind (Matrix4 const& transform);
+    ENGINE_API void calculate_bind (Matrix4 const& transform);
 
-    MODULE_INTERNAL Transform3D final_transform () const;
+    ENGINE_API Transform3D final_transform () const;
 
-    MODULE_INTERNAL static DAEIBone process (DAE const& dae, XMLItem& joint);
+    ENGINE_API static DAEIBone process (DAE const& dae, XMLItem& joint);
 
-    MODULE_INTERNAL bool filter (std::function<bool (DAEIBone const&)> filter);
+    ENGINE_API bool filter (std::function<bool (DAEIBone const&)> filter);
 
-    MODULE_INTERNAL void collapse (Array<DAEBoneBinding>& out_bones, s32_t parent_index = -1) const;
+    ENGINE_API void collapse (Array<DAEBoneBinding>& out_bones, s32_t parent_index = -1) const;
 
-    MODULE_INTERNAL bool traverse_cond (std::function<bool (DAEIBone const&)> callback) const;
+    ENGINE_API bool traverse_cond (std::function<bool (DAEIBone const&)> callback) const;
 
-    MODULE_INTERNAL void traverse (std::function<void (DAEIBone const&)> callback) const;
+    ENGINE_API void traverse (std::function<void (DAEIBone const&)> callback) const;
 
-    MODULE_INTERNAL void destroy ();
+    ENGINE_API void destroy ();
   };
   
 
@@ -234,7 +241,7 @@ namespace mod {
     f32_t time;
     Array<DAEIChannel> channels;
 
-    MODULE_INTERNAL DAEIChannel& get_channel (u32_t target_index) const;
+    ENGINE_API DAEIChannel& get_channel (u32_t target_index) const;
   };
 
   struct DAEBoneBindingList {
@@ -247,11 +254,11 @@ namespace mod {
 
     void destroy () { bindings.destroy(); }
 
-    MODULE_INTERNAL bool traverse_cond (std::function<bool (size_t, DAEBoneBinding const&)> callback, size_t index = 0) const;
+    ENGINE_API bool traverse_cond (std::function<bool (size_t, DAEBoneBinding const&)> callback, size_t index = 0) const;
 
-    MODULE_INTERNAL void traverse (std::function<void (size_t, DAEBoneBinding const&)> callback, size_t index = 0) const;
+    ENGINE_API void traverse (std::function<void (size_t, DAEBoneBinding const&)> callback, size_t index = 0) const;
 
-    MODULE_INTERNAL void collapse (Array<Bone>& out_array) const;
+    ENGINE_API void collapse (Array<Bone>& out_array) const;
   };
 
   struct DAEIAnimation {
@@ -260,22 +267,22 @@ namespace mod {
     f32_t length;
     Array<DAEIKeyframe> keyframes;
 
-    MODULE_INTERNAL DAEIKeyframe& get_keyframe_for_time (f32_t time);
+    ENGINE_API DAEIKeyframe& get_keyframe_for_time (f32_t time);
 
-    MODULE_INTERNAL static DAEIAnimation process (DAE const* dae, DAEIBone const& root_ibone, DAEAnimClip& clip);
+    ENGINE_API static DAEIAnimation process (DAE const* dae, DAEIBone const& root_ibone, DAEAnimClip& clip);
 
-    MODULE_INTERNAL void calculate_bind (DAEIBone const& root_ibone, Matrix4 const& transform) const;
+    ENGINE_API void calculate_bind (DAEIBone const& root_ibone, Matrix4 const& transform) const;
 
-    MODULE_INTERNAL void collapse (DAEBoneBindingList const& binding_list, Array<SkeletalKeyframe>& out_array) const;
+    ENGINE_API void collapse (DAEBoneBindingList const& binding_list, Array<SkeletalKeyframe>& out_array) const;
 
-    MODULE_INTERNAL void filter (DAEBoneBindingList const& binding_list) const;
+    ENGINE_API void filter (DAEBoneBindingList const& binding_list) const;
 
-    MODULE_INTERNAL void destroy ();
+    ENGINE_API void destroy ();
   };
 
 
   struct DAE {
-    MODULE_INTERNAL static std::function<bool (DAEIBone const&)> std_bone_filter;
+    ENGINE_API static std::function<bool (DAEIBone const&)> std_bone_filter;
 
 
     XML xml;
@@ -305,9 +312,9 @@ namespace mod {
 
 
     /* Create a new DAE from an XML, taking ownership of the XML */
-    MODULE_INTERNAL DAE (XML const& in_xml, Matrix4 const& in_transform = Constants::Matrix4::identity, bool apply_bone_filter = true, std::function<bool (DAEIBone const&)> bone_filter = std_bone_filter);
+    ENGINE_API DAE (XML const& in_xml, Matrix4 const& in_transform = Constants::Matrix4::identity, bool apply_bone_filter = true, std::function<bool (DAEIBone const&)> bone_filter = std_bone_filter);
 
-    MODULE_INTERNAL void destroy () ;
+    ENGINE_API void destroy () ;
 
 
     static DAE from_str (char const* origin, char const* source, Matrix4 const& transform = Constants::Matrix4::identity, bool apply_bone_filter = true, std::function<bool (DAEIBone const&)> bone_filter = std_bone_filter) {
@@ -323,52 +330,52 @@ namespace mod {
     }
     
 
-    MODULE_INTERNAL DAEAccessor& get_accessor (String const& id) const;
+    ENGINE_API DAEAccessor& get_accessor (String const& id) const;
 
-    MODULE_INTERNAL DAESource& get_source (String const& id) const;
+    ENGINE_API DAESource& get_source (String const& id) const;
 
-    MODULE_INTERNAL static DAEInput& get_poly_input (DAETriangles const& triangles, char const* semantic);
+    ENGINE_API static DAEInput& get_poly_input (DAETriangles const& triangles, char const* semantic);
 
-    MODULE_INTERNAL static DAEInput* get_poly_input_pointer (DAETriangles const& triangles, char const* semantic);
+    ENGINE_API static DAEInput* get_poly_input_pointer (DAETriangles const& triangles, char const* semantic);
 
-    MODULE_INTERNAL DAEInput& get_wd_input (char const* semantic) const;
+    ENGINE_API DAEInput& get_wd_input (char const* semantic) const;
 
-    MODULE_INTERNAL DAEInput* get_wd_input_pointer (char const* semantic) const;
+    ENGINE_API DAEInput* get_wd_input_pointer (char const* semantic) const;
 
-    MODULE_INTERNAL DAEInput& get_joint_input (char const* semantic) const;
+    ENGINE_API DAEInput& get_joint_input (char const* semantic) const;
 
-    MODULE_INTERNAL DAEInput* get_joint_input_pointer (char const* semantic) const;
+    ENGINE_API DAEInput* get_joint_input_pointer (char const* semantic) const;
 
-    MODULE_INTERNAL s64_t get_bone_index (String& id) const;
+    ENGINE_API s64_t get_bone_index (String& id) const;
 
-    MODULE_INTERNAL static s64_t get_origin_bone_index_from_node_id (DAEIBone const& root_ibone, String& id);
+    ENGINE_API static s64_t get_origin_bone_index_from_node_id (DAEIBone const& root_ibone, String& id);
 
-    MODULE_INTERNAL s64_t get_filtered_bone_index_from_node_id (String& id) const;
+    ENGINE_API s64_t get_filtered_bone_index_from_node_id (String& id) const;
 
-    MODULE_INTERNAL s64_t get_filtered_bone_index (u32_t origin_index) const;
+    ENGINE_API s64_t get_filtered_bone_index (u32_t origin_index) const;
     
-    MODULE_INTERNAL DAEAnimClip& get_anim_clip (char const* name) const;
+    ENGINE_API DAEAnimClip& get_anim_clip (char const* name) const;
 
-    MODULE_INTERNAL DAEAnimChannel& get_anim_channel (String& id) const;
+    ENGINE_API DAEAnimChannel& get_anim_channel (String& id) const;
 
-    MODULE_INTERNAL DAEAnimSampler& get_anim_sampler (String& id) const;
+    ENGINE_API DAEAnimSampler& get_anim_sampler (String& id) const;
 
-    MODULE_INTERNAL static DAEInput& get_sampler_input (DAEAnimSampler const& sampler, char const* semantic);
+    ENGINE_API static DAEInput& get_sampler_input (DAEAnimSampler const& sampler, char const* semantic);
 
-    MODULE_INTERNAL DAEIAnimation& get_animation (char const* name) const;
-
-
+    ENGINE_API DAEIAnimation& get_animation (char const* name) const;
 
 
 
 
 
-    MODULE_INTERNAL RenderMesh3D load_mesh () const;
+
+
+    ENGINE_API RenderMesh3D load_mesh () const;
       
 
 
 
-    MODULE_INTERNAL Skeleton load_skeleton () const;
+    ENGINE_API Skeleton load_skeleton () const;
 
 
     
@@ -376,7 +383,7 @@ namespace mod {
 
 
 
-    MODULE_INTERNAL SkeletalAnimation load_animation (char const* name = NULL) const;
+    ENGINE_API SkeletalAnimation load_animation (char const* name = NULL) const;
 
 
 
@@ -385,10 +392,12 @@ namespace mod {
 
 
   private:
-    MODULE_INTERNAL DAEVertexBinding& get_vertex_binding (String const& id) const;
+    ENGINE_API DAEVertexBinding& get_vertex_binding (String const& id) const;
 
-    MODULE_INTERNAL Array<DAEInput> gather_inputs (XMLItem& origin) const;
+    ENGINE_API Array<DAEInput> gather_inputs (XMLItem& origin) const;
 
-    MODULE_INTERNAL void gather_base_data (XMLItem& section);
+    ENGINE_API void gather_base_data (XMLItem& section);
   };
 }
+
+#endif

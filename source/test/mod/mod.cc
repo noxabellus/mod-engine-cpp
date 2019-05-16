@@ -2,7 +2,7 @@
 #include "../examples/gui/main_menu_ex.cc"
 #include "../examples/gui/vendor_ex.cc"
 
-#include "DAE.cc"
+
 
 MODULE_API void module_init ();
 

@@ -14,6 +14,8 @@
 #include "math/lib.cc"
 #include "graphics/lib.cc"
 
+#include "DAE.cc"
+
 #include "AssetManager.cc"
 
 #include "Input.cc"

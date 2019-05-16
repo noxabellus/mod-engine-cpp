@@ -1,4 +1,4 @@
-#include "DAE.hh"
+#include "../include/DAE.hh"
 
 
 
@@ -271,7 +271,7 @@ namespace mod {
 
 
   void DAEIAnimation::filter (DAEBoneBindingList const& binding_list) const {
-    static auto const inner_filter = [&] (DAEIKeyframe& keyframe) -> bool {
+    auto const inner_filter = [&] (DAEIKeyframe& keyframe) -> bool {
       for (auto [ j, channel ]: keyframe.channels) {
         if (channel.filtered) continue;
         
@@ -1114,8 +1114,6 @@ namespace mod {
 
       final_uvs.append(uv);
 
-      DAEIVertex ivert = iv;
-      s64_t color_index = iv.color;
       Vector3f color = { 1, 1, 1 };
       
       if (iv.color != -1) {
