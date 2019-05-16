@@ -55,7 +55,7 @@ All assets used by the engine or test game utilize open source or public domain 
 
 
 ## Project Status
-This is still very early in production, and code is being ported from the C-only prototype, but a list of architectural elements that have been implemented to some degree is as follows:
+This is still early in production, but a list of architectural elements that have been implemented to some degree is as follows:
 + Various generic data structures:
   - Bitmask (Bit flag set template)
   - Dynamic array (Template)
