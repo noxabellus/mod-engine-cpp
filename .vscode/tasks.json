@@ -241,6 +241,20 @@
       }
     },
 
+    
+    {
+      "label": "Debug memory leaks (Windows)",
+      "type": "shell",
+      "group": "build",
+      "command": ".\\build.bat memory_debugging engine_debug include test_game_debug test_mod_debug run_debug",
+      "problemMatcher": [],
+      "presentation": {
+        "panel": "shared",
+        "showReuseMessage": false,
+        "clear": true
+      }
+    },
+
 
     {
       "label": "Rebuild Full Release Test and Run (Windows)",
