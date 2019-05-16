@@ -25,8 +25,12 @@ namespace mod {
     enum: u8_t {
       Position,
       Normal,
+
       UV,
       Color,
+
+      SkinIndices,
+      SkinWeights,
 
       Face,
 
@@ -38,8 +42,12 @@ namespace mod {
     static constexpr char const* names [total_attribute_count] = {
       "Position",
       "Normal",
+
       "UV",
       "Color",
+
+      "SkinIndices",
+      "SkinWeights",
 
       "Face"
     };
@@ -65,27 +73,43 @@ namespace mod {
   struct VertexRef3D {
     Vector3f& position;
     Vector3f& normal;
+
     Optional<Vector2f&> uv;
     Optional<Vector3f&> color;
+
+    Optional<Vector4u&> skin_indices;
+    Optional<Vector4f&> skin_weights;
   };
 
   struct VertexData3D {
     Vector3f position;
     Vector3f normal;
+
     Optional<Vector2f> uv;
     Optional<Vector3f> color;
+
+    Optional<Vector4u> skin_indices;
+    Optional<Vector4f> skin_weights;
 
     VertexData3D () { }
     VertexData3D (
       Vector3f const& in_position,
       Vector3f const& in_normal,
+
       Optional<Vector2f> const& in_uv = { },
-      Optional<Vector3f> const& in_color = { }
+      Optional<Vector3f> const& in_color = { },
+      
+      Optional<Vector4u> const& in_skin_indices = { },
+      Optional<Vector4f> const& in_skin_weights = { }
     )
     : position(in_position)
     , normal(in_normal)
+    
     , uv(in_uv)
     , color(in_color)
+
+    , skin_indices(in_skin_indices)
+    , skin_weights(in_skin_weights)
     { }
   };
   
@@ -103,8 +127,12 @@ namespace mod {
 
     Array<Vector3f> positions;
     Array<Vector3f> normals;
+
     Array<Vector2f> uvs;
     Array<Vector3f> colors;
+
+    Array<Vector4u> skin_indices;
+    Array<Vector4f> skin_weights;
 
     Array<Vector3u> faces;
 
@@ -135,8 +163,12 @@ namespace mod {
       size_t vertex_count,
       Vector3f const* in_positions,
       Vector3f const* in_normals,
+
       Vector2f const* in_uvs,
       Vector3f const* in_colors,
+
+      Vector4u const* in_skin_indices,
+      Vector4f const* in_skin_weights,
       
       size_t face_count,
       Vector3u const* in_faces,
@@ -167,6 +199,8 @@ namespace mod {
       in_normals,
       NULL,
       NULL,
+      NULL,
+      NULL,
       face_count,
       in_faces,
       in_material_config
@@ -195,6 +229,8 @@ namespace mod {
       NULL,
       NULL,
       NULL,
+      NULL,
+      NULL,
       face_count,
       in_faces,
       in_material_config
@@ -212,6 +248,8 @@ namespace mod {
       Array<Vector3f> const& in_normals,
       Array<Vector2f> const& in_uvs,
       Array<Vector3f> const& in_colors,
+      Array<Vector4u> const& in_skin_indices,
+      Array<Vector4f> const& in_skin_weights,
       
       Array<Vector3u> const& in_faces,
 
@@ -225,6 +263,8 @@ namespace mod {
       in_normals.elements,
       in_uvs.elements,
       in_colors.elements,
+      in_skin_indices.elements,
+      in_skin_weights.elements,
       in_faces.count,
       in_faces.elements,
       in_material_config
@@ -290,8 +330,12 @@ namespace mod {
       size_t vertex_count,
       Vector3f* positions,
       Vector3f* normals,
+
       Vector2f* uvs,
       Vector3f* colors,
+
+      Vector4u* skin_indices,
+      Vector4f* skin_weights,
       
       size_t face_count,
       Vector3u* faces,
@@ -322,6 +366,8 @@ namespace mod {
       normals,
       NULL,
       NULL,
+      NULL,
+      NULL,
       face_count,
       faces,
       material_config
@@ -349,6 +395,8 @@ namespace mod {
       NULL,
       NULL,
       NULL,
+      NULL,
+      NULL,
       face_count,
       faces,
       material_config
@@ -363,8 +411,12 @@ namespace mod {
       
       Array<Vector3f> const& positions,
       Array<Vector3f> const& normals,
+
       Array<Vector2f> const& uvs,
       Array<Vector3f> const& colors,
+
+      Array<Vector4u> const& skin_indices,
+      Array<Vector4f> const& skin_weights,
       
       Array<Vector3u> const& faces,
 
@@ -524,6 +576,29 @@ namespace mod {
     ENGINE_API void disable_colors ();
 
 
+    /* Enable skinning for a RenderMesh3D and initialize the data by copying from buffera.
+     * Assumes there is at least mesh.positions.count Vector4s in the buffers.
+     * Panics if skinning is already enabled */
+    ENGINE_API void enable_skinning (Vector4u const* in_skin_indices, Vector4f const* in_skin_weights);
+
+    /* Enable skinning for a RenderMesh3D and initialize the data by copying from arrays.
+     * Panics if there are not enough elements in the arrays, or if skinning is already enabled */
+    ENGINE_API void enable_skinning (Array<Vector4u> const& in_skin_indices, Array<Vector4f> const& in_skin_weights);
+
+    /* Enable skinning for a RenderMesh3D and initialize the data by taking ownership of buffers.
+     * Assumes there is at least mesh.positions.count Vector4s in the buffers.
+     * Panics if skinning is already enabled */
+    ENGINE_API void enable_skinning_ex (Vector4u* in_skin_indices, Vector4f* in_skin_weights);
+
+    /* Enable skinning for a RenderMesh3D and initialize the data by taking ownership of arrays.
+     * Panics if there are not enough elements in the arrays, or if skinning is already enabled */
+    ENGINE_API void enable_skinning_ex (Array<Vector4u> const& in_skin_indices, Array<Vector4f> const& in_skin_weights);
+
+    /* Disable skinning for a RenderMesh3D and clean up its data.
+     * Does nothing if skinning is not enabled */
+    ENGINE_API void disable_skinning ();
+
+
 
     /* Get references to the various attributes of a vertex in a RenderMesh3D.
      * Returns a set of optional references, where each reference is only enabled if the corresponding attribute is enabled for the mesh.
@@ -560,6 +635,8 @@ namespace mod {
       needs_update.set_multiple(Position, bounds_flag, Normal);
       if (uvs.elements != NULL) needs_update.set(UV);
       if (colors.elements != NULL) needs_update.set(Color);
+      if (skin_indices.elements != NULL) needs_update.set(SkinIndices);
+      if (skin_weights.elements != NULL) needs_update.set(SkinWeights);
     }
 
     /* Mark a RenderMesh3D to have its vertex positions and bounds updated before use */
@@ -580,6 +657,16 @@ namespace mod {
     /* Mark a RenderMesh3D to have its colors updated before use */
     void dirty_colors () {
       if (colors.elements != NULL) needs_update.set(Mesh3DAttribute::Color);
+    }
+
+    /* Mark a RenderMesh3D to have its skin_indices updated before use */
+    void dirty_skin_indices () {
+      if (skin_indices.elements != NULL) needs_update.set(Mesh3DAttribute::SkinIndices);
+    }
+
+    /* Mark a RenderMesh3D to have its skin_weights updated before use */
+    void dirty_skin_weights () {
+      if (skin_weights.elements != NULL) needs_update.set(Mesh3DAttribute::SkinWeights);
     }
 
 

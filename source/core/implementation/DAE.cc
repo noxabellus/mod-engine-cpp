@@ -1163,25 +1163,6 @@ namespace mod {
     }
     
 
-
-
-    RenderMesh3D dae_mesh = RenderMesh3D::from_ex(
-      "collada!",
-
-      true,
-
-      final_positions.count,
-      final_positions.elements,
-      incomplete_normals || final_normals.count == 0? NULL : final_normals.elements,
-      final_uvs.count == 0? NULL : final_uvs.elements,
-      final_colors.count == 0? NULL : final_colors.elements,
-
-      final_faces.count,
-      final_faces.elements,
-
-      final_material_config
-    );
-
     for (auto [ i, joint ] : final_joints) {
       Vector4f& weight = final_weights[i];
 
@@ -1202,20 +1183,42 @@ namespace mod {
     }
 
 
-    dae_mesh.use();
+    RenderMesh3D dae_mesh = RenderMesh3D::from_ex(
+      "collada!",
 
-    u32_t buffers [2];
-    glGenBuffers(2, buffers);
+      true,
 
-    glBindBuffer(GL_ARRAY_BUFFER, buffers[0]);
-    glVertexAttribIPointer(4, 4, GL_UNSIGNED_INT, sizeof(Vector4u), reinterpret_cast<void*>(0));
-    glBufferData(GL_ARRAY_BUFFER, final_joints.count * sizeof(Vector4u), final_joints.elements, GL_DYNAMIC_DRAW);
-    glEnableVertexAttribArray(4);
+      final_positions.count,
+      final_positions.elements,
+      incomplete_normals || final_normals.count == 0? NULL : final_normals.elements,
+      
+      final_uvs.count == 0? NULL : final_uvs.elements,
+      final_colors.count == 0? NULL : final_colors.elements,
 
-    glBindBuffer(GL_ARRAY_BUFFER, buffers[1]);
-    glVertexAttribPointer(5, 4, GL_FLOAT, GL_FALSE, sizeof(Vector4f), reinterpret_cast<void*>(0));
-    glBufferData(GL_ARRAY_BUFFER, final_weights.count * sizeof(Vector4f), final_weights.elements, GL_DYNAMIC_DRAW);
-    glEnableVertexAttribArray(5);
+      final_joints.count == 0? NULL : final_joints.elements,
+      final_weights.count == 0? NULL : final_weights.elements,
+
+      final_faces.count,
+      final_faces.elements,
+
+      final_material_config
+    );
+
+
+    // dae_mesh.use();
+
+    // u32_t buffers [2];
+    // glGenBuffers(2, buffers);
+
+    // glBindBuffer(GL_ARRAY_BUFFER, buffers[0]);
+    // glVertexAttribIPointer(4, 4, GL_UNSIGNED_INT, sizeof(Vector4u), reinterpret_cast<void*>(0));
+    // glBufferData(GL_ARRAY_BUFFER, final_joints.count * sizeof(Vector4u), final_joints.elements, GL_DYNAMIC_DRAW);
+    // glEnableVertexAttribArray(4);
+
+    // glBindBuffer(GL_ARRAY_BUFFER, buffers[1]);
+    // glVertexAttribPointer(5, 4, GL_FLOAT, GL_FALSE, sizeof(Vector4f), reinterpret_cast<void*>(0));
+    // glBufferData(GL_ARRAY_BUFFER, final_weights.count * sizeof(Vector4f), final_weights.elements, GL_DYNAMIC_DRAW);
+    // glEnableVertexAttribArray(5);
 
 
     i_joints.destroy();
@@ -1224,8 +1227,8 @@ namespace mod {
     i_indices.destroy();
 
     // REMOVE THIS when skinned meshes are implemented
-    final_joints.destroy();
-    final_weights.destroy();
+    // final_joints.destroy();
+    // final_weights.destroy();
 
 
     return dae_mesh;

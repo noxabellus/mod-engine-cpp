@@ -24,7 +24,7 @@ void module_init () {
   /* XML TEST */
   Matrix4 dae_tran = Transform3D { 0, Quaternion::from_euler(Euler { Vector3f { 0, 0, num::deg_to_rad(180) } }), 1 }.compose();
 
-  DAE dae = DAE::from_file("./assets/meshes/animated_character_underwear.dae", dae_tran);
+  DAE dae = DAE::from_file("./assets/meshes/animated_character.dae", dae_tran);
 
   RenderMesh3D dae_mesh = dae.load_mesh();
 
@@ -96,7 +96,7 @@ void module_init () {
       Constants::Quaternion::identity,
       1
     });
-    // character.add_component(weight_check_mat);
+    character.add_component(weight_check_mat);
     character.add_component(BasicInput { true, 64 });
     character.add_component(RenderMesh3DHandle { &dae_mesh });
     // character.add_component(SkeletonHandle { &dae_skel });
@@ -127,11 +127,11 @@ void module_init () {
      )
     ));
 
-    MaterialInstance unlit_color_a = { unlit_color_uniform_mat };
-    MaterialInstance unlit_color_b = { unlit_color_uniform_mat };
-    unlit_color_a.set_uniform("color", Vector3f { 1, 0, 0 });
-    unlit_color_b.set_uniform("color", Vector3f { 0, 0, 1 });
-    character.add_component(MaterialSet::from_ex("UnlitColors", Array<MaterialSetEntry>::from_elements(unlit_color_a, unlit_color_b)));
+    // MaterialInstance unlit_color_a = { unlit_color_uniform_mat };
+    // MaterialInstance unlit_color_b = { unlit_color_uniform_mat };
+    // unlit_color_a.set_uniform("color", Vector3f { 1, 0, 0 });
+    // unlit_color_b.set_uniform("color", Vector3f { 0, 0, 1 });
+    // character.add_component(MaterialSet::from_ex("UnlitColors", Array<MaterialSetEntry>::from_elements(unlit_color_a, unlit_color_b)));
   }
 
   EntityHandle plane; {

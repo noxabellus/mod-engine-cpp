@@ -38,6 +38,14 @@ namespace mod {
     glBindBuffer(GL_ARRAY_BUFFER, mesh->gl_vbos[Color]);
     glVertexAttribPointer(Color, 3, GL_FLOAT, GL_FALSE, sizeof(Vector3f), reinterpret_cast<void*>(0));
 
+    // Setup skin indices attrib, do not copy data or enable
+    glBindBuffer(GL_ARRAY_BUFFER, mesh->gl_vbos[SkinIndices]);
+    glVertexAttribIPointer(SkinIndices, 4, GL_UNSIGNED_INT, sizeof(Vector4u), reinterpret_cast<void*>(0));
+
+    // Setup skin weights attrib, do not copy data or enable
+    glBindBuffer(GL_ARRAY_BUFFER, mesh->gl_vbos[SkinWeights]);
+    glVertexAttribPointer(SkinWeights, 4, GL_FLOAT, GL_FALSE, sizeof(Vector4f), reinterpret_cast<void*>(0));
+
 
     // Setup faces and copy data
     glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, mesh->gl_vbos[Face]);
@@ -74,6 +82,23 @@ namespace mod {
     glBindVertexArray(0);
   }
 
+  inline void init_gl_skinning (RenderMesh3D* mesh) {
+    // TODO switch to DSA style
+    
+    glBindVertexArray(mesh->gl_vao);
+    
+    glBindBuffer(GL_ARRAY_BUFFER, mesh->gl_vbos[Mesh3DAttribute::SkinIndices]);
+    glBufferData(GL_ARRAY_BUFFER, mesh->skin_indices.count * sizeof(Vector4u), mesh->skin_indices.elements, mesh->dynamic? GL_DYNAMIC_DRAW : GL_STATIC_DRAW);
+    glEnableVertexAttribArray(Mesh3DAttribute::SkinIndices);
+    
+    glBindBuffer(GL_ARRAY_BUFFER, mesh->gl_vbos[Mesh3DAttribute::SkinWeights]);
+    glBufferData(GL_ARRAY_BUFFER, mesh->skin_weights.count * sizeof(Vector4f), mesh->skin_weights.elements, mesh->dynamic? GL_DYNAMIC_DRAW : GL_STATIC_DRAW);
+    glEnableVertexAttribArray(Mesh3DAttribute::SkinWeights);
+
+    glBindBuffer(GL_ARRAY_BUFFER, 0);
+    glBindVertexArray(0);
+  }
+
   inline void disable_gl_uvs (RenderMesh3D* mesh) {
     // TODO switch to DSA style
 
@@ -90,6 +115,17 @@ namespace mod {
     glBindVertexArray(mesh->gl_vao);
 
     glDisableVertexAttribArray(Mesh3DAttribute::Color);
+
+    glBindVertexArray(0);
+  }
+
+  inline void disable_gl_skinning (RenderMesh3D* mesh) {
+    // TODO switch to DSA style
+
+    glBindVertexArray(mesh->gl_vao);
+
+    glDisableVertexAttribArray(Mesh3DAttribute::SkinIndices);
+    glDisableVertexAttribArray(Mesh3DAttribute::SkinWeights);
 
     glBindVertexArray(0);
   }
@@ -136,8 +172,12 @@ namespace mod {
     size_t vertex_count,
     Vector3f const* in_positions,
     Vector3f const* in_normals,
+
     Vector2f const* in_uvs,
     Vector3f const* in_colors,
+
+    Vector4u const* in_skin_indices,
+    Vector4f const* in_skin_weights,
 
     size_t face_count,
     Vector3u const* in_faces,
@@ -160,6 +200,7 @@ namespace mod {
 
     if (in_uvs != NULL) enable_uvs(in_uvs);
     if (in_colors != NULL) enable_colors(in_colors);
+    if (in_skin_indices != NULL || in_skin_weights != NULL) enable_skinning(in_skin_indices, in_skin_weights);
 
     material_config = in_material_config;
   }
@@ -173,8 +214,12 @@ namespace mod {
     size_t vertex_count,
     Vector3f* positions,
     Vector3f* normals,
+
     Vector2f* uvs,
     Vector3f* colors,
+    
+    Vector4u* skin_indices,
+    Vector4f* skin_weights,
     
     size_t face_count,
     Vector3u* faces,
@@ -200,6 +245,7 @@ namespace mod {
 
     if (uvs != NULL) mesh.enable_uvs_ex(uvs);
     if (colors != NULL) mesh.enable_colors_ex(colors);
+    if (skin_indices != NULL || skin_weights != NULL) mesh.enable_skinning_ex(skin_indices, skin_weights);
 
     mesh.material_config = material_config;
 
@@ -214,8 +260,12 @@ namespace mod {
     
     Array<Vector3f> const& positions,
     Array<Vector3f> const& normals,
+
     Array<Vector2f> const& uvs,
     Array<Vector3f> const& colors,
+
+    Array<Vector4u> const& skin_indices,
+    Array<Vector4f> const& skin_weights,
     
     Array<Vector3u> const& faces,
 
@@ -234,8 +284,10 @@ namespace mod {
 
     init_gl_data(&mesh);
     
-    mesh.enable_uvs_ex(uvs);
-    mesh.enable_colors_ex(colors);
+    if (uvs.elements != NULL) mesh.enable_uvs_ex(uvs);
+    if (colors.elements != NULL) mesh.enable_colors_ex(colors);
+
+    if (skin_indices.elements != NULL || skin_weights.elements != NULL) mesh.enable_skinning_ex(skin_indices, skin_weights);
 
     mesh.material_config = material_config;
     
@@ -308,8 +360,13 @@ namespace mod {
   RenderMesh3D RenderMesh3D::from_json_item (const char* origin, JSONItem const& json) {
     Array<f32_t> positions;
     Array<f32_t> normals;
+
     Array<f32_t> uvs;
     Array<f32_t> colors;
+
+    Array<u32_t> skin_indices;
+    Array<f32_t> skin_weights;
+
     Array<u32_t> faces;
 
     bool dynamic;
@@ -391,6 +448,27 @@ namespace mod {
         }
       }
 
+      /* Skin */ {
+        JSONItem* skin_indices_item = json.get_object_item("skin_indices");
+        JSONItem* skin_weights_item = json.get_object_item("skin_weights");
+
+        if (skin_indices_item != NULL || skin_weights_item != NULL) {
+          json.asset_assert(skin_indices_item != NULL && skin_weights_item != NULL, "If either skin_indices or skin_weights are present, the other must be as well");
+
+          JSONArray& skin_indices_arr = skin_indices_item->get_array();
+          JSONArray& skin_weights_arr = skin_weights_item->get_array();
+
+          skin_indices_item->asset_assert(skin_indices_arr.count % 4 == 0, "Number of skin_indices elements must be cleanly divisible by 4");
+          skin_indices_item->asset_assert(skin_indices_arr.count / 4 == positions.count / 3, "Number of skin_indices elements divided by 4 must be the same as positions elements divided by 3");
+          skin_indices_item->asset_assert(skin_weights_arr.count == skin_indices_arr.count, "Number of skin_weights elements must be the same as skin_indices elements");
+
+          for (auto [ i, index ] : skin_indices_arr) {
+            skin_indices.append(index.get_number());
+            skin_weights.append(skin_weights_arr[i].get_number());
+          }
+        }
+      }
+
       /* MaterialConfig */ {
         JSONItem* material_config_item = json.get_object_item("material_config");
 
@@ -411,10 +489,17 @@ namespace mod {
     } catch (Exception& exception) {
       positions.destroy();
       normals.destroy();
-      faces.destroy();
+      
       uvs.destroy();
       colors.destroy();
+
+      skin_indices.destroy();
+      skin_weights.destroy();
+
+      faces.destroy();
+
       material_config.destroy();
+
       throw exception;
     }
 
@@ -426,8 +511,12 @@ namespace mod {
       positions.count / 3,
       reinterpret_cast<Vector3f*>(positions.elements),
       reinterpret_cast<Vector3f*>(normals.elements),
+
       reinterpret_cast<Vector2f*>(uvs.elements),
       reinterpret_cast<Vector3f*>(colors.elements),
+      
+      reinterpret_cast<Vector4u*>(skin_indices.elements),
+      reinterpret_cast<Vector4f*>(skin_weights.elements),
 
       faces.count / 3,
       reinterpret_cast<Vector3u*>(faces.elements),
@@ -507,6 +596,16 @@ namespace mod {
       colors.clear();
       needs_update.set(Color);
     }
+    
+    if (skin_indices.elements != NULL) {
+      skin_indices.clear();
+      needs_update.set(SkinIndices);
+    }
+    
+    if (skin_weights.elements != NULL) {
+      skin_weights.clear();
+      needs_update.set(SkinWeights);
+    }
 
     material_config.clear();
   }
@@ -517,9 +616,13 @@ namespace mod {
     
     positions.destroy();
     normals.destroy();
-    faces.destroy();
+    
     disable_uvs();
     disable_colors();
+
+    disable_skinning();
+
+    faces.destroy();
 
     material_config.destroy();
 
@@ -600,6 +703,16 @@ namespace mod {
       if (needs_update.match_index(Color)) {
         glBindBuffer(GL_ARRAY_BUFFER, gl_vbos[Color]);
         glBufferData(GL_ARRAY_BUFFER, colors.count * sizeof(Vector3f), colors.elements, draw_arg);
+      }
+
+      if (needs_update.match_index(SkinIndices)) {
+        glBindBuffer(GL_ARRAY_BUFFER, gl_vbos[SkinIndices]);
+        glBufferData(GL_ARRAY_BUFFER, skin_indices.count * sizeof(Vector4u), skin_indices.elements, draw_arg);
+      }
+
+      if (needs_update.match_index(SkinWeights)) {
+        glBindBuffer(GL_ARRAY_BUFFER, gl_vbos[SkinWeights]);
+        glBufferData(GL_ARRAY_BUFFER, skin_weights.count * sizeof(Vector4f), skin_weights.elements, draw_arg);
       }
 
       if (needs_update.match_index(Face)) {
@@ -776,12 +889,74 @@ namespace mod {
   }
 
 
+
+  void RenderMesh3D::enable_skinning (Vector4u const* in_skin_indices, Vector4f const* in_skin_weights) {
+    m_assert(skin_indices.elements == NULL && skin_weights.elements == NULL, "Cannot enable skinning, data already exists");
+
+    if (in_skin_indices != NULL) skin_indices.append_multiple(in_skin_indices, positions.count);
+    else skin_indices.grow_allocation();
+
+    if (in_skin_weights != NULL) skin_weights.append_multiple(in_skin_weights, positions.count);
+    else skin_weights.grow_allocation();
+
+    init_gl_skinning(this);
+  }
+
+  
+  void RenderMesh3D::enable_skinning (Array<Vector4u> const& in_skin_indices, Array<Vector4f> const& in_skin_weights) {
+    m_assert(skin_indices.elements == NULL && skin_weights.elements == NULL, "Cannot enable skinning, data already exists");
+    m_assert(in_skin_indices.count == positions.count, "Cannot enable skinning, copied skin indices array has %zu entries, but there are %zu vertices in the mesh", in_skin_indices.count, positions.count);
+    m_assert(in_skin_weights.count == positions.count, "Cannot enable skinning, copied skin weights array has %zu entries, but there are %zu vertices in the mesh", in_skin_weights.count, positions.count);
+
+    skin_indices.append_multiple(in_skin_indices.elements, positions.count);
+    skin_weights.append_multiple(in_skin_weights.elements, positions.count);
+
+    init_gl_skinning(this);
+  }
+
+  void RenderMesh3D::enable_skinning_ex (Vector4u* in_skin_indices, Vector4f* in_skin_weights) {
+    m_assert(skin_indices.elements == NULL && skin_weights.elements == NULL, "Cannot enable skinning, data already exists");
+
+    skin_indices = Array<Vector4u>::from_ex(in_skin_indices, positions.count);
+    skin_weights = Array<Vector4f>::from_ex(in_skin_weights, positions.count);
+
+    init_gl_skinning(this);
+  }
+
+  void RenderMesh3D::enable_skinning_ex (Array<Vector4u> const& in_skin_indices, Array<Vector4f> const& in_skin_weights) {
+    m_assert(skin_indices.elements == NULL && skin_weights.elements == NULL, "Cannot enable skinning, data already exists");
+    m_assert(in_skin_indices.count == positions.count, "Cannot enable skinning, new skin indices array has %zu entries, but there are %zu vertices in the mesh", in_skin_indices.count, positions.count);
+    m_assert(in_skin_weights.count == positions.count, "Cannot enable skinning, new skin weights array has %zu entries, but there are %zu vertices in the mesh", in_skin_weights.count, positions.count);
+
+    skin_indices = in_skin_indices;
+    skin_weights = in_skin_weights;
+
+    init_gl_skinning(this);
+  }
+
+  void RenderMesh3D::disable_skinning () {
+    if (skin_indices.elements == NULL && skin_weights.elements == NULL) return;
+
+    skin_indices.destroy();
+    skin_weights.destroy();
+
+    disable_gl_skinning(this);
+
+    needs_update.unset(Mesh3DAttribute::SkinIndices);
+    needs_update.unset(Mesh3DAttribute::SkinWeights);
+  }
+
+
   VertexRef3D RenderMesh3D::get_vertex (size_t index) const {
     return {
       positions[index],
       normals[index],
+
       uvs.elements != NULL? Optional<Vector2f&> { uvs[index] } : Optional<Vector2f&> { },
-      colors.elements != NULL? Optional<Vector3f&> { colors[index] } : Optional<Vector3f&> { }
+      colors.elements != NULL? Optional<Vector3f&> { colors[index] } : Optional<Vector3f&> { },
+
+      skin_indices.elements != NULL? Optional<Vector4u&> { skin_indices[index] } : Optional<Vector4u&> { },
+      skin_weights.elements != NULL? Optional<Vector4f&> { skin_weights[index] } : Optional<Vector4f&> { }
     };
   }
 
@@ -803,6 +978,16 @@ namespace mod {
       colors[index] = data.color;
       needs_update.set(Color);
     } else m_assert(!data.color.valid, "Unexpected Color attribute data");
+
+    if (skin_indices.elements != NULL) {
+      skin_indices[index] = data.skin_indices;
+      needs_update.set(SkinIndices);
+    } else m_assert(!data.skin_indices.valid, "Unexpected SkinIndices attribute data");
+
+    if (skin_weights.elements != NULL) {
+      skin_weights[index] = data.skin_weights;
+      needs_update.set(SkinWeights);
+    } else m_assert(!data.skin_weights.valid, "Unexpected SkinWeights attribute data");
   }
 
 
@@ -822,6 +1007,16 @@ namespace mod {
       colors.append(data.color);
       needs_update.set(Color);
     } else m_assert(!data.color.valid, "Unexpected Color attribute data");
+
+    if (skin_indices.elements != NULL) {
+      skin_indices.append(data.skin_indices);
+      needs_update.set(SkinIndices);
+    } else m_assert(!data.skin_indices.valid, "Unexpected SkinIndices attribute data");
+
+    if (skin_weights.elements != NULL) {
+      skin_weights.append(data.skin_weights);
+      needs_update.set(SkinWeights);
+    } else m_assert(!data.skin_weights.valid, "Unexpected SkinWeights attribute data");
   }
 
 
@@ -841,6 +1036,16 @@ namespace mod {
       colors.insert(index, data.color);
       needs_update.set(Color);
     } else m_assert(!data.color.valid, "Unexpected Color attribute data");
+
+    if (skin_indices.elements != NULL) {
+      skin_indices.insert(index, data.skin_indices);
+      needs_update.set(SkinIndices);
+    } else m_assert(!data.skin_indices.valid, "Unexpected SkinIndices attribute data");
+
+    if (skin_weights.elements != NULL) {
+      skin_weights.insert(index, data.skin_weights);
+      needs_update.set(SkinWeights);
+    } else m_assert(!data.skin_weights.valid, "Unexpected SkinWeights attribute data");
   }
 
 
@@ -859,6 +1064,16 @@ namespace mod {
     if (colors.elements != NULL) {
       colors.remove(index);
       needs_update.set(Color);
+    }
+
+    if (skin_indices.elements != NULL) {
+      skin_indices.remove(index);
+      needs_update.set(SkinIndices);
+    }
+
+    if (skin_weights.elements != NULL) {
+      skin_weights.remove(index);
+      needs_update.set(SkinWeights);
     }
   }
 
