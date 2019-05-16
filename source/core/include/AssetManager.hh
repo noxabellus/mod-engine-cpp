@@ -13,23 +13,13 @@
 
 
 namespace mod {
-  struct AssetName {
+  using AssetName = Name<
     #ifndef CUSTOM_ASSET_NAME_MAX_LENGTH
-      static constexpr size_t max_length = 128;
+      128
     #else
-      static constexpr size_t max_length = CUSTOM_ASSET_NAME_MAX_LENGTH;
+      CUSTOM_ASSET_NAME_MAX_LENGTH
     #endif
-
-    char value [max_length] = { 0 };
-
-    AssetName () { }
-    AssetName (char const* in_value, size_t value_max_length = 0)
-    {
-      if (value_max_length == 0) value_max_length = strlen(in_value);
-      memcpy(value, in_value, value_max_length);
-      value[value_max_length] = '\0';
-    }
-  };
+  >;
 
   template <typename T> struct AssetList {
     Array<AssetName> names;
@@ -155,23 +145,13 @@ namespace mod {
   
 
 
-  struct WatchedFilePath {
+  using WatchedFilePath = Name<
     #ifndef CUSTOM_WATCHED_FILE_PATH_MAX_LENGTH
-      static constexpr size_t max_length = 256;
+      256
     #else
-      static constexpr size_t max_length = CUSTOM_WATCHED_FILE_PATH_MAX_LENGTH;
+      CUSTOM_WATCHED_FILE_PATH_MAX_LENGTH
     #endif
-
-    char value [max_length] = { 0 };
-
-    WatchedFilePath () { }
-    WatchedFilePath (char const* in_value, size_t length = 0)
-    {
-      if (length == 0) length = num::min(strlen(in_value), max_length);
-      memcpy(value, in_value, length);
-      value[length] = '\0';
-    }
-  };
+  >;
 
   struct WatchedFile {
     time_t last_update;
@@ -220,23 +200,13 @@ namespace mod {
   };
   
 
-  struct WatchedFileError {
+  using WatchedFileError = Name<
     #ifndef CUSTOM_WATCHED_FILE_ERROR_MAX_LENGTH
-      static constexpr size_t max_length = 512;
+      512
     #else
-      static cosntexpr size_t max_length = CUSTOM_WATCHED_FILE_ERROR_MAX_LENGTH;
+      CUSTOM_WATCHED_FILE_ERROR_MAX_LENGTH
     #endif
-
-    char value [max_length];
-
-    WatchedFileError () { }
-    WatchedFileError (char const* in_value, size_t length = 0)
-    {
-      if (length == 0) length = num::min(strlen(in_value), max_length);
-      memcpy(value, in_value, length);
-      value[length] = '\0';
-    }
-  };
+  >;
 
 
   struct WatchedFileReport {

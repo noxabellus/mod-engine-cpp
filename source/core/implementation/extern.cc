@@ -21,19 +21,7 @@
 
 
 #ifdef MEMORY_DEBUG_INDEPTH
-  struct StackTraceMsg {
-    static constexpr size_t max_length = 512;
-
-    char value [max_length] = { 0 };
-
-    StackTraceMsg () { }
-    StackTraceMsg (char const* in_value)
-    {
-      size_t len = in_value != NULL? num::min(strlen(in_value), max_length) : 0;
-      if (len != 0) memcpy(value, in_value, len);
-      value[len] = '\0';
-    }
-  };
+  using StackTraceMsg = Name<512>;
 
   ENGINE_API extern mod::Array<StackTraceMsg> stack_trace_msgs;
   mod::Array<StackTraceMsg> stack_trace_msgs = mod::Array<StackTraceMsg> { 0, true };
