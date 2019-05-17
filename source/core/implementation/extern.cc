@@ -21,7 +21,7 @@
 
 
 #ifdef MEMORY_DEBUG_INDEPTH
-  using StackTraceMsg = Name<512>;
+  using StackTraceMsg = mod::Name<1024>;
 
   ENGINE_API extern mod::Array<StackTraceMsg> stack_trace_msgs;
   mod::Array<StackTraceMsg> stack_trace_msgs = mod::Array<StackTraceMsg> { 0, true };
