@@ -95,100 +95,81 @@ namespace mod {
 
 
       case UniformType::BoolArray: {
-        BoolArray = { };
-        BoolArray.copy(proto.BoolArray);
+        BoolArray = proto.BoolArray;
       } break;
 
       case UniformType::F32Array: {
-        F32Array = { };
-        F32Array.copy(proto.F32Array);
+        F32Array = proto.F32Array;
       } break;
 
       case UniformType::F64Array: {
-        F64Array = { };
-        F64Array.copy(proto.F64Array);
+        F64Array = proto.F64Array;
       } break;
 
       case UniformType::S32Array: {
-        S32Array = { };
-        S32Array.copy(proto.S32Array);
+        S32Array = proto.S32Array;
       } break;
 
       case UniformType::U32Array: {
-        U32Array = { };
-        U32Array.copy(proto.U32Array);
+        U32Array = proto.U32Array;
       } break;
 
 
       case UniformType::Vector2fArray: {
-        Vector2fArray = { };
-        Vector2fArray.copy(proto.Vector2fArray);
+        Vector2fArray = proto.Vector2fArray;
       } break;
 
       case UniformType::Vector2dArray: {
-        Vector2dArray = { };
-        Vector2dArray.copy(proto.Vector2dArray);
+        Vector2dArray = proto.Vector2dArray;
       } break;
 
       case UniformType::Vector2sArray: {
-        Vector2sArray = { };
-        Vector2sArray.copy(proto.Vector2sArray);
+        Vector2sArray = proto.Vector2sArray;
       } break;
 
       case UniformType::Vector2uArray: {
-        Vector2uArray = { };
-        Vector2uArray.copy(proto.Vector2uArray);
+        Vector2uArray = proto.Vector2uArray;
       } break;
 
       case UniformType::Vector3fArray: {
-        Vector3fArray = { };
-        Vector3fArray.copy(proto.Vector3fArray);
+        Vector3fArray = proto.Vector3fArray;
       } break;
 
       case UniformType::Vector3dArray: {
-        Vector3dArray = { };
-        Vector3dArray.copy(proto.Vector3dArray);
+        Vector3dArray = proto.Vector3dArray;
       } break;
 
       case UniformType::Vector3sArray: {
-        Vector3sArray = { };
-        Vector3sArray.copy(proto.Vector3sArray);
+        Vector3sArray = proto.Vector3sArray;
       } break;
 
       case UniformType::Vector3uArray: {
-        Vector3uArray = { };
-        Vector3uArray.copy(proto.Vector3uArray);
+        Vector3uArray = proto.Vector3uArray;
       } break;
 
       case UniformType::Vector4fArray: {
-        Vector4fArray = { };
-        Vector4fArray.copy(proto.Vector4fArray);
+        Vector4fArray = proto.Vector4fArray;
       } break;
 
       case UniformType::Vector4dArray: {
-        Vector4dArray = { };
-        Vector4dArray.copy(proto.Vector4dArray);
+        Vector4dArray = proto.Vector4dArray;
       } break;
 
       case UniformType::Vector4sArray: {
-        Vector4sArray = { };
-        Vector4sArray.copy(proto.Vector4sArray);
+        Vector4sArray = proto.Vector4sArray;
       } break;
 
       case UniformType::Vector4uArray: {
-        Vector4uArray = { };
-        Vector4uArray.copy(proto.Vector4uArray);
+        Vector4uArray = proto.Vector4uArray;
       } break;
 
 
       case UniformType::Matrix3Array: {
-        Matrix3Array = { };
-        Matrix3Array.copy(proto.Matrix3Array);
+        Matrix3Array = proto.Matrix3Array;
       } break;
 
       case UniformType::Matrix4Array :{
-        Matrix4Array = { };
-        Matrix4Array.copy(proto.Matrix4Array);
+        Matrix4Array = proto.Matrix4Array;
       } break;
 
 
