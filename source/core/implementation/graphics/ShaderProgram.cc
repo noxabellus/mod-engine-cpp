@@ -210,7 +210,7 @@ namespace mod {
   }
 
   void ShaderProgram::dump_uniform_info () {
-    Array<UniformInfo> info = get_uniform_info();
+    Array<UniformInfo> const& info = get_uniform_info();
 
     printf(
       "ShaderProgram Info:\n"
@@ -229,7 +229,5 @@ namespace mod {
         uniform.size
       );
     }
-
-    info.destroy();
   }
 }
