@@ -9,7 +9,8 @@ set DISALBED_WARNINGS=^
 -D_CRT_SECURE_NO_WARNINGS -D_CRT_NONSTDC_NO_WARNINGS ^
 -Wno-c++98-compat -Wno-c++98-compat-unnamed-type-template-args -Wno-c++98-compat-pedantic ^
 -Wno-newline-eof -Wno-gnu-zero-variadic-macro-arguments -Wno-zero-as-null-pointer-constant ^
--Wno-unused-function -Wno-global-constructors -Wno-exit-time-destructors ^
+-Wno-unused-function -Wno-unused-macros -Wno-unused-member-function ^
+-Wno-global-constructors -Wno-exit-time-destructors ^
 -Wno-nested-anon-types -Wno-gnu-anonymous-struct ^
 -Wno-double-promotion -Wno-sign-conversion -Wno-shorten-64-to-32 -Wno-conversion -Wno-float-conversion -Wno-sign-compare
 

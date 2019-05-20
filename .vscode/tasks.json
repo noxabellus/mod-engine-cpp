@@ -4,7 +4,7 @@
   "version": "2.0.0",
   "tasks": [
     {
-      "label": "Build Debug Engine (Windows)",
+      "label": "Build Engine Debug (Windows)",
       "type": "shell",
       "group": "build",
       "command": ".\\build.bat engine_debug",
@@ -17,7 +17,7 @@
     },
 
     {
-      "label": "Build Release Engine (Windows)",
+      "label": "Build Engine Release (Windows)",
       "type": "shell",
       "group": "build",
       "command": ".\\build.bat engine_release",
@@ -43,7 +43,7 @@
     },
     
     {
-      "label": "Build Debug Test Game (Windows)",
+      "label": "Build Test Game Debug (Windows)",
       "type": "shell",
       "group": "build",
       "command": ".\\build.bat test_game_debug",
@@ -56,7 +56,7 @@
     },
     
     {
-      "label": "Build Release Test Game (Windows)",
+      "label": "Build Test Game Release (Windows)",
       "type": "shell",
       "group": "build",
       "command": ".\\build.bat test_game_release",
@@ -69,7 +69,7 @@
     },
     
     {
-      "label": "Build Debug Test Mod (Windows)",
+      "label": "Build Test Mod Debug (Windows)",
       "type": "shell",
       "group": "build",
       "command": ".\\build.bat test_mod_debug",
@@ -82,7 +82,7 @@
     },
     
     {
-      "label": "Build Release Test Mod (Windows)",
+      "label": "Build Test Mod Release (Windows)",
       "type": "shell",
       "group": "build",
       "command": ".\\build.bat test_mod_release",
@@ -96,7 +96,7 @@
     
 
     {
-      "label": "Clear Debug Engine (Windows)",
+      "label": "Clear Engine Debug (Windows)",
       "type": "shell",
       "group": "build",
       "command": ".\\build.bat clear debug",
@@ -109,7 +109,7 @@
     },
 
     {
-      "label": "Clear Release Engine (Windows)",
+      "label": "Clear Engine Release (Windows)",
       "type": "shell",
       "group": "build",
       "command": ".\\build.bat clear release",
@@ -135,7 +135,7 @@
     },
 
     {
-      "label": "Clear Debug Test Game (Windows)",
+      "label": "Clear Test Game Debug (Windows)",
       "type": "shell",
       "group": "build",
       "command": ".\\build.bat clear test\\debug",
@@ -148,7 +148,7 @@
     },
 
     {
-      "label": "Clear Release Test Game (Windows)",
+      "label": "Clear Test Game Release (Windows)",
       "type": "shell",
       "group": "build",
       "command": ".\\build.bat clear test\\release",
@@ -161,7 +161,7 @@
     },
 
     {
-      "label": "Clear Debug Test Mod (Windows)",
+      "label": "Clear Test Mod Debug (Windows)",
       "type": "shell",
       "group": "build",
       "command": ".\\build.bat clear test\\debug\\mods",
@@ -174,7 +174,7 @@
     },
 
     {
-      "label": "Clear Release Test Mod (Windows)",
+      "label": "Clear Test Mod Release (Windows)",
       "type": "shell",
       "group": "build",
       "command": ".\\build.bat clear test\\release\\mods",
@@ -201,7 +201,7 @@
 
 
     {
-      "label": "Run Debug Test (Windows)",
+      "label": "Run Test Debug (Windows)",
       "type": "shell",
       "group": "build",
       "command": ".\\build\\test\\debug\\main",
@@ -215,7 +215,7 @@
     
 
     {
-      "label": "Rebuild Debug Test Mod and Run (Windows)",
+      "label": "Quick Rebuild and Run (Windows)",
       "type": "shell",
       "group": "build",
       "command": ".\\build.bat test_mod_debug run_debug",
@@ -229,7 +229,7 @@
 
 
     {
-      "label": "Rebuild Full Debug Test and Run (Windows)",
+      "label": "Full Rebuild and Run (Windows)",
       "type": "shell",
       "group": "build",
       "command": ".\\build.bat engine_debug include test_game_debug test_mod_debug run_debug",
