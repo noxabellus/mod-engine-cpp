@@ -40,7 +40,7 @@ namespace mod {
 
     /* Set all flags of a Bitmask to 0 */
     void clear () {
-      memset(bytes, 0, byte_count);
+      memory::clear(bytes, byte_count);
     }
     
 

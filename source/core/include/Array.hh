@@ -64,7 +64,7 @@ namespace mod {
 
       m_assert(elements != NULL, "Out of memory or other null pointer error while allocating Array elements with capacity %zu", in_capacity);
 
-      memcpy(elements, in_elements, in_count * sizeof(T));
+      memory::copy(elements, in_elements, in_count);
       
       count = in_count;
       capacity = in_capacity;
@@ -93,7 +93,7 @@ namespace mod {
 
       if (is_static) {
         T* new_mem = memory::allocate<T, false>(capacity);
-        memcpy(new_mem, elements, count * sizeof(T));
+        memory::copy(new_mem, elements, count);
         memory::deallocate(elements);
         elements = new_mem;
       } else {
@@ -323,7 +323,7 @@ namespace mod {
     void append_multiple (T const* values, size_t value_count) {
       grow_allocation(value_count);
 
-      memcpy(elements + count, values, sizeof(T) * value_count);
+      memory::copy(elements + count, values, value_count);
 
       count += value_count;
     }

@@ -15,7 +15,7 @@ namespace mod {
 
     value = memory::allocate<char>(!is_static, in_capacity);
 
-    memcpy(value, in_value, in_length);
+    memory::copy(value, in_value, in_length);
     value[in_length] = '\0';
 
     length = in_length;
@@ -31,7 +31,7 @@ namespace mod {
 
     if (is_static) {
       char* new_mem = memory::allocate<char, false>(capacity);
-      memcpy(new_mem, value, length);
+      memory::copy(new_mem, value, length);
       memory::deallocate(value);
       value = new_mem;
     } else {
@@ -86,7 +86,7 @@ namespace mod {
       grow_allocation(new_value_length - length);
     }
 
-    memmove(value, new_value, new_value_length);
+    memory::move(value, new_value, new_value_length);
     length = new_value_length;
     value[length] = 0;
   }
@@ -96,7 +96,7 @@ namespace mod {
 
     grow_allocation(new_value_length);
 
-    memmove(value + length, new_value, new_value_length);
+    memory::move(value + length, new_value, new_value_length);
     length += new_value_length;
     value[length] = 0;
   }
@@ -108,8 +108,8 @@ namespace mod {
 
     if (offset >= length) return append(new_value, new_value_length);
     
-    memmove(value + offset + new_value_length, value + offset, length - offset);
-    memmove(value + offset, new_value, new_value_length);
+    memory::move(value + offset + new_value_length, value + offset, length - offset);
+    memory::move(value + offset, new_value, new_value_length);
     length += new_value_length;
     value[length] = 0;
   }
@@ -118,7 +118,7 @@ namespace mod {
     size_t end = offset + remove_length;
     if (end > length) return;
 
-    memmove(value + offset, value + offset + remove_length, length - end);
+    memory::move(value + offset, value + offset + remove_length, length - end);
 
     length -= remove_length;
     value[length] = 0;
@@ -188,7 +188,7 @@ namespace mod {
     char* end = value + offset + new_value_length;
     char* start = value + offset;
     
-    memmove(end, start, length - offset);
+    memory::move(end, start, length - offset);
 
     char c = *end; // store char overwritten by vsnprintf null terminator
 

@@ -86,8 +86,8 @@ namespace mod {
 
     if (t_len > max_length) return false;
 
-    memcpy(out, base_path, base_back_len);
-    memcpy(out + base_back_len, relative_path + back_len, rel_len + 1);
+    memory::copy(out, base_path, base_back_len);
+    memory::copy(out + base_back_len, relative_path + back_len, rel_len + 1);
 
     return true;
   }

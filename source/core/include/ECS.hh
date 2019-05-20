@@ -78,7 +78,7 @@ namespace mod {
 
 
     void swap_instances (u32_t dest, u32_t src) {
-      memcpy(get_instance_by_id(dest), get_instance_by_id(src), instance_size);
+      memory::copy(get_instance_by_id(dest), get_instance_by_id(src), instance_size);
     }
 
 

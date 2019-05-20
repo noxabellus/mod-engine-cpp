@@ -157,7 +157,7 @@ namespace mod {
   , entity_thread_threshold(in_entity_thread_threshold)
   , thread_pool(NULL)
   {
-    memset(systems, 0, sizeof(System) * System::max_systems);
+    memory::clear(systems, System::max_systems);
     m_assert(entities != NULL, "Out of memory or other null pointer error while allocating ECS entities with starting capacity %" PRIu32, entity_capacity);
   }
 
@@ -312,7 +312,7 @@ namespace mod {
     
     void* ptr = type.get_instance_by_id(index);
 
-    memset(ptr, 0, type.instance_size);
+    memory::clear(ptr, type.instance_size);
 
     return ptr;
   }
@@ -333,7 +333,7 @@ namespace mod {
     
     void* ptr = type.get_instance_by_id(handle.index);
 
-    memset(ptr, 0, type.instance_size);
+    memory::clear(ptr, type.instance_size);
 
     return ptr;
   }
@@ -354,7 +354,7 @@ namespace mod {
     
     void* ptr = type.get_instance_by_id(index);
 
-    memcpy(ptr, data, type.instance_size);
+    memory::copy(ptr, data, type.instance_size);
 
     return ptr;
   }
@@ -375,7 +375,7 @@ namespace mod {
     
     void* ptr = type.get_instance_by_id(handle.index);
 
-    memcpy(ptr, data, type.instance_size);
+    memory::copy(ptr, data, type.instance_size);
 
     return ptr;
   }

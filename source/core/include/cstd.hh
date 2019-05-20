@@ -379,7 +379,7 @@ namespace mod {
 
     Name& operator = (char const* in_value) {
       size_t len = in_value != NULL? num::min(strlen(in_value), max_length) : 0;
-      if (len != 0) memcpy(value, in_value, len);
+      if (len != 0) memory::copy(value, in_value, len);
       value[len] = '\0';
       return *this;
     }
@@ -529,7 +529,6 @@ namespace mod {
         return allocate_tracked<T, allocator>(size, clear);
       } else return allocate_untracked<T, allocator>(size, clear);
     }
-
     
 
 
@@ -690,6 +689,44 @@ namespace mod {
       }
       #endif
     }
+
+
+
+    template <typename T, typename U> T* copy (T* destination, U const* source, size_t size = 1) {
+      if constexpr (!std::is_same_v<T, void>) size *= sizeof(T);
+      memcpy(destination, source, size);
+      return destination;
+    }
+
+    
+    template <typename T, typename U> T* move (T* destination, U const* source, size_t size = 1) {
+      if constexpr (!std::is_same_v<T, void>) size *= sizeof(T);
+      memmove(destination, source, size);
+      return destination;
+    }
+
+
+    template <typename T> T* set (T* data, T const& value, size_t size = 1) {
+      for (size_t i = 0; i < size; i ++) copy(data + i, &value);
+    }
+
+
+    template <typename T> T* clear (T* data, size_t size = 1) {
+      if constexpr (!std::is_same_v<T, void>) size *= sizeof(T);
+      memset(data, 0, size);
+      return data;
+    }
+
+
+    template <typename T> T& clear (T& data) {
+      return *clear(&data);
+    }
+
+    template <typename T> T cleared () {
+      T value;
+      clear(value);
+      return value;
+    }
   }
 
   /* Wrapper for snprintf that produces a new heap-allocated str */
@@ -732,7 +769,7 @@ namespace mod {
 
     m_assert(out != NULL, "Out of memory or other null pointer error while allocating new str via str_clone with length %zu + 1", length);
     
-    memcpy(out, base, length);
+    memory::copy(out, base, length);
 
     out[length] = '\0';
 
@@ -740,16 +777,6 @@ namespace mod {
   }
 }
 
-#define m_impl_debug_constructors(T) \
-  T (T const& t) { memcpy(this, &t, sizeof(T)); } \
-  T& operator = (T const& t) { memcpy(this, &t, sizeof(T)); return *this; }
-
-#define m_impl_debug_destructor(T) \
-  ~##T () { }
-
-#define m_impl_debug_boilerplate(T) \
-  m_impl_debug_constructors(T) \
-  m_impl_debug_destructor(T)
 
 
 /* Determine the length of an array */

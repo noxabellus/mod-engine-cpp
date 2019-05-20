@@ -53,7 +53,7 @@ namespace mod {
 
       existing_item->type = item->type;
 
-      memcpy(&existing_item->object, &item->object, sizeof(JSONObject));
+      memory::copy(&existing_item->object, &item->object);
 
       return existing_item_index;
     } else {

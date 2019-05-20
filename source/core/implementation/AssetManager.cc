@@ -248,17 +248,17 @@ namespace mod {
         name.value, origin, type, name.value, len
       );
 
-      memcpy(relative_path, origin, origin_len);
+      memory::copy(relative_path, origin, origin_len);
       
       char* type_pos = relative_path + origin_len;
       *type_pos = ':';
       ++ type_pos;
-      memcpy(type_pos, type, type_len);
+      memory::copy(type_pos, type, type_len);
 
       char* name_pos = type_pos + type_len;
       *name_pos = ':';
       ++ name_pos;
-      memcpy(name_pos, name.value, name.length + 1);
+      memory::copy(name_pos, name.value, name.length + 1);
 
       return relative_path;
     };
