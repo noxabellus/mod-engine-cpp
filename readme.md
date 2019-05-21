@@ -134,8 +134,8 @@ This is still early in production, but a list of architectural elements that hav
 + <details>
     <summary style="cursor:pointer">Audio i/o through SDL + stb_vorbis with compressed and uncompressed file type support</summary>
     <ul>
-      <li>Windows audio (*.WAV) (Compressed)</li>
-      <li>Vorbis (*.OGG) (Uncompressed)</li>
+      <li>Windows audio (*.WAV) (Uncompressed)</li>
+      <li>Vorbis (*.OGG) (Compressed)</li>
     </ul>
   </details>
 + <details>
