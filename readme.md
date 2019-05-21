@@ -62,52 +62,117 @@ All assets used by the engine or test game utilize open source or public domain 
 
 ## Project Status
 This is still early in production, but a list of architectural elements that have been implemented to some degree is as follows:
-+ Various generic data structures:
-  - Bitmask (Bit flag set template)
-  - Dynamic array (Template)
-  - Dynamic string (ASCII-only for now)
-  - Shared Library
-  - ThreadPool
++ <details>
+    <summary style="cursor:pointer">Various generic data structures</summary>
+    <ul>
+      <li>Bitmask (Bit flag set template)</li>
+      <li>Dynamic array (Template)</li>
+      <li>Dynamic string (ASCII-only for now)</li>
+      <li>Shared Library</li>
+      <li>ThreadPool</li>
+      <li>Optional</li>
+    </ul>
+  </details>
++ Application window abstraction with config file i/o
 + UI through SDL + ImGUI
 + Input to generic Control binding abstractionwith config file i/o
-+ Source file editor with ImGuiColorTextEdit
++ Source file editor with ImGuiColorTextEdit (Very WIP)
 + JSON parser + stringifier
 + XML parser + stringifier
 + ECS (Highly experimental)
-+ Application window abstraction with config file i/o
-+ Extensive linear algebra library including:
-  - 2d and 3d vectors
-  - 3x3 and 4x4 matrices
-  - Euler and Quaternion rotations
-  - 2d and 3d component transforms (Scale + Rotation + Translation)
-  - 2d and 3d geometric primitives
-  - 2d and 3d intersection and distance tests
-+ Image i/o and manipulation through FreeImage
-+ Audio i/o through SDL + stb_vorbis with support for:
-  - WAV/Windows audio files (uncompressed format)
-  - OGG/Vorbis files (compressed format)
-+ Extensive graphics drawing abstractions with asset file i/o:
-  - Shaders (Vertex, Fragment)
-  - Shader programs
-  - Textures
-  - Materials
-  - Material sets
-  - 2d & 3d Meshes
-  - Skinning for 3D meshes
-  - Skeletal Animations
-  - Collada importer
-  <!-- - Batched rendering (Speculative) -->
-+ Asset manager:
-  - JSON database files
-  - Inline definitions for most asset types
-  - Relative file path references to individual files
-  - Assets are accessible by name or index
-  - Definition priority is load order, later loads overwrite earlier loads
-  - Automatic reloading of assets when source files are modified
-  - Utilizes exceptions to prevent crashes from loading improperly formatted assets
-+ Memory leak detector:
-  - Tracks all nonstatic allocations to determine if anything is leaked by the program
-  - Indepth memory debug compilation mode gives stack trace for all leaks
++ <details>
+    <summary style="cursor:pointer">Extensive linear algebra library</summary>
+    <ul>
+      <li>2d, 3d, & 4d vectors</li>
+      <li>3x3 and 4x4 matrices</li>
+      <li>Euler and Quaternion rotations</li>
+      <li>2d and 3d component transforms (Scale + Rotation + Translation)</li>
+      <li>2d and 3d geometric primitives (Sphere, AABB, etc)</li>
+      <li>2d and 3d intersection and distance tests (Line intersects AABB, Distance from AABB to Line, etc)</li>
+    </ul>
++ <details>
+    <summary style="cursor:pointer">Image i/o and manipulation through FreeImage with support for many file types</summary>
+    <ul>
+      <li>Windows or OS/2 Bitmap File (*.BMP)</li>
+      <li>Windows Icon (*.ICO)</li>
+      <li>Independent JPEG Group (*.JPG, *.JIF, *.JPEG, *.JPE)</li>
+      <li>JPEG Network Graphics (*.JNG)</li>
+      <li>Commodore 64 Koala format (*.KOA)</li>
+      <li>Amiga IFF (*.IFF, *.LBM)</li>
+      <li>Amiga IFF (*.IFF, *.LBM)</li>
+      <li>Multiple Network Graphics (*.MNG)</li>
+      <li>Portable Bitmap (ASCII) (*.PBM)</li>
+      <li>Portable Bitmap (BINARY) (*.PBM)</li>
+      <li>Kodak PhotoCD (*.PCD)</li>
+      <li>Zsoft Paintbrush PCX bitmap format (*.PCX)</li>
+      <li>Portable Graymap (ASCII) (*.PGM)</li>
+      <li>Portable Graymap (BINARY) (*.PGM)</li>
+      <li>Portable Network Graphics (*.PNG)</li>
+      <li>Portable Pixelmap (ASCII) (*.PPM)</li>
+      <li>Portable Pixelmap (BINARY) (*.PPM)</li>
+      <li>Sun Rasterfile (*.RAS)</li>
+      <li>truevision Targa files (*.TGA, *.TARGA)</li>
+      <li>Tagged Image File Format (*.TIF, *.TIFF)</li>
+      <li>Wireless Bitmap (*.WBMP)</li>
+      <li>Adobe Photoshop (*.PSD)</li>
+      <li>Dr. Halo (*.CUT)</li>
+      <li>X11 Bitmap Format (*.XBM)</li>
+      <li>X11 Pixmap Format (*.XPM)</li>
+      <li>DirectDraw Surface (*.DDS)</li>
+      <li>Graphics Interchange Format (*.GIF)</li>
+      <li>High Dynamic Range (*.HDR)</li>
+      <li>Raw Fax format CCITT G3 (*.G3)</li>
+      <li>Silicon Graphics SGI image format (*.SGI)</li>
+      <li>OpenEXR format (*.EXR)</li>
+      <li>JPEG-2000 format (*.J2K, *.J2C)</li>
+      <li>JPEG-2000 format (*.JP2)</li>
+      <li>Portable FloatMap (*.PFM)</li>
+      <li>Macintosh PICT (*.PICT)</li>
+      <li>RAW camera image (\*.\*)</li>
+    </ul>
+  </details>
++ <details>
+    <summary style="cursor:pointer">Audio i/o through SDL + stb_vorbis with compressed and uncompressed file type support</summary>
+    <ul>
+      <li>Windows audio (*.WAV) (Compressed)</li>
+      <li>Vorbis (*.OGG) (Uncompressed)</li>
+    </ul>
+  </details>
++ <details>
+    <summary style="cursor:pointer">Extensive graphics drawing abstractions</summary>
+    <ul>
+      <li>Shaders (Vertex, Fragment)</li>
+      <li>Shader programs</li>
+      <li>Textures</li>
+      <li>Materials</li>
+      <li>Material sets</li>
+      <li>2D & 3D Meshes</li>
+      <li>Skinning for 3D meshes</li>
+      <li>Skeletal Animations</li>
+      <li>Collada importer</li>
+      <li>2D and 3D debug drawing api</li>
+      <!--<li>Batched rendering (Speculative)</li>-->
+    </ul>
+  </details>
++ <details>
+    <summary style="cursor:pointer">Asset manager</summary>
+    <ul>
+      <li>JSON database files</li>
+      <li>Inline definitions for most asset types</li>
+      <li>Relative file path references to individual files</li>
+      <li>Assets are accessible by name or index</li>
+      <li>Definition priority is load order, later loads overwrite earlier loads</li>
+      <li>Automatic reloading of assets when source files are modified</li>
+      <li>Utilizes exceptions to prevent crashes from loading improperly formatted assets</li>
+    </ul>
+  </details>
++ <details>
+    <summary style="cursor:pointer">Memory leak detector</summary>
+    <ul>
+      <li>Tracks all nonstatic allocations to determine if anything is leaked by the program</li>
+      <li>Indepth memory debug compilation mode gives stack trace for all leaks</li>
+    </ul>
+  </details>
 
 
 
