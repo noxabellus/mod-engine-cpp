@@ -19,6 +19,11 @@
 #pragma clang diagnostic ignored "-Wundef"
 #pragma clang diagnostic ignored "-Wimplicit-fallthrough"
 #pragma clang diagnostic ignored "-Wpragma-pack"
+#pragma clang diagnostic ignored "-Wcast-qual"
+#pragma clang diagnostic ignored "-Wshadow"
+#pragma clang diagnostic ignored "-Wcomma"
+#pragma clang diagnostic ignored "-Wunused-parameter"
+#pragma clang diagnostic ignored "-Wconditional-uninitialized"
 
 
 #include <extern/tinycthread/tinycthread.h>
@@ -100,6 +105,13 @@ namespace ImGui {
 
   ENGINE_API extern StringStackWalker_t StringStackWalker;
 #endif
+
+
+#define VORBIS_API ENGINE_API
+#define STB_VORBIS_NO_INTEGER_CONVERSION
+#define STB_VORBIS_NO_PUSHDATA_API
+#include <extern/stb_vorbis/stb_vorbis.h>
+
 
 
 #pragma clang diagnostic pop

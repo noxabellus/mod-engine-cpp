@@ -35,6 +35,9 @@ All dependencies are embedded in the source tracking so no extra downloads or bu
 + tinycthread ([zlib](https://github.com/tinycthread/tinycthread/blob/master/README.txt#L71))
   > https://github.com/tinycthread/tinycthread
 
++ stb_vorbis ([Unlicense](https://github.com/nothings/stb/blob/master/stb_vorbis.c#L5468))
+  > https://github.com/nothings/stb/blob/master/stb_vorbis.c
+
 + StackWalker (Used for indepth memory debug mode during development only) ([BSD3](https://github.com/JochenKalmbach/StackWalker/blob/master/LICENSE))
   > https://github.com/JochenKalmbach/StackWalker
 
@@ -52,6 +55,9 @@ All assets used by the engine or test game utilize open source or public domain 
   + Teko ([Open Font](http://scripts.sil.org/cms/scripts/page.php?site_id=nrsi&id=OFL_web))
     > https://fonts.google.com/specimen/Teko
 
+- Music
+  + Return to the basis by Soft and Furious ([CC0](https://creativecommons.org/publicdomain/zero/1.0/))
+    > https://freemusicarchive.org/music/Soft_and_Furious/You_know_where_to_find_me/
 
 
 ## Project Status
@@ -77,6 +83,9 @@ This is still early in production, but a list of architectural elements that hav
   - 2d and 3d geometric primitives
   - 2d and 3d intersection and distance tests
 + Image i/o and manipulation through FreeImage
++ Audio i/o through SDL + stb_vorbis with support for:
+  - WAV/Windows audio files (uncompressed format)
+  - OGG/Vorbis files (compressed format)
 + Extensive graphics drawing abstractions with asset file i/o:
   - Shaders (Vertex, Fragment)
   - Shader programs

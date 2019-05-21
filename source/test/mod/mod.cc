@@ -21,6 +21,159 @@ void module_init () {
   ECS& ecs = *new ECS;
 
 
+  #define MUSIC_PATH_WAV "./assets/audio/music/YouKnowWhereToFindMe/Soft_and_Furious_-_02_-_Return_to_the_basis.wav"
+  #define MUSIC_PATH_OGG "./assets/audio/music/YouKnowWhereToFindMe/Soft_and_Furious_-_02_-_Return_to_the_basis.ogg"
+  #define EFFECT_PATH_0 "./assets/audio/effects/Player/LowHealth.wav"
+  #define EFFECT_PATH_1 "./assets/audio/effects/UI/MenuConfirm.wav"
+  #define EFFECT_PATH_2 "./assets/audio/effects/UI/MenuDenied.wav"
+  #define EFFECT_PATH_3 "./assets/audio/effects/UI/MenuDialog.wav"
+  #define EFFECT_PATH_4 "./assets/audio/effects/UI/MenuNavDown.wav"
+  #define EFFECT_PATH_5 "./assets/audio/effects/UI/MenuNavUp.wav"
+
+  struct AudioData {
+    f32_t* data;
+    size_t position;
+    size_t length;
+    f32_t volume;
+    bool loop;
+
+
+    AudioData () { }
+    AudioData (f32_t* in_data, size_t in_length, f32_t in_volume = 1.0f, bool in_loop = true)
+    : data(in_data)
+    , position(0)
+    , length(in_length)
+    , volume(in_volume)
+    , loop(in_loop)
+    { }
+
+    void destroy () {
+      if (data != NULL) memory::deallocate(data);
+    }
+
+
+    void add_stream_data (f32_t* stream, size_t stream_length) {
+      size_t rem = length - position;
+    
+      size_t len = stream_length > rem? rem : stream_length;
+
+      if (len > 0) {
+        for (size_t i = 0; i < len; i ++) {
+          stream[i] += data[position + i] * volume;
+        }
+        
+        position += len;
+      } else if (loop) {
+        position = 0;
+      }
+    }
+  };
+  
+
+  Array<AudioData> audio_data;
+
+  SDL_AudioSpec custom_spec;
+	custom_spec.format = AUDIO_F32SYS;
+	custom_spec.freq = 44100;
+	custom_spec.channels = 2;
+	custom_spec.samples = 2048;
+  custom_spec.userdata = &audio_data;
+  custom_spec.callback = [] (void* ud, u8_t* stream, int stream_length) -> void {
+    memory::clear(stream, stream_length);
+    size_t stream_flt_length = stream_length / sizeof(f32_t);
+    for (auto [ i, audio ] : *reinterpret_cast<Array<AudioData>*>(ud)) {
+      audio.add_stream_data(reinterpret_cast<f32_t*>(stream), stream_flt_length);
+    }
+  };
+  
+  SDL_AudioDeviceID audio_device = SDL_OpenAudioDevice(NULL, 0, &custom_spec, NULL, 0);
+  m_assert(audio_device != 0, "Could not open audio device with the designated spec");
+
+
+
+  auto const load_audio_wav = [&] (char const* path, f32_t volume = 1.0f) {
+    SDL_AudioSpec wav_spec;
+    u8_t* wav_start = NULL;
+    u32_t wav_length = 0;
+
+    m_asset_assert(
+      SDL_LoadWAV(path, &wav_spec, &wav_start, &wav_length) != NULL,
+      path,
+      "Could not load file"
+    );
+  
+    SDL_AudioCVT cvt;
+    SDL_BuildAudioCVT(&cvt, wav_spec.format, wav_spec.channels, wav_spec.freq, custom_spec.format, custom_spec.channels, custom_spec.freq);
+
+    if (!cvt.needed) printf("Warning: applying conversion to wav file that was loaded with the custom spec\n");
+
+    cvt.len = wav_length;
+    cvt.buf = memory::allocate<u8_t>(cvt.len * cvt.len_mult);
+
+    memory::copy(cvt.buf, wav_start, wav_length);
+
+    SDL_FreeWAV(wav_start);
+
+    SDL_ConvertAudio(&cvt);
+
+    audio_data.append({ reinterpret_cast<f32_t*>(cvt.buf), static_cast<size_t>(cvt.len_cvt) / sizeof(f32_t), volume });
+  };
+
+  auto const load_audio_ogg = [&] (char const* path, f32_t volume = 1.0f) {
+    s32_t err;
+    stb_vorbis* file = stb_vorbis_open_filename(path, &err, NULL);
+
+    m_asset_assert(
+      file != NULL,
+      path,
+      "Could not load file, error code %d",
+      err
+    );
+
+    stb_vorbis_info info = stb_vorbis_get_info(file);
+
+    size_t num_floats = stb_vorbis_stream_length_in_samples(file) * info.channels;
+    f32_t* imem = memory::allocate<f32_t>(num_floats);
+
+    stb_vorbis_get_samples_float_interleaved(file, info.channels, imem, num_floats);
+
+    stb_vorbis_close(file);
+
+    SDL_AudioCVT cvt;
+    SDL_BuildAudioCVT(&cvt, AUDIO_F32SYS, info.channels, info.sample_rate, custom_spec.format, custom_spec.channels, custom_spec.freq);
+
+    if (cvt.needed) {
+      cvt.len = num_floats * sizeof(f32_t);
+      cvt.buf = memory::allocate<u8_t>(cvt.len * cvt.len_mult);
+
+      memory::copy(cvt.buf, imem, cvt.len);
+
+      memory::deallocate(imem);
+
+      SDL_ConvertAudio(&cvt);
+
+      audio_data.append({ reinterpret_cast<f32_t*>(cvt.buf), static_cast<size_t>(cvt.len_cvt) / sizeof(f32_t), volume });
+    } else {
+      audio_data.append({ imem, num_floats, volume });
+    }
+  };
+  
+  // load_audio_wav(MUSIC_PATH_WAV, 0.4f);
+     load_audio_ogg(MUSIC_PATH_OGG, 0.4f);
+     load_audio_wav(EFFECT_PATH_0);
+  // load_audio_wav(EFFECT_PATH_1);
+  // load_audio_wav(EFFECT_PATH_2);
+  // load_audio_wav(EFFECT_PATH_3);
+  // load_audio_wav(EFFECT_PATH_4);
+  // load_audio_wav(EFFECT_PATH_5);
+
+   
+  
+  
+  SDL_PauseAudioDevice(audio_device, 0);
+
+
+
   /* XML TEST */
   Matrix4 dae_tran = Transform3D { 0, Quaternion::from_euler(Euler { Vector3f { 0, 0, num::deg_to_rad(180) } }), 1 }.compose();
 
@@ -68,11 +221,11 @@ void module_init () {
   MaterialHandle directional_light_mat = AssetManager.get<Material>("PointLight");
   MaterialHandle unlit_color_mat = AssetManager.get<Material>("UnlitColor");
 
-  MaterialHandle unlit_color_uniform_mat = AssetManager.get<Material>("UnlitColorUniform");
+  // MaterialHandle unlit_color_uniform_mat = AssetManager.get<Material>("UnlitColorUniform");
   
   // MaterialSet unlit_colors = MaterialSet::from_ex("UnlitColors", Array<MaterialSetEntry>::from_elements(unlit_color_a, unlit_color_b));
 
-  MaterialHandle unlit_texture_mat = AssetManager.get<Material>("UnlitTexture");
+  // MaterialHandle unlit_texture_mat = AssetManager.get<Material>("UnlitTexture");
   RenderMesh3DHandle test_cube_mesh = AssetManager.get<RenderMesh3D>("Test Cube");
 
   ecs.create_component_type<Transform3D>();
@@ -819,6 +972,13 @@ void module_init () {
 
     Application.end_frame();
   }
+
+
+  SDL_CloseAudioDevice(audio_device);
+
+  for (auto [ i, audio ] : audio_data) audio.destroy();
+  audio_data.destroy();
+
 
   dae_mesh.destroy();
   dae_skel.destroy();

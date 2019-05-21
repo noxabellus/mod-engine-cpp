@@ -11,11 +11,18 @@
 #pragma clang diagnostic ignored "-Wundef"
 #pragma clang diagnostic ignored "-Wimplicit-fallthrough"
 #pragma clang diagnostic ignored "-Wpragma-pack"
+#pragma clang diagnostic ignored "-Wcast-qual"
+#pragma clang diagnostic ignored "-Wshadow"
+#pragma clang diagnostic ignored "-Wcomma"
+#pragma clang diagnostic ignored "-Wunused-parameter"
+#pragma clang diagnostic ignored "-Wconditional-uninitialized"
 
 #include <extern/tinycthread/tinycthread.c>
 #include <extern/gl3w/gl3w.c>
 #include <extern/imgui/implementation/imgui_impl_sdl.cpp>
 #include <extern/imgui/implementation/imgui_impl_opengl3.cpp>
+#define STB_VORBIS_IMPLEMENTATION
+#include <extern/stb_vorbis/stb_vorbis.h>
 
 #pragma clang diagnostic pop
 
