@@ -21,94 +21,7 @@ void module_init () {
   ECS& ecs = *new ECS;
 
 
-  #define MUSIC_PATH_WAV "./assets/audio/music/YouKnowWhereToFindMe/Soft_and_Furious_-_02_-_Return_to_the_basis.wav"
-  #define MUSIC_PATH_OGG "./assets/audio/music/YouKnowWhereToFindMe/Soft_and_Furious_-_02_-_Return_to_the_basis.ogg"
-  #define EFFECT_PATH_0 "./assets/audio/effects/Player/LowHealth.wav"
-  #define EFFECT_PATH_1 "./assets/audio/effects/UI/MenuConfirm.wav"
-  #define EFFECT_PATH_2 "./assets/audio/effects/UI/MenuDenied.wav"
-  #define EFFECT_PATH_3 "./assets/audio/effects/UI/MenuDialog.wav"
-  #define EFFECT_PATH_4 "./assets/audio/effects/UI/MenuNavDown.wav"
-  #define EFFECT_PATH_5 "./assets/audio/effects/UI/MenuNavUp.wav"
   
-  Array<AudioElement> audio_elements;
-
-  auto const load_audio_wav = [&] (char const* path, f32_t volume = 1.0f) {
-    SDL_AudioSpec wav_spec;
-    u8_t* wav_start = NULL;
-    u32_t wav_length = 0;
-
-    m_asset_assert(
-      SDL_LoadWAV(path, &wav_spec, &wav_start, &wav_length) != NULL,
-      path,
-      "Could not load file"
-    );
-  
-    SDL_AudioCVT cvt;
-    SDL_BuildAudioCVT(&cvt, wav_spec.format, wav_spec.channels, wav_spec.freq, AudioContext.audio_spec.format, AudioContext.audio_spec.channels, AudioContext.audio_spec.freq);
-
-    if (!cvt.needed) printf("Warning: applying conversion to wav file that was loaded with the standard spec\n");
-
-    cvt.len = wav_length;
-    cvt.buf = memory::allocate<u8_t>(cvt.len * cvt.len_mult);
-
-    memory::copy(cvt.buf, wav_start, wav_length);
-
-    SDL_FreeWAV(wav_start);
-
-    SDL_ConvertAudio(&cvt);
-
-    audio_elements.append({ reinterpret_cast<f32_t*>(cvt.buf), static_cast<size_t>(cvt.len_cvt) / sizeof(f32_t), volume });
-  };
-
-  auto const load_audio_ogg = [&] (char const* path, f32_t volume = 1.0f) {
-    s32_t err;
-    stb_vorbis* file = stb_vorbis_open_filename(path, &err, NULL);
-
-    m_asset_assert(
-      file != NULL,
-      path,
-      "Could not load file, error code %d",
-      err
-    );
-
-    stb_vorbis_info info = stb_vorbis_get_info(file);
-
-    size_t num_floats = stb_vorbis_stream_length_in_samples(file) * info.channels;
-    f32_t* imem = memory::allocate<f32_t>(num_floats);
-
-    stb_vorbis_get_samples_float_interleaved(file, info.channels, imem, num_floats);
-
-    stb_vorbis_close(file);
-
-    SDL_AudioCVT cvt;
-    SDL_BuildAudioCVT(&cvt, AUDIO_F32SYS, info.channels, info.sample_rate, AudioContext.audio_spec.format, AudioContext.audio_spec.channels, AudioContext.audio_spec.freq);
-
-    if (cvt.needed) {
-      cvt.len = num_floats * sizeof(f32_t);
-      cvt.buf = memory::allocate<u8_t>(cvt.len * cvt.len_mult);
-
-      memory::copy(cvt.buf, imem, cvt.len);
-
-      memory::deallocate(imem);
-
-      SDL_ConvertAudio(&cvt);
-
-      audio_elements.append({ reinterpret_cast<f32_t*>(cvt.buf), static_cast<size_t>(cvt.len_cvt) / sizeof(f32_t), volume });
-    } else {
-      audio_elements.append({ imem, num_floats, volume });
-    }
-  };
-  
-  // load_audio_wav(MUSIC_PATH_WAV, 0.4f);
-     load_audio_ogg(MUSIC_PATH_OGG, 0.4f);
-     load_audio_wav(EFFECT_PATH_0);
-  // load_audio_wav(EFFECT_PATH_1);
-  // load_audio_wav(EFFECT_PATH_2);
-  // load_audio_wav(EFFECT_PATH_3);
-  // load_audio_wav(EFFECT_PATH_4);
-  // load_audio_wav(EFFECT_PATH_5);
-
-
 
   /* XML TEST */
   Matrix4 dae_tran = Transform3D { 0, Quaternion::from_euler(Euler { Vector3f { 0, 0, num::deg_to_rad(180) } }), 1 }.compose();
@@ -164,6 +77,8 @@ void module_init () {
   // MaterialHandle unlit_texture_mat = AssetManager.get<Material>("UnlitTexture");
   RenderMesh3DHandle test_cube_mesh = AssetManager.get<RenderMesh3D>("Test Cube");
 
+  AudioHandle test_song = AssetManager.get<Audio>("ReturnToTheBasis");
+
   ecs.create_component_type<Transform3D>();
   ecs.create_component_type<MaterialHandle>();
   ecs.create_component_type<MaterialInstance>();
@@ -176,6 +91,7 @@ void module_init () {
   ecs.create_component_type<SkeletalAnimationHandle>();
   ecs.create_component_type<SkeletalAnimationState>();
   ecs.create_component_type<SkeletonState>();
+  ecs.create_component_type<AudioState>();
 
 
   EntityHandle character; {
@@ -215,6 +131,7 @@ void module_init () {
        }
      )
     ));
+    character.add_component(AudioState { test_song });
 
     // MaterialInstance unlit_color_a = { unlit_color_uniform_mat };
     // MaterialInstance unlit_color_b = { unlit_color_uniform_mat };
@@ -245,6 +162,35 @@ void module_init () {
     light.add_component(unlit_color_mat);
     light.add_component(PointLight { { 1, 1, 1 }, 1 });
   }
+
+  ecs.create_system("Audio Renderer", [&] (ECS*) {
+    ComponentType::ID audio_state_id = ecs.get_component_type_by_instance_type<AudioState>().id;
+
+    AudioContext.queue_buffer();
+
+    Begin("Audio");
+    size_t queue_b = SDL_GetQueuedAudioSize(AudioContext.device_id);
+    size_t queue_s = queue_b / sizeof(f32_t);
+    Text("SDL_QueuedAudioSize\n- Bytes: %zu\n- Samples: %zu", queue_b, queue_s);
+    char element_desc [64];
+    for (size_t i = 0; i < ecs.entity_count; i ++) {
+      Entity& entity = ecs.entities[i];
+      if (entity.enabled_components.match_index(audio_state_id)) {
+        AudioState& state = ecs.get_component<AudioState>(i);
+        
+        Text("Element %zu", i);
+        snprintf(element_desc, 64, "Active %zu", i);
+        Checkbox(element_desc, &state.active);
+        snprintf(element_desc, 64, "Loop %zu", i);
+        Checkbox(element_desc, &state.loop);
+        snprintf(element_desc, 64, "Start Over %zu", i);
+        if (Button(element_desc)) state.position = 0;
+
+        AudioContext.render_element(state);
+      }
+    }
+    End();
+  });
 
 
   ecs.create_system("Skeletal Animator Debug Controller", false, { ecs.get_component_type_by_instance_type<SkeletonState>().id }, [&] (ECS*, u32_t index) {
@@ -865,27 +811,9 @@ void module_init () {
 
     draw_debug.begin_frame();
 
-
-    AudioContext.queue_buffer();
-
     ecs.update();
 
-    Begin("Audio");
-    size_t queue_b = SDL_GetQueuedAudioSize(AudioContext.device_id);
-    size_t queue_s = queue_b / sizeof(f32_t);
-    Text("SDL_QueuedAudioSize\n- Bytes: %zu\n- Samples: %zu", queue_b, queue_s);
-    char element_desc [64];
-    for (auto [ i, element ] : audio_elements) {
-      Text("Element %zu", i);
-      snprintf(element_desc, 64, "Active %zu", i);
-      Checkbox(element_desc, &element.active);
-      snprintf(element_desc, 64, "Loop %zu", i);
-      Checkbox(element_desc, &element.loop);
-      snprintf(element_desc, 64, "Start Over %zu", i);
-      if (Button(element_desc)) element.position = 0;
-      AudioContext.render_element(element);
-    }
-    End();
+    
 
     Begin("Debuggers");
     Checkbox("Face Normals", &ecs.get_system_by_name("Face Normal Debugger").enabled);
@@ -929,10 +857,6 @@ void module_init () {
 
     Application.end_frame();
   }
-
-
-  for (auto [ i, element ] : audio_elements) element.destroy();
-  audio_elements.destroy();
 
 
   dae_mesh.destroy();

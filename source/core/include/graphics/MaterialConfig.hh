@@ -5,6 +5,7 @@
 #include "../JSON.hh"
 
 
+
 namespace mod {
   struct MaterialInfo {
     size_t material_index;

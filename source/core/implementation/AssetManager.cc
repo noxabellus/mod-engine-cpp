@@ -35,6 +35,7 @@ namespace mod {
     render_mesh_3d.destroy();
     skeleton.destroy();
     skeletal_animation.destroy();
+    audio.destroy();
   }
 
   s32_t AssetManager_t::watch_files (void*) {
@@ -149,6 +150,12 @@ namespace mod {
             create_asset_from_file<SkeletalAnimation>(name, path, false);
           } break;
 
+          case AssetType::Audio: {
+            name = audio.get_name_by_id(file.asset_id);
+
+            create_asset_from_file<Audio>(name, path, false);
+          } break;
+
           case database_type: {
             if (update_reports_output != NULL) {
               load_database_from_file(path, &report_error_intermediate, false, true);
@@ -218,6 +225,7 @@ namespace mod {
     JSONItem* render_mesh_3ds_item = json.get_object_item("render_mesh_3ds");
     JSONItem* skeletons_item = json.get_object_item("skeletons");
     JSONItem* skeletal_animations_item = json.get_object_item("skeletal_animations");
+    JSONItem* audio_item = json.get_object_item("audio");
 
 
     char relative_path [1024];
@@ -527,6 +535,38 @@ namespace mod {
             create_asset_from_json_item<SkeletalAnimation>(
               name.value,
               get_sub_rel_path("skeletal_animations", name, item),
+              item
+            );
+          }
+        } catch (Exception& exception) {
+          if (err_msg_output != NULL) {
+            exception.print(*err_msg_output);
+          } else {
+            exception.print();
+          }
+          
+          exception.handle();
+        }
+      }
+    }
+
+    if (audio_item != NULL) {
+      JSONObject audio_obj = audio_item->get_object();
+
+      for (auto [ i, name ] : audio_obj.keys) {
+        JSONItem& item = audio_obj.items[i];
+        
+        try {
+          if (item.type == JSONType::String) {
+            create_asset_from_file<Audio>(
+              name.value,
+              get_file_rel_path(item),
+              watch_sub
+            );
+          } else {
+            create_asset_from_json_item<Audio>(
+              name.value,
+              get_sub_rel_path("audio", name, item),
               item
             );
           }

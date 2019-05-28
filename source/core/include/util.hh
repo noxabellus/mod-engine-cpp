@@ -98,6 +98,29 @@ namespace mod {
     return dot;
   }
 
+  
+
+  
+  /* Convert an ascii char to lowercase */
+  static constexpr char char_to_lower (char c) {
+    if (c > '@' && c < '[') return c ^ ' ';
+    else return c;
+  }
+
+  /* Convert an ascii char to uppercase */
+  static constexpr char char_to_upper (char c) {
+    if (c > '`' && c < '{') return c ^ ' ';
+    else return c;
+  }
+
+  /* Compare two ascii chars, disregarding case
+   * < 0 if they do not match and a has a lower value than b.
+   * 0 if they are equal.
+   * > 0 if they do not match and a has a greater value than b */
+  static constexpr s32_t char_cmp_caseless (char a, char b) {
+    return char_to_lower(a) - char_to_lower(b);
+  }
+
 
   /* Determine whether a str or subsection of a str `start` matches the beginning of `str` */
   static constexpr bool str_starts_with (char const* str, char const* start, size_t max_length = SIZE_MAX) {
@@ -126,6 +149,33 @@ namespace mod {
     return true;
   }
 
+  /* Determine whether a str or subsection of a str `start` matches the beginning of `str`, disregarding case */
+  static constexpr bool str_starts_with_caseless (char const* str, char const* start, size_t max_length = SIZE_MAX) {
+    size_t i = 0;
+
+    while (start[i] != '\0' && i < max_length) {
+      if (char_cmp_caseless(str[i], start[i]) != 0) return false;
+      ++ i;
+    }
+
+    return true;
+  }
+
+  /* Determine whether a str or subsection of a str `end` matches the end of `str`, disregarding case */
+  static constexpr bool str_ends_with_caseless (char const* str, char const* end, size_t max_length = 0) {
+    if (max_length == 0) max_length = strlen(end);
+
+    size_t str_len = strlen(str);
+
+    if (max_length > str_len) return false;
+
+    for (size_t i = 0; i < max_length; i ++) {
+      if (char_cmp_caseless(str[str_len - max_length + i], end[i]) != 0) return false;
+    }
+
+    return true;
+  }
+
   /* Get the length of a str (same as strlen but constexpr) */
   static constexpr size_t str_length (char const* str) {
     size_t l = 0;
@@ -133,18 +183,6 @@ namespace mod {
     return l;
   }
 
-
-  
-
-  static constexpr char char_to_lower (char c) {
-    if (c > '@' && c < '[') return c ^ ' ';
-    else return c;
-  }
-
-  static constexpr char char_to_upper (char c) {
-    if (c > '`' && c < '{') return c ^ ' ';
-    else return c;
-  }
 
   /* Determine whether two strs are the same if case (a vs A) is disregarded
    * Returns:
@@ -159,7 +197,7 @@ namespace mod {
 
     if (str1 != NULL && str2 != NULL) {
       while ((*str1 || *str2) && (i < num)) {
-        ret_code = char_to_lower(*str1) - char_to_lower(*str2);
+        ret_code = char_cmp_caseless(*str1, *str2);
 
         if (ret_code != 0) break;
 

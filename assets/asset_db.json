@@ -71,5 +71,19 @@
   "render_mesh_3ds": {
     "Test Quad 3D": "meshes/test_quad3d.json",
     "Test Cube": "meshes/test_cube.json"
+  },
+
+  "audio": {
+    "LowHealth": "audio/effects/Player/LowHealth.wav",
+    "MenuConfirm": "audio/effects/UI/MenuConfirm.wav",
+    "MenuDenied": "audio/effects/UI/MenuDenied.wav",
+    "MenuDialog": "audio/effects/UI/MenuDialog.wav",
+    "MenuNavDown": "audio/effects/UI/MenuNavDown.wav",
+    "MenuNavUp": "audio/effects/UI/MenuNavUp.wav",
+
+    "ReturnToTheBasis": {
+      "path": "audio/music/YouKnowWhereToFindMe/Soft_and_Furious_-_02_-_Return_to_the_basis.ogg",
+      "volume": 0.4
+    }
   }
 }
