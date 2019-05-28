@@ -29,67 +29,8 @@ void module_init () {
   #define EFFECT_PATH_3 "./assets/audio/effects/UI/MenuDialog.wav"
   #define EFFECT_PATH_4 "./assets/audio/effects/UI/MenuNavDown.wav"
   #define EFFECT_PATH_5 "./assets/audio/effects/UI/MenuNavUp.wav"
-
-  struct AudioData {
-    f32_t* data;
-    size_t position;
-    size_t length;
-    f32_t volume;
-    bool loop;
-
-
-    AudioData () { }
-    AudioData (f32_t* in_data, size_t in_length, f32_t in_volume = 1.0f, bool in_loop = true)
-    : data(in_data)
-    , position(0)
-    , length(in_length)
-    , volume(in_volume)
-    , loop(in_loop)
-    { }
-
-    void destroy () {
-      if (data != NULL) memory::deallocate(data);
-    }
-
-
-    void add_stream_data (f32_t* stream, size_t stream_length) {
-      size_t rem = length - position;
-    
-      size_t len = stream_length > rem? rem : stream_length;
-
-      if (len > 0) {
-        for (size_t i = 0; i < len; i ++) {
-          stream[i] += data[position + i] * volume;
-        }
-        
-        position += len;
-      } else if (loop) {
-        position = 0;
-      }
-    }
-  };
   
-
-  Array<AudioData> audio_data;
-
-  SDL_AudioSpec custom_spec;
-	custom_spec.format = AUDIO_F32SYS;
-	custom_spec.freq = 44100;
-	custom_spec.channels = 2;
-	custom_spec.samples = 2048;
-  custom_spec.userdata = &audio_data;
-  custom_spec.callback = [] (void* ud, u8_t* stream, int stream_length) -> void {
-    memory::clear(stream, stream_length);
-    size_t stream_flt_length = stream_length / sizeof(f32_t);
-    for (auto [ i, audio ] : *reinterpret_cast<Array<AudioData>*>(ud)) {
-      audio.add_stream_data(reinterpret_cast<f32_t*>(stream), stream_flt_length);
-    }
-  };
-  
-  SDL_AudioDeviceID audio_device = SDL_OpenAudioDevice(NULL, 0, &custom_spec, NULL, 0);
-  m_assert(audio_device != 0, "Could not open audio device with the designated spec");
-
-
+  Array<AudioElement> audio_elements;
 
   auto const load_audio_wav = [&] (char const* path, f32_t volume = 1.0f) {
     SDL_AudioSpec wav_spec;
@@ -103,9 +44,9 @@ void module_init () {
     );
   
     SDL_AudioCVT cvt;
-    SDL_BuildAudioCVT(&cvt, wav_spec.format, wav_spec.channels, wav_spec.freq, custom_spec.format, custom_spec.channels, custom_spec.freq);
+    SDL_BuildAudioCVT(&cvt, wav_spec.format, wav_spec.channels, wav_spec.freq, AudioContext.audio_spec.format, AudioContext.audio_spec.channels, AudioContext.audio_spec.freq);
 
-    if (!cvt.needed) printf("Warning: applying conversion to wav file that was loaded with the custom spec\n");
+    if (!cvt.needed) printf("Warning: applying conversion to wav file that was loaded with the standard spec\n");
 
     cvt.len = wav_length;
     cvt.buf = memory::allocate<u8_t>(cvt.len * cvt.len_mult);
@@ -116,7 +57,7 @@ void module_init () {
 
     SDL_ConvertAudio(&cvt);
 
-    audio_data.append({ reinterpret_cast<f32_t*>(cvt.buf), static_cast<size_t>(cvt.len_cvt) / sizeof(f32_t), volume });
+    audio_elements.append({ reinterpret_cast<f32_t*>(cvt.buf), static_cast<size_t>(cvt.len_cvt) / sizeof(f32_t), volume });
   };
 
   auto const load_audio_ogg = [&] (char const* path, f32_t volume = 1.0f) {
@@ -140,7 +81,7 @@ void module_init () {
     stb_vorbis_close(file);
 
     SDL_AudioCVT cvt;
-    SDL_BuildAudioCVT(&cvt, AUDIO_F32SYS, info.channels, info.sample_rate, custom_spec.format, custom_spec.channels, custom_spec.freq);
+    SDL_BuildAudioCVT(&cvt, AUDIO_F32SYS, info.channels, info.sample_rate, AudioContext.audio_spec.format, AudioContext.audio_spec.channels, AudioContext.audio_spec.freq);
 
     if (cvt.needed) {
       cvt.len = num_floats * sizeof(f32_t);
@@ -152,9 +93,9 @@ void module_init () {
 
       SDL_ConvertAudio(&cvt);
 
-      audio_data.append({ reinterpret_cast<f32_t*>(cvt.buf), static_cast<size_t>(cvt.len_cvt) / sizeof(f32_t), volume });
+      audio_elements.append({ reinterpret_cast<f32_t*>(cvt.buf), static_cast<size_t>(cvt.len_cvt) / sizeof(f32_t), volume });
     } else {
-      audio_data.append({ imem, num_floats, volume });
+      audio_elements.append({ imem, num_floats, volume });
     }
   };
   
@@ -166,11 +107,6 @@ void module_init () {
   // load_audio_wav(EFFECT_PATH_3);
   // load_audio_wav(EFFECT_PATH_4);
   // load_audio_wav(EFFECT_PATH_5);
-
-   
-  
-  
-  SDL_PauseAudioDevice(audio_device, 0);
 
 
 
@@ -930,7 +866,26 @@ void module_init () {
     draw_debug.begin_frame();
 
 
+    AudioContext.queue_buffer();
+
     ecs.update();
+
+    Begin("Audio");
+    size_t queue_b = SDL_GetQueuedAudioSize(AudioContext.device_id);
+    size_t queue_s = queue_b / sizeof(f32_t);
+    Text("SDL_QueuedAudioSize\n- Bytes: %zu\n- Samples: %zu", queue_b, queue_s);
+    char element_desc [64];
+    for (auto [ i, element ] : audio_elements) {
+      Text("Element %zu", i);
+      snprintf(element_desc, 64, "Active %zu", i);
+      Checkbox(element_desc, &element.active);
+      snprintf(element_desc, 64, "Loop %zu", i);
+      Checkbox(element_desc, &element.loop);
+      snprintf(element_desc, 64, "Start Over %zu", i);
+      if (Button(element_desc)) element.position = 0;
+      AudioContext.render_element(element);
+    }
+    End();
 
     Begin("Debuggers");
     Checkbox("Face Normals", &ecs.get_system_by_name("Face Normal Debugger").enabled);
@@ -939,7 +894,9 @@ void module_init () {
     Checkbox("Object Picker", &ecs.get_system_by_name("Object Picker").enabled);
     Checkbox("Animator Controls", &ecs.get_system_by_name("Skeletal Animator Debug Controller").enabled);
     Checkbox("Animated Skeleton", &ecs.get_system_by_name("Skeletal Animator Debugger").enabled);
-
+    if (Button("Simulate Frame Drop")) SDL_Delay(16);
+    if (Button("Simulate Two Frame Drop")) SDL_Delay(32);
+    if (Button("Simulate Ten Frame Drop")) SDL_Delay(160);
     // MaterialHandle material_options [] = {
     //   weight_check_mat,
     //   directional_light_mat,
@@ -974,10 +931,8 @@ void module_init () {
   }
 
 
-  SDL_CloseAudioDevice(audio_device);
-
-  for (auto [ i, audio ] : audio_data) audio.destroy();
-  audio_data.destroy();
+  for (auto [ i, element ] : audio_elements) element.destroy();
+  audio_elements.destroy();
 
 
   dae_mesh.destroy();

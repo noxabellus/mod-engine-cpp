@@ -13,6 +13,7 @@
 
 #include "math/lib.cc"
 #include "graphics/lib.cc"
+#include "audio/lib.cc"
 
 #include "DAE.cc"
 

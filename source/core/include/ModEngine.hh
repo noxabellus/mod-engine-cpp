@@ -18,6 +18,7 @@
 
 #include "math/lib.hh"
 #include "graphics/lib.hh"
+#include "audio/lib.hh"
 
 #include "DAE.hh"
 

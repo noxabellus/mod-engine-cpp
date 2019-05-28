@@ -252,6 +252,8 @@ namespace mod {
 
     AssetManager.init();
 
+    AudioContext.init();
+
 
     SDL_ShowWindow(window);
 
@@ -320,6 +322,8 @@ namespace mod {
     Input.destroy();
 
     AssetManager.destroy();
+
+    AudioContext.destroy();
     
 
     fonts.destroy();
