@@ -127,7 +127,7 @@ namespace mod {
       source
     );
 
-    return Audio { origin, result.a, result.b, volume };
+    return from_ex(origin, result.a, result.b, volume);
   }
 
   Audio Audio::from_json_item (char const* origin, JSONItem const& json) {
