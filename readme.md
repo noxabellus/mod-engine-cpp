@@ -139,6 +139,16 @@ This is still early in production, but a list of architectural elements that hav
     </ul>
   </details>
 + <details>
+    <summary style="cursor:pointer">Component based audio rendering abstraction</summary>
+    <ul>
+      <li>Simple additive mixing through floating point encoding</li>
+      <li>Component architecture allows for consistent usage similar to graphics</li>
+      <li>Add and remove audio components for easy playback control</li>
+      <li>Integrated with asset manager</li>
+      <!--<li>Dynamic pitch control</li>-->
+    </ul>
+  </details>
++ <details>
     <summary style="cursor:pointer">Extensive graphics drawing abstractions</summary>
     <ul>
       <li>Shaders (Vertex, Fragment)</li>
@@ -151,6 +161,7 @@ This is still early in production, but a list of architectural elements that hav
       <li>Skeletal Animations</li>
       <li>Collada importer</li>
       <li>2D and 3D debug drawing api</li>
+      <li>Integrated with asset manager</li>
       <!--<li>Batched rendering (Speculative)</li>-->
     </ul>
   </details>
