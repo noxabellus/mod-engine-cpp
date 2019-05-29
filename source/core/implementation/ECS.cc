@@ -1,6 +1,6 @@
 #include "../include/ECS.hh"
 #include "../include/String.hh"
-
+#include "../include/Hierarchy.hh"
 
 namespace mod {
   void* EntityHandle::create_component_by_id (ComponentType::ID type_id) {
@@ -159,6 +159,10 @@ namespace mod {
   {
     memory::clear(systems, System::max_systems);
     m_assert(entities != NULL, "Out of memory or other null pointer error while allocating ECS entities with starting capacity %" PRIu32, entity_capacity);
+    create_component_type<Transform3D>();
+    create_component_type<Child>();
+    create_component_type<Parent>();
+    create_component_type<SkeletonState>();
   }
 
 

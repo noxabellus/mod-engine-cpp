@@ -20,6 +20,8 @@
 #include "graphics/lib.hh"
 #include "audio/lib.hh"
 
+#include "Hierarchy.hh"
+
 #include "DAE.hh"
 
 #include "AssetHandle.hh"

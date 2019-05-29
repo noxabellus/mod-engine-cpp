@@ -267,6 +267,25 @@ namespace mod {
 
     ENGINE_API Entity* operator -> ();
 
+    bool equal (EntityHandle const& other) const {
+      return ecs == other.ecs
+          && id  == other.id;
+    }
+
+    bool operator == (EntityHandle const& other) const {
+      return equal(other);
+    }
+
+    
+    bool not_equal (EntityHandle const& other) const {
+      return ecs != other.ecs
+          || id  != other.id;
+    }
+
+    bool operator != (EntityHandle const& other) const {
+      return not_equal(other);
+    }
+
     private: friend ECS;
       EntityHandle (ECS* in_ecs, u32_t in_index, Entity::ID in_id)
       : ecs(in_ecs)

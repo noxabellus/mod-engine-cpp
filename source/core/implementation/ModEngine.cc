@@ -15,6 +15,8 @@
 #include "graphics/lib.cc"
 #include "audio/lib.cc"
 
+#include "Hierarchy.cc"
+
 #include "DAE.cc"
 
 #include "AssetManager.cc"

@@ -65,6 +65,8 @@ void module_init () {
     Vector3f color;
     f32_t brightness;
   };
+
+  
   
   MaterialHandle weight_check_mat = AssetManager.get<Material>("WeightCheck");
   MaterialHandle directional_light_mat = AssetManager.get<Material>("PointLight");
@@ -79,7 +81,12 @@ void module_init () {
 
   AudioHandle test_song = AssetManager.get<Audio>("ReturnToTheBasis");
 
-  ecs.create_component_type<Transform3D>();
+  // now created by ecs constructor
+  // ecs.create_component_type<Transform3D>();
+  // ecs.create_component_type<SkeletonState>();
+  // ecs.create_component_type<Child>();
+  // ecs.create_component_type<Parent>();
+
   ecs.create_component_type<MaterialHandle>();
   ecs.create_component_type<MaterialInstance>();
   ecs.create_component_type<MaterialSetHandle>();
@@ -89,8 +96,7 @@ void module_init () {
   ecs.create_component_type<PointLight>();
   ecs.create_component_type<SkeletonHandle>();
   ecs.create_component_type<SkeletalAnimationHandle>();
-  ecs.create_component_type<SkeletalAnimationState>();
-  ecs.create_component_type<SkeletonState>();
+  // ecs.create_component_type<SkeletalAnimationState>();
   ecs.create_component_type<AudioState>();
 
 
@@ -132,6 +138,8 @@ void module_init () {
      )
     ));
     character.add_component(AudioState { test_song });
+    
+    character.add_component(Parent { character });
 
     // MaterialInstance unlit_color_a = { unlit_color_uniform_mat };
     // MaterialInstance unlit_color_b = { unlit_color_uniform_mat };
@@ -140,15 +148,26 @@ void module_init () {
     // character.add_component(MaterialSet::from_ex("UnlitColors", Array<MaterialSetEntry>::from_elements(unlit_color_a, unlit_color_b)));
   }
 
+  EntityHandle xent; {
+    xent = ecs.create_entity();
+    xent.add_component(Transform3D {
+      0,
+      Constants::Quaternion::identity,
+      1
+    });
+    xent.add_component(Parent { xent });
+  }
+
   EntityHandle plane; {
     plane = ecs.create_entity();
     plane.add_component(Transform3D {
-      0,
+      { 100, 0, 0 },
       Constants::Quaternion::identity,
       100
     });
     plane.add_component(directional_light_mat);
     plane.add_component(AssetManager.get<RenderMesh3D>("Test Quad 3D"));
+    xent.get_component<Parent>().add_child(plane);
   }
 
   EntityHandle light; {
@@ -161,6 +180,18 @@ void module_init () {
     light.add_component(test_cube_mesh);
     light.add_component(unlit_color_mat);
     light.add_component(PointLight { { 1, 1, 1 }, 1 });
+  }
+
+  EntityHandle hand_cube; {
+    hand_cube = ecs.create_entity();
+    hand_cube.add_component(Transform3D {
+      0,
+      Constants::Quaternion::identity,
+      10
+    });
+    hand_cube.add_component(test_cube_mesh);
+    hand_cube.add_component(unlit_color_mat);
+    character.get_component<Parent>().add_child(hand_cube, 25);
   }
 
   ecs.create_system("Audio Renderer", [&] (ECS*) {
@@ -305,7 +336,11 @@ void module_init () {
   //   }
   // });
 
+  f32_t xer = 0.0f;
 
+  ecs.create_system("Rotator", [&] (ECS*) {
+    ecs.get_component<Transform3D>(xent).rotation = Quaternion::from_euler(Euler { 0, 0, xer += 1 / Application.frame_delta });
+  });
 
   ecs.create_system("MovementInput", true, { ecs.get_component_type_by_instance_type<BasicInput>().id, ecs.get_component_type_by_instance_type<Transform3D>().id }, [&] (ECS*, u32_t index) {
     BasicInput& input = ecs.get_component<BasicInput>(index);
@@ -456,9 +491,14 @@ void module_init () {
 
       if (entity->enabled_components.match_subset(mask)) {
         Transform3D& transform = entity.get_component<Transform3D>();
-        RenderMesh3D& mesh = *entity.get_component<RenderMesh3DHandle>();
-
+        
         Matrix4 model_matrix = transform.compose();
+
+        if (entity->enabled_components.match_index(ecs.get_component_type_by_instance_type<Child>().id)) {
+          model_matrix = entity.get_component<Child>().compute_hierarchical_matrix() * model_matrix;
+        }
+        
+        RenderMesh3D& mesh = *entity.get_component<RenderMesh3DHandle>();
         
         Matrix3 normal_matrix = Matrix3::normal(view_matrix * model_matrix);
 
@@ -602,92 +642,92 @@ void module_init () {
 
 
 
-  // ecs.create_system("Skeleton Debugger", [&] (ECS*) {
-  //   ComponentMask mask = ComponentMask {
-  //     ecs.get_component_type_by_instance_type<Transform3D>().id,
-  //     ecs.get_component_type_by_instance_type<SkeletonHandle>().id
-  //   };
+  ecs.create_system("Skeleton Debugger", [&] (ECS*) {
+    ComponentMask mask = ComponentMask {
+      ecs.get_component_type_by_instance_type<Transform3D>().id,
+      ecs.get_component_type_by_instance_type<SkeletonHandle>().id
+    };
 
-  //   ComponentType::ID animation_type = ecs.get_component_type_by_instance_type<SkeletalAnimationHandle>().id;
+    ComponentType::ID animation_type = ecs.get_component_type_by_instance_type<SkeletalAnimationHandle>().id;
 
-  //   static Array<pair_t<bool, s32_t>> settings = Array<pair_t<bool, s32_t>> { 0, true };
+    static Array<pair_t<bool, s32_t>> settings = Array<pair_t<bool, s32_t>> { 0, true };
 
-  //   static auto const get_settings = [&] (size_t index) -> auto& {
-  //     while (settings.count <= index) settings.append({ true, 1 });
-  //     return settings[index];
-  //   };
+    static auto const get_settings = [&] (size_t index) -> auto& {
+      while (settings.count <= index) settings.append({ true, 1 });
+      return settings[index];
+    };
 
-  //   Begin("Bone Transforms");
-  //   for (u32_t i = 0; i < ecs.entity_count; i ++) {
-  //     EntityHandle entity = ecs.get_handle(i);
+    Begin("Bone Transforms");
+    for (u32_t i = 0; i < ecs.entity_count; i ++) {
+      EntityHandle entity = ecs.get_handle(i);
 
-  //     if (!entity->enabled_components.match_subset(mask)) continue;
+      if (!entity->enabled_components.match_subset(mask)) continue;
 
-  //     Transform3D& transform = entity.get_component<Transform3D>();
+      Transform3D& transform = entity.get_component<Transform3D>();
 
-  //     Matrix4 transform_matrix = transform.compose();
+      Matrix4 transform_matrix = transform.compose();
 
-  //     Skeleton& skeleton = *entity.get_component<SkeletonHandle>();
+      Skeleton& skeleton = *entity.get_component<SkeletonHandle>();
 
-  //     char entity_ident [128];
-  //     snprintf(entity_ident, 128, "Entity %u", entity.id);
-  //     bool do_menu = CollapsingHeader(entity_ident);
+      char entity_ident [128];
+      snprintf(entity_ident, 128, "Entity %u", entity.id);
+      bool do_menu = CollapsingHeader(entity_ident);
 
-  //     SkeletalKeyframe keyframe;
-  //     auto& anim_settings = get_settings(i);
-  //     if (do_menu) Checkbox("Enable animation", &anim_settings.a);
-  //     bool do_anim = anim_settings.a && entity->enabled_components[animation_type];
-  //     s32_t& selection = anim_settings.b;
+      SkeletalKeyframe keyframe;
+      auto& anim_settings = get_settings(i);
+      if (do_menu) Checkbox("Enable animation", &anim_settings.a);
+      bool do_anim = anim_settings.a && entity->enabled_components[animation_type];
+      s32_t& selection = anim_settings.b;
 
-  //     if (do_anim) {
-  //       SkeletalAnimation& animation = *entity.get_component<SkeletalAnimationHandle>();
+      if (do_anim) {
+        SkeletalAnimation& animation = *entity.get_component<SkeletalAnimationHandle>();
     
-  //       if (do_menu) SliderInt("Keyframe", &selection, 1, animation.keyframes.count - 1);
+        if (do_menu) SliderInt("Keyframe", &selection, 1, animation.keyframes.count - 1);
 
-  //       keyframe = animation.keyframes[selection];
-  //     }
+        keyframe = animation.keyframes[selection];
+      }
       
-  //     if (do_menu) Text("%zu total bones", skeleton.bones.count);
+      if (do_menu) Text("%zu total bones", skeleton.bones.count);
 
-  //     for (auto [ j, bone ] : skeleton) {
-  //       bool selected = false;
+      for (auto [ j, bone ] : skeleton) {
+        bool selected = false;
         
-  //       if (do_menu) {
-  //         Text("%zu - %s", j, bone.name.value);
-  //         selected = IsItemHovered();
-  //         if (selected) SetMouseCursor(ImGuiMouseCursor_Hand);
-  //       }
+        if (do_menu) {
+          Text("%zu - %s", j, bone.name.value);
+          selected = IsItemHovered();
+          if (selected) SetMouseCursor(ImGuiMouseCursor_Hand);
+        }
 
 
-  //       Transform3D* anim_tran_ptr = do_anim? keyframe.get_bone_transform(j) : NULL;
-  //       Transform3D anim_tran = anim_tran_ptr != NULL? *anim_tran_ptr : bone.bind_matrix.decompose();
-  //       Matrix4 anim_matrix = anim_tran.compose();
-  //       Matrix4 f_matrix = transform_matrix * anim_matrix;
-  //       Vector3f bone_pos = Vector3f{}.apply_matrix(f_matrix);
+        Transform3D* anim_tran_ptr = do_anim? keyframe.get_bone_transform(j) : NULL;
+        Transform3D anim_tran = anim_tran_ptr != NULL? *anim_tran_ptr : bone.bind_matrix.decompose();
+        Matrix4 anim_matrix = anim_tran.compose();
+        Matrix4 f_matrix = transform_matrix * anim_matrix;
+        Vector3f bone_pos = Vector3f{}.apply_matrix(f_matrix);
 
-  //       draw_debug.cube(false, AABB3::from_center_and_size(bone_pos, selected? 10 : 1), selected? Vector3f { 0, 1, 1  } : Vector3f { 1, 0, 1 });
+        draw_debug.cube(false, AABB3::from_center_and_size(bone_pos, selected? 10 : 1), selected? Vector3f { 0, 1, 1  } : Vector3f { 1, 0, 1 });
 
-  //       Bone* parent_bone = skeleton.get_parent(bone);
-  //       if (parent_bone != NULL) {
-  //         Transform3D* parent_anim_tran_ptr = do_anim? keyframe.get_bone_transform(bone.parent_index) : NULL;
-  //         Transform3D parent_anim_tran = parent_anim_tran_ptr != NULL? *parent_anim_tran_ptr : parent_bone->bind_matrix.decompose();
-  //         Matrix4 parent_anim_matrix = parent_anim_tran.compose();
-  //         Matrix4 parent_fmatrix = transform_matrix * parent_anim_matrix;
-  //         Vector3f parent_pos = Vector3f{}.apply_matrix(parent_fmatrix);
-  //         draw_debug.line3(false, Line3 { parent_pos, bone_pos }, { 1, 1, 0 });
-  //       }
+        Bone* parent_bone = skeleton.get_parent(bone);
+        if (parent_bone != NULL) {
+          Transform3D* parent_anim_tran_ptr = do_anim? keyframe.get_bone_transform(bone.parent_index) : NULL;
+          Transform3D parent_anim_tran = parent_anim_tran_ptr != NULL? *parent_anim_tran_ptr : parent_bone->bind_matrix.decompose();
+          Matrix4 parent_anim_matrix = parent_anim_tran.compose();
+          Matrix4 parent_fmatrix = transform_matrix * parent_anim_matrix;
+          Vector3f parent_pos = Vector3f{}.apply_matrix(parent_fmatrix);
+          draw_debug.line3(false, Line3 { parent_pos, bone_pos }, { 1, 1, 0 });
+        }
 
-  //       if (do_menu) {
-  //         Transform3D f_tran = f_matrix.decompose();
+        if (do_menu) {
+          Transform3D f_tran = f_matrix.decompose();
           
-  //         Text("- Position: %.3f, %.3f, %.3f", f_tran.position.x, f_tran.position.y, f_tran.position.z);
-  //         Text("- Rotation: %.3f, %.3f, %.3f, %.3f", f_tran.rotation.x, f_tran.rotation.y, f_tran.rotation.z, f_tran.rotation.w);
-  //         Text("- Scale: %.3f, %.3f, %.3f", f_tran.scale.x, f_tran.scale.y, f_tran.scale.z);
-  //       }
-  //     }
-  //   }
-  //   End();
-  // });
+          Text("- Position: %.3f, %.3f, %.3f", f_tran.position.x, f_tran.position.y, f_tran.position.z);
+          Text("- Rotation: %.3f, %.3f, %.3f, %.3f", f_tran.rotation.x, f_tran.rotation.y, f_tran.rotation.z, f_tran.rotation.w);
+          Text("- Scale: %.3f, %.3f, %.3f", f_tran.scale.x, f_tran.scale.y, f_tran.scale.z);
+        }
+      }
+    }
+    End();
+  });
 
 
   
@@ -724,6 +764,11 @@ void module_init () {
         Transform3D& tran = entity.get_component<Transform3D>();
         RenderMesh3D& mesh = *entity.get_component<RenderMesh3DHandle>();
         Matrix4 world_matrix = tran.compose();
+
+        if (entity->enabled_components.match_index(ecs.get_component_type_by_instance_type<Child>().id)) {
+          world_matrix = entity.get_component<Child>().compute_hierarchical_matrix() * world_matrix;
+        }
+
         AABB3 mesh_bounds = mesh.get_aabb().apply_matrix(world_matrix);
         
         if (auto aabb_res = Intersects::ray3_aabb3(ray, mesh_bounds); aabb_res.a) {
@@ -759,7 +804,12 @@ void module_init () {
 
       Transform3D& t = entity.get_component<Transform3D>();
       RenderMesh3D& m = *entity.get_component<RenderMesh3DHandle>();
-      AABB3 b = m.get_aabb().apply_matrix(t.compose());
+      Matrix4 m4 = t.compose();
+      if (entity->enabled_components.match_index(ecs.get_component_type_by_instance_type<Child>().id)) {
+        m4 = entity.get_component<Child>().compute_hierarchical_matrix() * m4;
+      }
+
+      AABB3 b = m.get_aabb().apply_matrix(m4);
 
       draw_debug.cube(AABB3::from_center_and_size(intersect, { 15 }), { 0, 1, 1 });
 
@@ -813,7 +863,9 @@ void module_init () {
 
     ecs.update();
 
-    
+    Begin("Bone attachment");
+    SliderInt("slot_index", &ecs.get_component<Child>(hand_cube).slot_index, -1, ecs.get_component<SkeletonState>(character).pose.count - 1);
+    End();
 
     Begin("Debuggers");
     Checkbox("Face Normals", &ecs.get_system_by_name("Face Normal Debugger").enabled);
