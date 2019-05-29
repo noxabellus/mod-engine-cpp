@@ -1,0 +1,19 @@
+{
+  "materials": {
+    "Minimal2DA": "minimal2dA.json",
+    "Minimal2DB": "minimal2dB.json",
+    "Minimal2DC": "minimal2dC.json",
+    "PointLight": "PointLight.json",
+    "UnlitColor": "UnlitColor.json",
+    "UnlitColorUniform": "UnlitColorUniform.json",
+    "UnlitTexture": "UnlitTexture.json",
+    "WeightCheck": "WeightCheck.json"
+  },
+
+  "material_sets": {
+    "Minimal2D Set": [
+      "Minimal2DA",
+      "Minimal2DB"
+    ]
+  }
+}

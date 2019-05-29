@@ -216,6 +216,8 @@ namespace mod {
 
 
   void AssetManager_t::load_database_from_json_item (char const* origin, JSONItem const& json, String* err_msg_output, bool watch_sub) {
+    JSONItem* db_item = json.get_object_item("databases");
+
     JSONItem* shaders_item = json.get_object_item("shaders");
     JSONItem* shader_programs_item = json.get_object_item("shader_programs");
     JSONItem* textures_item = json.get_object_item("textures");
@@ -270,6 +272,39 @@ namespace mod {
 
       return relative_path;
     };
+
+
+    if (db_item != NULL) {
+      char name [32];
+      for (auto [ i, item ] : db_item->get_array()) {
+        try {
+          if (item.type == JSONType::String) {
+            load_database_from_file(
+              get_file_rel_path(item),
+              err_msg_output,
+              watch_sub,
+              watch_sub
+            );
+          } else {
+            snprintf(name, 32, "inline_db_%zu", i);
+            load_database_from_json_item(
+              get_sub_rel_path("databases", name, item),
+              item,
+              err_msg_output,
+              watch_sub
+            );
+          }
+        } catch (Exception& exception) {
+          if (err_msg_output != NULL) {
+            exception.print(*err_msg_output);
+          } else {
+            exception.print();
+          }
+          
+          exception.handle();
+        }
+      }
+    }
 
 
     if (shaders_item != NULL) {

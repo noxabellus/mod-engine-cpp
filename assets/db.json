@@ -1,0 +1,9 @@
+{
+  "databases": [
+    "shaders/db.json",
+    "textures/db.json",
+    "materials/db.json",
+    "meshes/db.json",
+    "audio/db.json"
+  ]
+}

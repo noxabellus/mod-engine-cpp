@@ -1,0 +1,15 @@
+{
+  "audio": {
+    "LowHealth": "effects/Player/LowHealth.wav",
+    "MenuConfirm": "effects/UI/MenuConfirm.wav",
+    "MenuDenied": "effects/UI/MenuDenied.wav",
+    "MenuDialog": "effects/UI/MenuDialog.wav",
+    "MenuNavDown": "effects/UI/MenuNavDown.wav",
+    "MenuNavUp": "effects/UI/MenuNavUp.wav",
+
+    "ReturnToTheBasis": {
+      "path": "music/YouKnowWhereToFindMe/Soft_and_Furious_-_02_-_Return_to_the_basis.ogg",
+      "volume": 0.4
+    }
+  }
+}

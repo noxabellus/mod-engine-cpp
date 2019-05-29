@@ -1,0 +1,41 @@
+{
+  "shaders": {
+    "Minimal2D Vert": "minimal2d.vert",
+    "Minimal2D Frag": "minimal2d.frag",
+    "PointLight Vert": "PointLight.vert",
+    "PointLight Frag": "PointLight.frag",
+    "UnlitColor Vert": "UnlitColor.vert",
+    "UnlitColor Frag": "UnlitColor.frag",
+    "UnlitColorUniform Frag": "UnlitColorUniform.frag",
+    "UnlitTexture Frag": "UnlitTexture.frag",
+    "WeightCheck Vert": "WeightCheck.vert",
+    "WeightCheck Frag": "WeightCheck.frag"
+  },
+
+  "shader_programs": {
+    "Minimal2D": {
+      "vertex": "Minimal2D Vert",
+      "fragment": "Minimal2D Frag"
+    },
+    "PointLight": {
+      "vertex": "PointLight Vert",
+      "fragment": "PointLight Frag"
+    },
+    "UnlitColor": {
+      "vertex": "UnlitColor Vert",
+      "fragment": "UnlitColor Frag"
+    },
+    "UnlitColorUniform": {
+      "vertex": "UnlitColor Vert",
+      "fragment": "UnlitColorUniform Frag"
+    },
+    "UnlitTexture": {
+      "vertex": "UnlitColor Vert",
+      "fragment": "UnlitTexture Frag"
+    },
+    "WeightCheck": {
+      "vertex": "WeightCheck Vert",
+      "fragment": "WeightCheck Frag"
+    }
+  }
+}

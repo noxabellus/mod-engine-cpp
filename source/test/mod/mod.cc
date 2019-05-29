@@ -12,7 +12,7 @@ void module_init () {
 
   Application.init();
 
-  AssetManager.load_database_from_file("./assets/asset_db.json");
+  AssetManager.load_database_from_file("./assets/db.json");
 
 
   draw_debug.init();

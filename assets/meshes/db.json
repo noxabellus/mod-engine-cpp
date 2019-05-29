@@ -1,0 +1,10 @@
+{
+  "render_mesh_2ds": {
+    "Test Quad 2D": "test_quad2d.json"
+  },
+
+  "render_mesh_3ds": {
+    "Test Quad 3D": "test_quad3d.json",
+    "Test Cube": "test_cube.json"
+  }
+}

@@ -1,0 +1,8 @@
+{
+  "textures": {
+    "ModEngine Logo": "modengine.json",
+    "Color Calibration Test": "color_test.json",
+    "Color Blending Test": "blending_test.json",
+    "Transparency Test": "transparency_test.json"
+  }
+}
