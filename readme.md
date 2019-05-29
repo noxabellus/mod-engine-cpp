@@ -169,6 +169,7 @@ This is still early in production, but a list of architectural elements that hav
     <summary style="cursor:pointer">Asset manager</summary>
     <ul>
       <li>JSON database files</li>
+      <li>Hierarchical database loading</li>
       <li>Inline definitions for most asset types</li>
       <li>Relative file path references to individual files</li>
       <li>Assets are accessible by name or index</li>
