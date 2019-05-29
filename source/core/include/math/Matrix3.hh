@@ -240,12 +240,30 @@ namespace mod {
       return multiply_in_place(*this, r);
     }
 
+    /* Multiply a matrix with another matrix, and place the result into the active matrix */
+    Matrix3& operator *= (Matrix3 const& r) {
+      return multiply_in_place(r);
+    }
+
     /* Multiply a matrix with another matrix, and return a new matrix as the result */
     ENGINE_API Matrix3 multiply (Matrix3 const& r) const;
 
     /* Multiply a matrix with another matrix, and return a new matrix as the result */
     Matrix3 operator * (Matrix3 const& r) const {
       return multiply(r);
+    }
+    
+    /* Multiply each element of a matrix by a scalar value, and place the result into the active matrix */
+    ENGINE_API Matrix3& multiply_scl_in_place (Matrix3 const& l, f32_t s);
+
+    /* Multiply each element of a matrix by a scalar value, and place the result into the active matrix */
+    Matrix3& multiply_scl_in_place (f32_t s) {
+      return multiply_scl_in_place(*this, s);
+    }
+
+    /* Multiply each element of a matrix by a scalar value, and place the result into the active matrix */
+    Matrix3& operator *= (f32_t s) {
+      return multiply_scl_in_place(s);
     }
 
 
@@ -255,6 +273,12 @@ namespace mod {
     /* Multiply all components of a matrix with a scalar value */
     Matrix3 operator * (f32_t s) const {
       return multiply_scl(s);
+    }
+
+    /* Multiply each element of a matrix by a scalar value */
+    Matrix3& operator *= (f32_t s) {
+      *this = multiply_scl(s);
+      return *this;
     }
 
 

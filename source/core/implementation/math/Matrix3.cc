@@ -95,6 +95,22 @@ namespace mod {
     };
   }
 
+  Matrix3& Matrix3::multiply_scl_in_place (Matrix3 const& l, f32_t s) {
+    e0 = l.e0 * s;
+    e1 = l.e1 * s;
+    e2 = l.e2 * s;
+
+    e3 = l.e3 * s;
+    e4 = l.e4 * s;
+    e5 = l.e5 * s;
+    
+    e6 = l.e6 * s;
+    e7 = l.e7 * s;
+    e8 = l.e8 * s;
+
+    return *this;
+  }
+
   Matrix3 Matrix3::multiply_scl (f32_t s) const {
     return {
       e0 * s, e1 * s, e2 * s,

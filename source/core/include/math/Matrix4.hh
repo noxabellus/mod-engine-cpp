@@ -350,10 +350,16 @@ namespace mod {
 
     /* Multiply a matrix with another matrix, and place the result into the active matrix */
     ENGINE_API Matrix4& multiply_in_place (Matrix4 const& l, Matrix4 const& r);
+    
 
     /* Multiply a matrix with another matrix, and place the result into the active matrix */
     Matrix4& multiply_in_place (Matrix4 const& r) {
       return multiply_in_place(*this, r);
+    }
+
+    /* Multiply a matrix with another matrix, and place the result into the active matrix */
+    Matrix4& operator *= (Matrix4 const& r) {
+      return multiply_in_place(r);
     }
 
     /* Multiply a matrix with another matrix, and return a new matrix as the result */
@@ -362,6 +368,19 @@ namespace mod {
     /* Multiply a matrix with another matrix, and return a new matrix as the result */
     Matrix4 operator * (Matrix4 const& r) const {
       return multiply(r);
+    }
+
+    /* Multiply each element of a matrix by a scalar value, and place the result into the active matrix */
+    ENGINE_API Matrix4& multiply_scl_in_place (Matrix4 const& l, f32_t s);
+
+    /* Multiply each element of a matrix by a scalar value, and place the result into the active matrix */
+    Matrix4& multiply_scl_in_place (f32_t s) {
+      return multiply_scl_in_place(*this, s);
+    }
+
+    /* Multiply each element of a matrix by a scalar value, and place the result into the active matrix */
+    Matrix4& operator *= (f32_t s) {
+      return multiply_scl_in_place(s);
     }
 
     /* Multiply each element of a matrix by a scalar value */

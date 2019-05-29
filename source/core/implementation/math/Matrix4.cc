@@ -590,14 +590,17 @@ namespace mod {
     e1  = l1 * r0 + l5 * r1 + l9  * r2 + l13 * r3;
     e2  = l2 * r0 + l6 * r1 + l10 * r2 + l14 * r3;
     e3  = l3 * r0 + l7 * r1 + l11 * r2 + l15 * r3;
+
     e4  = l0 * r4 + l4 * r5 + l8  * r6 + l12 * r7;
     e5  = l1 * r4 + l5 * r5 + l9  * r6 + l13 * r7;
     e6  = l2 * r4 + l6 * r5 + l10 * r6 + l14 * r7;
     e7  = l3 * r4 + l7 * r5 + l11 * r6 + l15 * r7;
+
     e8  = l0 * r8 + l4 * r9 + l8  * r10 + l12 * r11;
     e9  = l1 * r8 + l5 * r9 + l9  * r10 + l13 * r11;
     e10 = l2 * r8 + l6 * r9 + l10 * r10 + l14 * r11;
     e11 = l3 * r8 + l7 * r9 + l11 * r10 + l15 * r11;
+
     e12 = l0 * r12 + l4 * r13 + l8  * r14 + l12 * r15;
     e13 = l1 * r12 + l5 * r13 + l9  * r14 + l13 * r15;
     e14 = l2 * r12 + l6 * r13 + l10 * r14 + l14 * r15;
@@ -628,6 +631,30 @@ namespace mod {
       e2 * r.e12 + e6 * r.e13 + e10 * r.e14 + e14 * r.e15,
       e3 * r.e12 + e7 * r.e13 + e11 * r.e14 + e15 * r.e15
     };
+  }
+
+  Matrix4& Matrix4::multiply_scl_in_place (Matrix4 const& l, f32_t s) {
+    e0  = l.e0  * s;
+    e1  = l.e1  * s;
+    e2  = l.e2  * s;
+    e3  = l.e3  * s;
+
+    e4  = l.e4  * s;
+    e5  = l.e5  * s;
+    e6  = l.e6  * s;
+    e7  = l.e7  * s;
+
+    e8  = l.e8  * s;
+    e9  = l.e9  * s;
+    e10 = l.e10 * s;
+    e11 = l.e11 * s;
+    
+    e12 = l.e12 * s;
+    e13 = l.e13 * s;
+    e14 = l.e14 * s;
+    e15 = l.e15 * s;
+
+    return *this;
   }
 
   Matrix4 Matrix4::multiply_scl (f32_t s) const {
