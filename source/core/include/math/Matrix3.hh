@@ -275,12 +275,6 @@ namespace mod {
       return multiply_scl(s);
     }
 
-    /* Multiply each element of a matrix by a scalar value */
-    Matrix3& operator *= (f32_t s) {
-      *this = multiply_scl(s);
-      return *this;
-    }
-
 
     /* Get the determinant of a matrix */
     ENGINE_API f32_t determinant () const;
