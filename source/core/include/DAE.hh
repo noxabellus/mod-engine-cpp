@@ -241,7 +241,7 @@ namespace mod {
     f32_t time;
     Array<DAEIChannel> channels;
 
-    ENGINE_API DAEIChannel& get_channel (u32_t target_index) const;
+    ENGINE_API DAEIChannel* get_channel (u32_t target_index) const;
   };
 
   struct DAEBoneBindingList {

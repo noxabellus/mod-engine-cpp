@@ -165,12 +165,12 @@ namespace mod {
 
   
 
-  DAEIChannel& DAEIKeyframe::get_channel (u32_t target_index) const {
+  DAEIChannel* DAEIKeyframe::get_channel (u32_t target_index) const {
     for (auto [ i, channel ] : channels) {
-      if (channel.target_index == target_index) return channel;
+      if (channel.target_index == target_index) return &channel;
     }
 
-    dae->xml.asset_error("Cannot find DAEIChannel with target index %" PRIu32, target_index);
+    return NULL;
   }
 
 
@@ -194,7 +194,7 @@ namespace mod {
       s64_t bone_index = DAE::get_origin_bone_index_from_node_id(root_ibone, channel.target_id);
       
       if (bone_index == -1) {
-        // printf("Warning: Failed to find bone index for animation target id '%s'\n", channel.target_id.value);
+        printf("Warning: Failed to find bone index for animation target id '%s'\n", channel.target_id.value);
         continue;
       }
 
@@ -255,13 +255,16 @@ namespace mod {
       DAEIKeyframe& keyframe = pair.b;
 
       root_ibone.traverse([&] (DAEIBone const& ibone) {
-        DAEIChannel& channel = keyframe.get_channel(ibone.origin_index);
+        DAEIChannel* channel = keyframe.get_channel(ibone.origin_index);
 
-        if (ibone.parent == NULL) channel.bind_matrix = transform * channel.base_matrix;
+        if (channel == NULL) return;
+
+        if (ibone.parent == NULL) channel->bind_matrix = transform * channel->base_matrix;
         else {
-          DAEIChannel& parent_channel = keyframe.get_channel(ibone.parent->origin_index);
-
-          channel.bind_matrix = parent_channel.bind_matrix * channel.base_matrix;
+          DAEIChannel* parent_channel = keyframe.get_channel(ibone.parent->origin_index);
+          
+          if (parent_channel != NULL) channel->bind_matrix = parent_channel->bind_matrix * channel->base_matrix;
+          else channel->bind_matrix = channel->base_matrix;
         }
       });
     }
@@ -326,8 +329,9 @@ namespace mod {
     DAEBoneBinding& binding = binding_list[target_index];
 
     if (binding.parent_index != -1) {
-      DAEIChannel& parent_channel = owner.get_channel(binding.parent_index);
-      return (parent_channel.bind_matrix.inverse() * bind_matrix).decompose();
+      DAEIChannel* parent_channel = owner.get_channel(binding.parent_index);
+      if (parent_channel != NULL) return (parent_channel->bind_matrix.inverse() * bind_matrix).decompose();
+      else return bind_matrix.decompose();
     } else return bind_matrix.decompose();
   }
 
@@ -605,7 +609,18 @@ namespace mod {
 
             String const& ctid = channel.get_attribute("target").value;
 
-            String target_id = { ctid.value, ctid.length - str_length("/transform") };
+            constexpr size_t tlen = str_length("/transform");
+            constexpr size_t mlen = str_length("/matrix");
+            size_t olen;
+            if (str_ends_with(ctid.value, "/transform", tlen)) {
+              olen = tlen;
+            } else if (str_ends_with(ctid.value, "/matrix", mlen)) {
+              olen = mlen;
+            } else {
+              m_error("Expected channel target id to end with /transform or /matrix, found '%s'", ctid.value);
+            }
+
+            String target_id = { ctid.value, ctid.length - olen };
 
             anim_channels.append({
               anim.get_attribute("id").value,
@@ -1369,13 +1384,14 @@ namespace mod {
       XMLItem accessor = source.first_named("technique_common").first_named("accessor");
 
       XMLAttribute* offset = accessor.get_attribute_pointer("offset");
+      XMLAttribute* stride = accessor.get_attribute_pointer("stride");
 
       accessors.append({
         source.get_attribute("id").value, // borrowing string here, destroyed by XML
         accessor.get_attribute("source").value, // borrowing string here, destroyed by XML
         strtoumax(accessor.get_attribute("count").value.value, NULL, 10),
         offset != NULL? strtoumax(offset->value.value, NULL, 10) : 0,
-        strtoumax(accessor.get_attribute("stride").value.value, NULL, 10),
+        stride != NULL? strtoumax(stride->value.value, NULL, 10) : 1,
         accessor.count_of_name("param")
       });
     }
