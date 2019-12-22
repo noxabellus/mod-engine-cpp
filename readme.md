@@ -1,3 +1,6 @@
+# Archived
+This project has been shelved in favor of a Rust version focusing on 2D
+
 ![ModEngine Logo](meta/images/modengine.png)
 
 ModEngine is a C++ game engine project, designed to be highly modifiable by the end-user, but in a way that supports medium to high performance requirements. The initial/standard engine components and systems will center around top-down games that do not employ real time physics, first person cameras, etc, and instead utilize in-depth world mechanics/simulations. This engine is designed to suit a specific type of game design and most of the decisions are driven by this underlying goal. It is not a universal solution, but if your goals fit within its niche, it aims to be a competitive solution with intelligent tradeoffs.
